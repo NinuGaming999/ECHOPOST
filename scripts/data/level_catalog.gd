@@ -43,6 +43,48 @@ const LEVELS: Array[Dictionary] = [
 		"hazard_amplitude": 315.0,
 		"hazard_speed": 1.55,
 		"accent": Color(0.78, 0.52, 1.0)
+	},
+	{
+		"name": "Fractured Lane",
+		"subtitle": "TAKE THE LONG TURN",
+		"hint": "Switch A is across the chamber. Record the diagonal route, avoid the sweeping sentinel, and end on A.",
+		"spawn": Vector2(150, 525),
+		"plate_a": Vector2(510, 245),
+		"plate_b": Vector2(930, 500),
+		"linger": 9.0,
+		"hazard": true,
+		"hazard_y": 385.0,
+		"hazard_amplitude": 280.0,
+		"hazard_speed": 1.25,
+		"accent": Color(0.38, 0.92, 0.72)
+	},
+	{
+		"name": "Crosscurrent",
+		"subtitle": "READ THE ROOM BEFORE YOU MOVE",
+		"hint": "The switches pull you to opposite corners. Let the echo finish its crossing before you commit to B.",
+		"spawn": Vector2(150, 180),
+		"plate_a": Vector2(540, 500),
+		"plate_b": Vector2(945, 225),
+		"linger": 8.75,
+		"hazard": true,
+		"hazard_y": 345.0,
+		"hazard_amplitude": 300.0,
+		"hazard_speed": 1.6,
+		"accent": Color(0.55, 0.68, 1.0)
+	},
+	{
+		"name": "Static Bloom",
+		"subtitle": "THE LAST SIGNAL IS WIDE AWAKE",
+		"hint": "A wide sentinel patrols the middle lane. Record a clean route to A, then cross to B and race for the portal.",
+		"spawn": Vector2(155, 500),
+		"plate_a": Vector2(620, 350),
+		"plate_b": Vector2(960, 195),
+		"linger": 9.5,
+		"hazard": true,
+		"hazard_y": 410.0,
+		"hazard_amplitude": 330.0,
+		"hazard_speed": 1.45,
+		"accent": Color(0.96, 0.56, 0.84)
 	}
 ]
 
