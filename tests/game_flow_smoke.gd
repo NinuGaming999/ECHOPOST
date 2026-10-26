@@ -459,7 +459,7 @@ func _test_ordered_echo_waypoints(game: Control) -> void:
 	_check(not bool(game.get("echo_visible")), "A route that visits the relay checkpoints in reverse order must be rejected.")
 	_check(not bool(game.call("_is_relay_waypoint_linked", 0)), "Relay 1 must not show linked when Relay 2 was encountered first.")
 	_check(not bool(game.call("_is_relay_waypoint_linked", 1)), "Relay 2 must not show linked when it was visited before Relay 1.")
-	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2 in order"), "An out-of-order route should explain the required relay sequence.")
+	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2, then RELAY 3 in order"), "An out-of-order route should explain the full three-relay sequence.")
 
 	# Visiting Relay 1 then Relay 2 before ending on A creates a valid echo.
 	var ordered_track = EchoTrackScript.new()
@@ -552,6 +552,23 @@ func _test_relay_timer_combo(game: Control) -> void:
 	var spawn: Vector2 = room["spawn"]
 	var plate_a: Vector2 = room["plate_a"]
 	var waypoints: Array = room["echo_waypoints"]
+
+	# The rejection hint must name all three checkpoints, not just the first pair.
+	var invalid_route = EchoTrackScript.new()
+	invalid_route.add_sample(0.0, spawn)
+	invalid_route.add_sample(1.0, waypoints[0])
+	invalid_route.add_sample(2.0, waypoints[2])
+	invalid_route.add_sample(3.0, waypoints[1])
+	invalid_route.add_sample(4.0, plate_a)
+	game.set("recording_track", invalid_route)
+	game.set("recording_elapsed", 4.0)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(not bool(game.get("echo_visible")), "Fracture Clock should reject a route that visits Relay 3 before Relay 2.")
+	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2, then RELAY 3 in order"), "Fracture Clock's rejection hint should list every required relay.")
+
 	var route = EchoTrackScript.new()
 	route.add_sample(0.0, spawn)
 	route.add_sample(1.0, waypoints[0])
