@@ -1,7 +1,7 @@
-class_name EchoTrack
 extends RefCounted
 
 ## Timestamped, data-only player movement. It is safe to duplicate or persist in a level replay format.
+## This script intentionally avoids a global class_name dependency so it works when loaded directly by preload().
 var samples: Array[Dictionary] = []
 
 
@@ -16,8 +16,10 @@ func add_sample(sample_time: float, position: Vector2) -> void:
 	samples.append({"t": safe_time, "p": position})
 
 
-func copy_track() -> EchoTrack:
-	var duplicate_track := EchoTrack.new()
+func copy_track():
+	# Instantiate this same script resource instead of resolving "EchoTrack" from the
+	# global script-class cache, which may not be populated in a fresh Godot 4.4 import.
+	var duplicate_track: Variant = get_script().new()
 	for sample in samples:
 		duplicate_track.samples.append({"t": float(sample["t"]), "p": sample["p"]})
 	return duplicate_track
