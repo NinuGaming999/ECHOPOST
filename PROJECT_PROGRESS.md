@@ -42,17 +42,19 @@ ECHOPOST is a mobile-first 2D puzzle adventure about recording a route and letti
 5. The two switches open the gate; reaching the portal completes the chamber.
 6. Campaign progress is saved locally and the next chamber unlocks.
 
-The current source includes eight authored chamber layouts:
+The current source includes ten authored chamber layouts:
 - **The First Echo:** basic teach-the-mechanic chamber.
 - **Long Memory:** roaming sentinel and a more distant Switch B.
 - **Split Signal:** faster/larger sentinel movement and opposite-side switches.
 - **Fractured Lane:** a longer diagonal route under a wide patrol.
 - **Crosscurrent:** switches in opposite corners and a faster midline patrol.
-- **Static Bloom:** long route, wide sentinel sweep, and one required Relay Beacon before Switch A.
+- **Static Bloom:** one required Relay Beacon before Switch A.
 - **Chorus Route:** two Relay Beacons must be crossed in order before Switch A.
-- **Pulse Lock:** holding both switches opens a 3.5-second gate-crossing window; a missed window requires re-arming, while a successful crossing keeps the exit powered.
+- **Pulse Lock:** a 3.5-second gate-crossing window, with retry/re-arm behavior if the player misses it.
+- **Latch Protocol:** Switch B is a toggle; after activating it, the player can leave the switch and cross the gate.
+- **Triune Relay:** three Relay Beacons must be crossed in order before Switch A.
 
-The first five rooms teach the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces a single required gold Relay Beacon; Chorus Route requires two beacons in order; Pulse Lock adds a timed crossing and retry rule. Relay tests check line segments between samples, so a crossing between samples is valid. Eight rooms are still a prototype, not a finished campaign.
+The first five rooms teach the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces a single required gold Relay Beacon; Chorus Route requires two beacons in order; Pulse Lock adds a timed crossing and retry rule; Latch Protocol adds a toggle switch; Triune Relay extends ordered route planning to three checkpoints. Relay tests check line segments between samples, so a crossing between samples is valid. Ten rooms are still a prototype, not a finished campaign.
 
 The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon is the main external art asset. Procedural visuals keep the project importable without an asset pack but are placeholder art, not final art. Each chamber also has one optional Memory Shard that reveals a short courier-network lore fragment.
 
