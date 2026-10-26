@@ -98,6 +98,23 @@ const LEVELS: Array[Dictionary] = [
 		"hazard_amplitude": 330.0,
 		"hazard_speed": 1.45,
 		"accent": Color(0.96, 0.56, 0.84)
+	},
+	{
+		"name": "Chorus Route",
+		"subtitle": "TWO RELAYS. ONE MEMORY.",
+		"hint": "Your recording must cross RELAY 1, then RELAY 2, and finish on SWITCH A. The order matters.",
+		"spawn": Vector2(155, 500),
+		"plate_a": Vector2(710, 250),
+		"plate_b": Vector2(980, 500),
+		"echo_waypoints": [Vector2(310, 320), Vector2(520, 475)],
+		"memory_shard": Vector2(870, 340),
+		"shard_lore": "The relay crew learned to send a chorus one note at a time. The order was the message.",
+		"linger": 9.5,
+		"hazard": false,
+		"hazard_y": 365.0,
+		"hazard_amplitude": 0.0,
+		"hazard_speed": 0.0,
+		"accent": Color(0.98, 0.77, 0.36)
 	}
 ]
 
@@ -148,6 +165,8 @@ static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 			errors.append("%s must use a positive echo linger duration." % prefix)
 		if level.has("echo_waypoint") and not (level["echo_waypoint"] is Vector2):
 			errors.append("%s echo_waypoint must be a Vector2." % prefix)
+		if level.has("echo_waypoints") and not (level["echo_waypoints"] is Array):
+			errors.append("%s echo_waypoints must be an Array of Vector2 positions." % prefix)
 		for point_key in ["spawn", "plate_a", "plate_b", "memory_shard", "echo_waypoint"]:
 			if level.has(point_key) and level[point_key] is Vector2:
 				var point: Vector2 = level[point_key]
@@ -181,6 +200,29 @@ static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 					var anchor_position: Vector2 = level[anchor_key]
 					if waypoint_position.distance_to(anchor_position) < 70.0:
 						errors.append("%s echo waypoint must be separated from %s." % [prefix, anchor_key])
+
+		if level.has("echo_waypoints") and level["echo_waypoints"] is Array:
+			var raw_waypoints: Array = level["echo_waypoints"]
+			if raw_waypoints.is_empty():
+				errors.append("%s must have at least one echo waypoint when echo_waypoints is authored." % prefix)
+			var validated_waypoints: Array[Vector2] = []
+			for waypoint_index in range(raw_waypoints.size()):
+				var raw_waypoint: Variant = raw_waypoints[waypoint_index]
+				if not (raw_waypoint is Vector2):
+					errors.append("%s echo_waypoints[%d] must be a Vector2." % [prefix, waypoint_index])
+					continue
+				var sequence_waypoint: Vector2 = raw_waypoint
+				if sequence_waypoint.x < 63.0 or sequence_waypoint.x > 1217.0 or sequence_waypoint.y < 140.0 or sequence_waypoint.y > 597.0:
+					errors.append("%s echo_waypoints[%d] is outside the playable room." % [prefix, waypoint_index])
+				for anchor_key in ["spawn", "plate_a", "plate_b", "memory_shard"]:
+					if level.has(anchor_key) and level[anchor_key] is Vector2:
+						var anchor_position: Vector2 = level[anchor_key]
+						if sequence_waypoint.distance_to(anchor_position) < 70.0:
+							errors.append("%s echo waypoint %d must be separated from %s." % [prefix, waypoint_index + 1, anchor_key])
+				for previous_waypoint in validated_waypoints:
+					if sequence_waypoint.distance_to(previous_waypoint) < 70.0:
+						errors.append("%s ordered echo waypoints must be separated by at least 70 units." % prefix)
+				validated_waypoints.append(sequence_waypoint)
 
 		if bool(level.get("hazard", false)):
 			for hazard_key in ["hazard_y", "hazard_amplitude", "hazard_speed"]:
