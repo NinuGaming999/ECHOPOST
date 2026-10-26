@@ -97,14 +97,27 @@ static func level_count() -> int:
 
 ## Validate data before a campaign build; authoring tools and smoke tests use this too.
 static func validate_levels() -> PackedStringArray:
+	return validate_level_list(LEVELS)
+
+
+## Validate arbitrary room data too, so editor tooling and tests can check invalid drafts before adding them.
+static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 	var errors := PackedStringArray()
-	if LEVELS.is_empty():
+	if levels.is_empty():
 		errors.append("Campaign must contain at least one level.")
 		return errors
 
-	for index in range(LEVELS.size()):
-		var level: Dictionary = LEVELS[index]
+	var seen_names: Dictionary = {}
+	for index in range(levels.size()):
+		var level: Dictionary = levels[index]
 		var prefix := "Level %d" % (index + 1)
+		var level_name := str(level.get("name", "")).strip_edges()
+		if level_name.is_empty():
+			errors.append("%s must have a non-empty name." % prefix)
+		elif seen_names.has(level_name):
+			errors.append("%s uses duplicate chamber name '%s'." % [prefix, level_name])
+		else:
+			seen_names[level_name] = true
 		for required_key in ["name", "subtitle", "hint", "spawn", "plate_a", "plate_b", "linger", "hazard", "accent"]:
 			if not level.has(required_key):
 				errors.append("%s is missing '%s'." % [prefix, required_key])
@@ -121,8 +134,30 @@ static func validate_levels() -> PackedStringArray:
 				var point: Vector2 = level[point_key]
 				if point.x < 63.0 or point.x > 1217.0 or point.y < 140.0 or point.y > 597.0:
 					errors.append("%s %s is outside the playable room." % [prefix, point_key])
+
+		if level.has("spawn") and level["spawn"] is Vector2 and level.has("plate_a") and level["plate_a"] is Vector2:
+			var spawn: Vector2 = level["spawn"]
+			var plate_a: Vector2 = level["plate_a"]
+			if spawn.distance_to(plate_a) < 180.0:
+				errors.append("%s spawn and Switch A are too close for a meaningful minimum-length recording." % prefix)
+
+		if level.has("plate_a") and level["plate_a"] is Vector2 and level.has("plate_b") and level["plate_b"] is Vector2:
+			var plate_a_position: Vector2 = level["plate_a"]
+			var plate_b_position: Vector2 = level["plate_b"]
+			if plate_a_position.distance_to(plate_b_position) < 86.0:
+				errors.append("%s Switch A and Switch B must be separated by at least 86 units." % prefix)
+
 		if bool(level.get("hazard", false)):
 			for hazard_key in ["hazard_y", "hazard_amplitude", "hazard_speed"]:
 				if not level.has(hazard_key):
 					errors.append("%s hazard is missing '%s'." % [prefix, hazard_key])
+			var hazard_y := float(level.get("hazard_y", 0.0))
+			var hazard_amplitude := float(level.get("hazard_amplitude", -1.0))
+			var hazard_speed := float(level.get("hazard_speed", 0.0))
+			if hazard_y < 140.0 or hazard_y > 597.0:
+				errors.append("%s sentinel patrol height is outside the room." % prefix)
+			if hazard_amplitude < 0.0 or hazard_amplitude > 500.0:
+				errors.append("%s sentinel patrol width must be between 0 and 500." % prefix)
+			if hazard_speed <= 0.0 or hazard_speed > 4.0:
+				errors.append("%s sentinel speed must be greater than 0 and no more than 4." % prefix)
 	return errors
