@@ -1095,7 +1095,9 @@ func _draw_room() -> void:
 		draw_arc(joystick_hint, 44.0, 0, TAU, 40, Color(0.40, 0.72, 0.86, 0.27), 2.0, true)
 		draw_circle(joystick_hint, 17.0, Color(0.30, 0.78, 0.94, 0.14))
 
-	if door_open:
+	if door_open and gate_open_timer > 0.0:
+		draw_string(ThemeDB.fallback_font, Vector2(900, 145), "PULSE WINDOW  %.1fs" % gate_open_timer, HORIZONTAL_ALIGNMENT_CENTER, 190, 13, Color(1.0, 0.78, 0.39))
+	elif door_open:
 		draw_string(ThemeDB.fallback_font, Vector2(915, 145), "GATE POWERED", HORIZONTAL_ALIGNMENT_CENTER, 160, 13, Color(0.35, 1.0, 0.77))
 	else:
 		draw_string(ThemeDB.fallback_font, Vector2(1035, 145), "SEALED", HORIZONTAL_ALIGNMENT_CENTER, 90, 13, Color(0.47, 0.61, 0.72))
