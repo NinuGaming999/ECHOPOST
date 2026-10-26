@@ -650,11 +650,16 @@ func _draw_room() -> void:
 		draw_circle(sentinel_pos + Vector2(-5, -3), 4, Color(1.0, 0.85, 0.87))
 		draw_circle(sentinel_pos + Vector2(5, -3), 4, Color(1.0, 0.85, 0.87))
 
+	# Show the player's route as it is being recorded, so the ghost mechanic feels tangible.
+	if is_recording and not recording_track.samples.is_empty():
+		_draw_track_path(recording_track, Color(1.0, 0.69, 0.31, 0.62), 3.5)
+		var route_start: Vector2 = recording_track.samples.front()["p"]
+		draw_circle(route_start, 12.0, Color(1.0, 0.69, 0.31, 0.12))
+		draw_arc(route_start, 12.0, 0.0, TAU, 32, Color(1.0, 0.76, 0.40, 0.92), 2.0, true)
+		draw_string(ThemeDB.fallback_font, route_start + Vector2(17, -10), "START", HORIZONTAL_ALIGNMENT_LEFT, 55, 10, Color(1.0, 0.80, 0.50))
+
 	if echo_track.samples.size() > 1 and (echo_playing or echo_visible):
-		for i in range(1, echo_track.samples.size()):
-			var from_point: Vector2 = echo_track.samples[i - 1]["p"]
-			var to_point: Vector2 = echo_track.samples[i]["p"]
-			draw_line(from_point, to_point, Color(0.29, 0.82, 1.0, 0.17), 3.0, true)
+		_draw_track_path(echo_track, Color(0.29, 0.82, 1.0, 0.17), 3.0)
 	if echo_visible:
 		var echo_alpha := 0.48 if echo_playing else 0.68
 		_draw_robot(echo_position, Color(0.28, 0.84, 1.0, echo_alpha), 0.78)
@@ -727,3 +732,13 @@ func _draw_joystick() -> void:
 	draw_arc(center, 54.0, 0, TAU, 48, Color(0.40, 0.72, 0.86, 0.48), 2.0, true)
 	draw_circle(center + offset, 23.0, Color(0.30, 0.78, 0.94, 0.70))
 	draw_arc(center + offset, 23.0, 0, TAU, 32, Color(0.79, 0.94, 1.0, 0.95), 2.0, true)
+
+
+func _draw_track_path(track: Variant, tint: Color, line_width: float) -> void:
+	if track.samples.size() < 2:
+		return
+	for i in range(1, track.samples.size()):
+		var from_point: Vector2 = track.samples[i - 1]["p"]
+		var to_point: Vector2 = track.samples[i]["p"]
+		draw_line(from_point, to_point, tint, line_width, true)
+
