@@ -132,6 +132,23 @@ const LEVELS: Array[Dictionary] = [
 		"hazard_amplitude": 0.0,
 		"hazard_speed": 0.0,
 		"accent": Color(0.96, 0.48, 0.32)
+	},
+	{
+		"name": "Latch Protocol",
+		"subtitle": "SET IT. LEAVE IT.",
+		"hint": "Record a route that ends on SWITCH A. When your echo holds A, stand near SWITCH B and tap LATCH SWITCH B (or press E). You can leave B and cross the gate.",
+		"spawn": Vector2(155, 500),
+		"plate_a": Vector2(380, 500),
+		"plate_b": Vector2(760, 500),
+		"plate_b_mode": "toggle",
+		"memory_shard": Vector2(980, 260),
+		"shard_lore": "The last crew learned a switch did not need a hand, only a deliberate signal.",
+		"linger": 9.0,
+		"hazard": false,
+		"hazard_y": 365.0,
+		"hazard_amplitude": 0.0,
+		"hazard_speed": 0.0,
+		"accent": Color(0.34, 0.92, 0.74)
 	}
 ]
 
@@ -182,6 +199,12 @@ static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 			errors.append("%s must use a positive echo linger duration." % prefix)
 		if level.has("echo_waypoint") and not (level["echo_waypoint"] is Vector2):
 			errors.append("%s echo_waypoint must be a Vector2." % prefix)
+		if level.has("plate_b_mode"):
+			var raw_plate_b_mode: Variant = level["plate_b_mode"]
+			if not (raw_plate_b_mode is String):
+				errors.append("%s plate_b_mode must be a string." % prefix)
+			elif str(raw_plate_b_mode) not in ["hold", "toggle"]:
+				errors.append("%s plate_b_mode must be 'hold' or 'toggle'." % prefix)
 		if level.has("gate_open_seconds"):
 			var raw_gate_duration: Variant = level["gate_open_seconds"]
 			if not (raw_gate_duration is int or raw_gate_duration is float):
