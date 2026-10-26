@@ -24,6 +24,8 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Add clear feedback for invalid recording endpoints and a live route preview while recording.
 - [x] Auto-pause active gameplay when the app loses focus or Android/iOS suspends it; clear held joystick input and require explicit player resume.
 - [x] Add movement-speed presets and left-handed joystick placement, persisted separately from campaign progress.
+- [x] Automatically reset the whole chamber after sentinel contact or a failed relay route, with a short readable reset card and no extra restart tap.
+- [x] Add responsive bottom HUD placement, centered modal cards, larger primary touch targets, consistent premium button/panel styling and subtle button feedback animations.
 - [ ] Support multiple aspect ratios and device safe areas.
 - [ ] Add an in-game level-state debug view for development builds.
 
