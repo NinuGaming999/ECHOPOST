@@ -23,16 +23,18 @@ Make players feel that a successful run leaves a useful trace in the world. The 
 5. The gate opens; reach the portal to complete the room.
 6. Unlock the next chamber; progress is stored locally.
 
-## Current early campaign: six chambers
+## Current early campaign: eight chambers
 
-The current six chambers deliberately vary route length, switch placement, and sentinel patrols while teaching the same two-switch echo mechanic. They are a content foundation, not the final campaign.
+The current eight chambers progress from the basic two-switch echo rule to route checkpoints and a short timed-gate crossing. They are a content foundation, not the final campaign.
 
 - **The First Echo:** a safe introduction to recording, echo playback, and both switches.
 - **Long Memory:** introduces the roaming sentinel and separates Switch A from the real player's destination.
 - **Split Signal:** moves the switches to opposite sides and increases sentinel speed.
 - **Fractured Lane:** asks the player to record a longer diagonal crossing under a wide patrol.
 - **Crosscurrent:** places switches in opposite corners and tests route planning before moving toward B.
-- **Static Bloom:** uses a long route and wide sentinel sweep to create a busier timing puzzle.
+- **Static Bloom:** uses a long route, wide sentinel sweep, and one required Relay Beacon checkpoint.
+- **Chorus Route:** requires two Relay Beacons to be encountered in order within the recorded route, not just somewhere along the path.
+- **Pulse Lock:** opens a 3.5-second crossing window when the echo holds A and the player holds B. If the player is still on the entrance side when the window expires, the gate closes and both switches must be released/rearmed for another attempt. Once the player crosses the barrier in time, the portal remains powered.
 
 The chapter selector scrolls so future rooms do not collide with the navigation controls. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. New switch types, checkpoints, moving platforms, and truly different puzzle rules remain future work; do not describe the six current rooms as six distinct mechanics.
 
@@ -43,7 +45,8 @@ The chapter selector scrolls so future rooms do not collide with the navigation 
 - Echo playback follows recorded samples in time order.
 - When playback ends, the echo holds its final recorded position temporarily.
 - Echoes press switches by occupying their active area; they do not push the real player or change the recording.
-- A room may require a route checkpoint. For Static Bloom, `echo_waypoint` is a required Relay Beacon: a route is accepted only if at least one segment passes within the beacon radius and the final player position is still on Switch A. A route that misses it is rejected without replacing the current echo route.
+- A room may require route checkpoints. Static Bloom's `echo_waypoint` requires crossing one Relay Beacon; Chorus Route's `echo_waypoints` array requires Relay 1 then Relay 2 in path order. The game checks the nearest point on each sample-to-sample line segment so crossings between samples count. Wrong order or a missed checkpoint is rejected with explicit feedback.
+- Pulse Lock defines `gate_open_seconds`. When both switches activate it, the timer ticks only during PLAYING state; timeout closes the gate if the player has not crossed the barrier. A missed attempt stays latched until the player leaves a switch, so standing still cannot immediately reopen the gate. Crossing the barrier before timeout permanently powers the portal for that room.
 - Sentinel contact returns the player to the chamber entrance. If the player is still recording, that unfinished take is cancelled and discarded rather than saving a fake teleport back to spawn. Already-released echo behavior is separate from the unfinished take.
 - Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. The Memory Archive can revisit a recovered fragment later. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
 - Save schema version 2 stores the collected room indices. Version 1 saves remain loadable and begin with no Memory Shards collected; duplicate, negative, and out-of-campaign indices are filtered during loading.
@@ -74,7 +77,7 @@ A network of abandoned courier stations has lost its original inhabitants. A sma
 
 - Multiple recording slots with explicit limits.
 - Moving platforms and switch types (hold, toggle, timed, sequence).
-- Ordered multi-relay route checkpoints; the first implementation is the Chorus Route chamber, with further combinations planned only after usability testing.
+- Ordered multi-relay route checkpoints and a retryable timed gate; the first implementations are Chorus Route and Pulse Lock, with more combinations planned only after usability testing.
 - Echo-safe surfaces and echo-only sensors.
 - More optional Memory Shards with branching lore fragments, never required to finish the main path.
 - A level authoring/validation format separate from gameplay code.
