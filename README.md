@@ -4,7 +4,7 @@
 
 **Every player leaves a ghost.** ECHOPOST is a mobile-first 2D puzzle adventure about recording your movement and using its echo to solve rooms you cannot solve alone.
 
-This repository is the long-term home of the full game. The current source implements a playable vertical slice: movement, touch controls, recording/playback echoes with endpoint validation, pressure switches, gates/exits, three campaign rooms, roaming sentinels, chapter unlocks, local save data, and procedural graphics so it runs without external art assets.
+This repository is the long-term home of the full game. The current source implements an early playable slice: keyboard/touch movement, recording/playback echoes with endpoint validation, an amber live route preview, pressure switches, gates/exits, six chamber layouts, roaming sentinels, scrollable chapter selection, chapter unlocks, local save data, and procedural graphics so it runs without external art assets.
 
 > **Development status:** Early development. Automated Godot CI parses the project and runs smoke tests on every push and pull request. Production art/audio, accessibility options, online echo sharing, and Android release packaging remain future work.
 
@@ -32,7 +32,7 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 3. Move the real robot onto **Switch B**.
 4. When both switches are active, cross the gate and reach the exit.
 
-Later rooms introduce roaming sentinels. The current game uses procedural artwork, making this early version easy to run and extend.
+Later rooms introduce roaming sentinels and longer diagonal routes. While recording, an amber trace shows the route being captured and the starting point; after sending, the echo trail appears in cyan. The six rooms still use the same two-switch core mechanic, so new switch mechanics and a longer authored campaign remain future work.
 
 ## Project layout
 
@@ -51,6 +51,7 @@ ECHOPOST/
 ├── docs/GAME_DESIGN.md
 ├── docs/ROADMAP.md
 ├── docs/BUILD_STATUS.md
+├── PROJECT_PROGRESS.md
 ├── CONTRIBUTING.md
 ├── LICENSE
 └── RUN_TESTS.bat
@@ -65,7 +66,7 @@ godot --headless --path . --script res://tests/headless_smoke.gd
 godot --headless --path . --script res://tests/game_flow_smoke.gd
 ```
 
-On Windows, run `RUN_TESTS.bat`. The data tests cover echo-track timing/interpolation, campaign validation, and save/load boundaries. The gameplay integration test verifies valid recording, invalid endpoint rejection, echo creation, and two-switch gate activation. GitHub Actions installs Godot and runs these tests on each push and pull request.
+On Windows, run `RUN_TESTS.bat`. The data tests cover echo-track timing/interpolation, campaign validation, and save/load boundaries. The gameplay integration test verifies recording limits, short-recording feedback, sentinel resets, restart cleanup, idempotent portal completion with save restoration, valid/invalid routes, chapter scrolling, echo creation, gate activation, and lifecycle pause. GitHub Actions installs Godot and runs these tests on each push and pull request. See `PROJECT_PROGRESS.md` for the exact source map, known gaps, recent CI results, and next tasks.
 
 ## Android
 
