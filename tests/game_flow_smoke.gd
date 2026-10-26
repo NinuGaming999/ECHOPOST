@@ -4,6 +4,7 @@ extends SceneTree
 ## Tests the full puzzle flow and restores the saved campaign values after portal completion.
 const MainScene = preload("res://scenes/main.tscn")
 const EchoTrackScript = preload("res://scripts/core/echo_track.gd")
+const LevelCatalog = preload("res://scripts/data/level_catalog.gd")
 
 var failures: int = 0
 
@@ -17,6 +18,7 @@ func _run_tests() -> void:
 	root.add_child(game)
 	await process_frame
 
+	_test_chapter_select_layout(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
@@ -198,6 +200,25 @@ func _test_portal_completion_is_idempotent(game: Control) -> void:
 	game.set("rooms_completed", previous_completed)
 	game.call("_save_progress")
 	game.call("_update_menu_progress")
+
+
+func _test_chapter_select_layout(game: Control) -> void:
+	game.call("_open_level_select")
+	var panel: Panel = game.get("level_select_panel")
+	var scroll_node := panel.get_node_or_null("ChapterScroll")
+	_check(scroll_node is ScrollContainer, "Chapter select should use a ScrollContainer so longer campaigns do not overlap navigation.")
+	var buttons: Array = game.get("chapter_buttons")
+	_check(buttons.size() == LevelCatalog.LEVELS.size(), "Chapter select should create one button for every campaign chamber.")
+
+	if scroll_node is ScrollContainer:
+		var scroll := scroll_node as ScrollContainer
+		_check(scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "Chapter select should enable vertical scrolling when content exceeds the viewport.")
+		var list_node := scroll.get_node_or_null("ChapterList")
+		_check(list_node is VBoxContainer, "Scrollable chapter rows should use a VBoxContainer.")
+		if list_node is VBoxContainer:
+			_check(list_node.get_child_count() == LevelCatalog.LEVELS.size(), "The scroll list should contain every authored chamber.")
+	game.call("_show_menu")
+
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:
