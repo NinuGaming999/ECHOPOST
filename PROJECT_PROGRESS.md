@@ -620,7 +620,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 2. Check the most recent CI run before modifying code. A workflow run for a commit older than the code currently on `main` does not verify the current code.
 3. Choose **one focused improvement** at a time. Make changes in `main` only as permitted by the user/project workflow, and don't claim the project is finished.
 4. Test changes with Godot CI or available local Godot. Distinguish passed tests, tests not run, and manual device checks.
-5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `e44cb8d66c78b5a0cdb0253f88d8900b57d6d58d`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
+5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `2bbfb07c528b73e128aaf795cebee146075c28ed`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
 6. Update `PROJECT_PROGRESS.md` in the same development pass as source changes. Record the new commit(s), source hashes/line references, CI URL/result and what the next session should do.
 7. Keep this game offline-capable and dependency-light. Never add network accounts, telemetry, uploads, payment or ads as an incidental code change.
 8. Don't produce an APK/release claim unless an actual export and install verification were completed.
