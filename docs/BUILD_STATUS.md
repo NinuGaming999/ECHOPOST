@@ -13,7 +13,8 @@
 - Two-switch gate and portal completion flow.
 - Three authored room configurations; later rooms add moving sentinels.
 - Local versioned campaign save data and progress clamping.
-- Campaign-data validator, data-layer smoke tests, and a main-scene gameplay integration test.
+- Automatic pause on Android/iOS application suspension or application focus loss; held joystick input is cleared, in-progress recording state is preserved, and gameplay never auto-resumes without player input.
+- Campaign-data validator, data-layer smoke tests, and a main-scene gameplay integration test, including lifecycle pause/resume assertions.
 - Automated GitHub Actions workflow that imports/parses the project and runs both smoke-test scripts.
 - README, design document, roadmap, contribution guide, and MIT license.
 
@@ -23,9 +24,9 @@ The latest GitHub Actions run passed the Godot project import/parse step, the da
 
 ## Next work items
 
-1. Confirm the latest workflow passes the gameplay integration test; fix any regressions it catches.
+1. Continue expanding integration tests for recording-duration limits, sentinel resets, pause/restart behavior, and full room completion.
 2. Play through all three rooms with keyboard and touch input; tune switch radius, sentinel paths, timing, and messaging.
-3. Refactor the main controller into smaller scene/controller/renderer components as room count grows.
+3. Add viewport/safe-area handling and test the game at mobile aspect ratios; the current layout is authored for 1280×720.
 4. Expand the campaign with reusable puzzle mechanics, clear checkpoints, and a reliable level validator.
 5. Add original character and environment art, animation, audio, accessibility options, safe-area handling, and device-specific QA.
 6. Consider online echo sharing only after route validation, abuse reporting, moderation, privacy, and service costs are designed.
