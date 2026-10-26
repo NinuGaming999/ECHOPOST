@@ -10,7 +10,7 @@ const LEVELS: Array[Dictionary] = [
 		"plate_a": Vector2(430, 365),
 		"plate_b": Vector2(845, 365),
 		"memory_shard": Vector2(700, 185),
-				"shard_lore": "A courier logged this station as waiting for a reply. No reply ever arrived."
+		"shard_lore": "A courier logged this station as waiting for a reply. No reply ever arrived.",
 		"linger": 9.5,
 		"hazard": false,
 		"hazard_y": 365.0,
@@ -26,7 +26,7 @@ const LEVELS: Array[Dictionary] = [
 		"plate_a": Vector2(355, 505),
 		"plate_b": Vector2(910, 250),
 		"memory_shard": Vector2(700, 530),
-				"shard_lore": "This patrol was built to escort couriers. Its last route loops forever."
+		"shard_lore": "This patrol was built to escort couriers. Its last route loops forever.",
 		"linger": 9.0,
 		"hazard": true,
 		"hazard_y": 380.0,
@@ -42,7 +42,7 @@ const LEVELS: Array[Dictionary] = [
 		"plate_a": Vector2(360, 220),
 		"plate_b": Vector2(920, 510),
 		"memory_shard": Vector2(700, 245),
-				"shard_lore": "Three signals arrived at once. Someone answered only one, then the line went silent."
+		"shard_lore": "Three signals arrived at once. Someone answered only one, then the line went silent.",
 		"linger": 8.5,
 		"hazard": true,
 		"hazard_y": 360.0,
@@ -58,7 +58,7 @@ const LEVELS: Array[Dictionary] = [
 		"plate_a": Vector2(510, 245),
 		"plate_b": Vector2(930, 500),
 		"memory_shard": Vector2(760, 270),
-				"shard_lore": "This lane was once a garden corridor. The lights still wake for footsteps."
+		"shard_lore": "This lane was once a garden corridor. The lights still wake for footsteps.",
 		"linger": 9.0,
 		"hazard": true,
 		"hazard_y": 385.0,
@@ -74,7 +74,7 @@ const LEVELS: Array[Dictionary] = [
 		"plate_a": Vector2(540, 500),
 		"plate_b": Vector2(945, 225),
 		"memory_shard": Vector2(760, 500),
-				"shard_lore": "A map of the station is scratched out here. Someone wanted the route forgotten."
+		"shard_lore": "A map of the station is scratched out here. Someone wanted the route forgotten.",
 		"linger": 8.75,
 		"hazard": true,
 		"hazard_y": 345.0,
@@ -90,7 +90,7 @@ const LEVELS: Array[Dictionary] = [
 		"plate_a": Vector2(620, 350),
 		"plate_b": Vector2(960, 195),
 		"memory_shard": Vector2(780, 300),
-				"shard_lore": "The last courier left a message: if the echo reaches you, the signal survived."
+		"shard_lore": "The last courier left a message: if the echo reaches you, the signal survived.",
 		"linger": 9.5,
 		"hazard": true,
 		"hazard_y": 410.0,
