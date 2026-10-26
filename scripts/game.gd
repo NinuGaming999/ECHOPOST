@@ -635,7 +635,10 @@ func _finish_recording() -> void:
 			echo_visible = false
 			echo_playing = false
 			echo_track.clear()
-			status_message = "ROUTE REJECTED — pass through RELAY 1, then RELAY 2 in order before finishing on SWITCH A."
+			var relay_sequence := PackedStringArray()
+			for relay_index in range(required_waypoints.size()):
+				relay_sequence.append("RELAY %d" % (relay_index + 1))
+			status_message = "ROUTE REJECTED — pass through %s in order before finishing on SWITCH A." % ", then ".join(relay_sequence)
 			_update_hud()
 			queue_redraw()
 			return
