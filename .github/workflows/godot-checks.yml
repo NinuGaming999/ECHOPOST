@@ -28,3 +28,6 @@ jobs:
 
       - name: Run data-layer smoke tests
         run: godot --headless --path . --script res://tests/headless_smoke.gd
+
+      - name: Run main-scene gameplay smoke tests
+        run: godot --headless --path . --script res://tests/game_flow_smoke.gd
