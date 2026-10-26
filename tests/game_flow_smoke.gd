@@ -849,6 +849,7 @@ func _finish_failure_reset(game: Control) -> void:
 
 
 func _test_premium_mobile_ui(game: Control) -> void:
+	var previous_handedness := bool(game.get("left_handed_controls"))
 	var record: Button = game.get("record_button")
 	var latch: Button = game.get("latch_switch_button")
 	var pause: Button = game.get("pause_button")
@@ -865,12 +866,12 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	var failure_panel: Panel = game.get("failure_panel")
 	_check(options_panel.position.is_equal_approx((game.size - options_panel.size) * 0.5), "Options should remain centered when the viewport changes size.")
 	_check(failure_panel.position.is_equal_approx((game.size - failure_panel.size) * 0.5), "The failure/restart card should remain centered when the viewport changes size.")
-	_check(bool(game.call("_is_joystick_area", Vector2(100, 800))), "The left joystick area should adapt to a wider/taller viewport.")
+	_check(bool(game.call("_is_joystick_area", Vector2(100, 700))), "The left joystick area should adapt to a wider/taller viewport.")
 	game.set("left_handed_controls", true)
-	_check(bool(game.call("_is_joystick_area", Vector2(1400, 800))), "The right joystick area should adapt in left-handed mode.")
+	_check(bool(game.call("_is_joystick_area", Vector2(1400, 700))), "The right joystick area should adapt in left-handed mode.")
 	game.size = Vector2(1280, 720)
 	game.call("_layout_centered_panels")
-	game.call("_set_left_handed_controls", bool(game.get("left_handed_controls")))
+	game.call("_set_left_handed_controls", previous_handedness)
 	game.call("_show_menu")
 
 func _check(condition: bool, message: String) -> void:
