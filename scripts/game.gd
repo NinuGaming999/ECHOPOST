@@ -43,6 +43,7 @@ var recording_elapsed: float = 0.0
 var record_sample_accumulator: float = 0.0
 var recording_track: Variant = ECHO_TRACK_SCRIPT.new()
 var door_open: bool = false
+var switch_b_latched: bool = false
 var gate_open_timer: float = 0.0
 var timed_gate_failed: bool = false
 var hazard_time: float = 0.0
@@ -74,6 +75,7 @@ var level_hint_label: Label
 var echo_status_label: Label
 var status_label: Label
 var record_button: Button
+var latch_switch_button: Button
 var pause_button: Button
 var start_button: Button
 var complete_title_label: Label
@@ -143,6 +145,12 @@ func _process(delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if screen_state != ScreenState.PLAYING:
 		return
+
+	if event is InputEventKey:
+		var key_event := event as InputEventKey
+		if key_event.pressed and not key_event.echo and key_event.keycode == KEY_E:
+			_on_latch_switch_b_pressed()
+			return
 
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
@@ -247,6 +255,9 @@ func _build_game_hud() -> void:
 	status_label = _make_label(game_hud, "Status", Vector2(300, 626), Vector2(680, 34), "Find the switches.", 15, Color(0.74, 0.84, 0.93), HORIZONTAL_ALIGNMENT_CENTER)
 	record_button = _make_button(game_hud, "RecordButton", Vector2(380, 665), Vector2(270, 44), "RECORD ECHO", Color(0.03, 0.47, 0.62), Color(0.04, 0.65, 0.80), 17)
 	record_button.pressed.connect(_on_record_pressed)
+	latch_switch_button = _make_button(game_hud, "LatchSwitchBButton", Vector2(680, 665), Vector2(270, 44), "LATCH SWITCH B", Color(0.34, 0.25, 0.10), Color(0.52, 0.37, 0.13), 15)
+	latch_switch_button.pressed.connect(_on_latch_switch_b_pressed)
+	latch_switch_button.hide()
 	var reset_button := _make_button(game_hud, "ResetButton", Vector2(1000, 665), Vector2(145, 44), "RESTART ROOM", Color(0.22, 0.18, 0.31), Color(0.32, 0.23, 0.44), 13)
 	reset_button.pressed.connect(_on_reset_pressed)
 	var menu_button := _make_button(game_hud, "MenuButton", Vector2(34, 665), Vector2(145, 44), "MAIN MENU", Color(0.12, 0.22, 0.34), Color(0.17, 0.34, 0.48), 13)
@@ -575,6 +586,7 @@ func _start_level(level_index: int) -> void:
 	record_sample_accumulator = 0.0
 	recording_track.clear()
 	door_open = false
+	switch_b_latched = false
 	gate_open_timer = 0.0
 	timed_gate_failed = false
 	hazard_time = 0.0
@@ -609,6 +621,33 @@ func _on_record_pressed() -> void:
 		status_message = "Recording... move to SWITCH A, then press STOP & SEND."
 	else:
 		_finish_recording()
+	_update_hud()
+	queue_redraw()
+
+
+
+
+func _on_latch_switch_b_pressed() -> void:
+	if screen_state != ScreenState.PLAYING:
+		return
+	if str(level_data.get("plate_b_mode", "hold")) != "toggle":
+		return
+	if door_open:
+		status_message = "GATE OPEN — cross the barrier and reach the portal."
+		_update_hud()
+		return
+
+	var echo_on_a := echo_visible and echo_position.distance_to(level_data["plate_a"]) < 43.0
+	if not echo_on_a:
+		status_message = "WAIT FOR ECHO — let it hold SWITCH A before latching B."
+	elif player_position.distance_to(level_data["plate_b"]) >= 50.0:
+		status_message = "MOVE TO SWITCH B — stand close to latch it."
+	else:
+		switch_b_latched = not switch_b_latched
+		if switch_b_latched:
+			status_message = "SWITCH B LATCHED — leave it and cross the gate."
+		else:
+			status_message = "SWITCH B RELEASED — return to B to latch it again."
 	_update_hud()
 	queue_redraw()
 
@@ -855,7 +894,9 @@ func _check_puzzle_state() -> void:
 			_complete_level()
 		return
 	var echo_on_a := echo_visible and echo_position.distance_to(level_data["plate_a"]) < 43.0
-	var player_on_b := player_position.distance_to(level_data["plate_b"]) < 43.0
+	var player_near_b := player_position.distance_to(level_data["plate_b"]) < 43.0
+	var toggle_switch_b := str(level_data.get("plate_b_mode", "hold")) == "toggle"
+	var player_on_b := switch_b_latched if toggle_switch_b else player_near_b
 
 	# A missed timed-gate window cannot instantly re-open while the player is still
 	# holding Switch B. Leave either switch and return to re-arm another attempt.
@@ -870,6 +911,8 @@ func _check_puzzle_state() -> void:
 		gate_open_timer = maxf(0.0, float(level_data.get("gate_open_seconds", 0.0)))
 		if gate_open_timer > 0.0:
 			status_message = "PULSE GATE OPEN — cross the barrier within %.1f seconds, then reach the portal." % gate_open_timer
+		elif toggle_switch_b:
+			status_message = "SWITCH B LATCHED — GATE OPEN! Cross the barrier and reach the portal."
 		else:
 			status_message = "BOTH SWITCHES HELD — GATE OPEN! Reach the portal."
 		return
@@ -881,7 +924,10 @@ func _check_puzzle_state() -> void:
 		elif not echo_on_a and not echo_playing:
 			status_message = "Your echo missed SWITCH A. Record again and finish on the blue switch."
 		elif echo_on_a and not player_on_b:
-			status_message = "Echo holds A. Move yourself onto SWITCH B."
+			if toggle_switch_b:
+				status_message = "ECHO HOLDS A — move to SWITCH B, then tap LATCH SWITCH B."
+			else:
+				status_message = "Echo holds A. Move yourself onto SWITCH B."
 
 
 func _complete_level() -> void:
@@ -994,6 +1040,14 @@ func _update_hud() -> void:
 		else:
 			echo_status_label.text = "ECHO: READY"
 	record_button.disabled = screen_state == ScreenState.PAUSED or screen_state == ScreenState.COMPLETE
+	if is_instance_valid(latch_switch_button):
+		var toggle_mode := str(level_data.get("plate_b_mode", "hold")) == "toggle"
+		latch_switch_button.visible = toggle_mode
+		latch_switch_button.disabled = screen_state != ScreenState.PLAYING or door_open
+		if door_open and switch_b_latched:
+			latch_switch_button.text = "SWITCH B LATCHED"
+		else:
+			latch_switch_button.text = "RELEASE SWITCH B" if switch_b_latched else "LATCH SWITCH B"
 
 
 func _load_progress() -> void:
@@ -1060,7 +1114,10 @@ func _draw_room() -> void:
 		draw_line(Vector2(ROOM_LEFT + 4, y), Vector2(ROOM_RIGHT - 4, y), Color(0.13, 0.23, 0.31, 0.35), 1.0)
 
 	_draw_switch(level_data["plate_a"], "A", Color(0.23, 0.83, 1.0), echo_visible and echo_position.distance_to(level_data["plate_a"]) < 43.0)
-	_draw_switch(level_data["plate_b"], "B", Color(1.0, 0.70, 0.34), player_position.distance_to(level_data["plate_b"]) < 43.0)
+	var switch_b_active := player_position.distance_to(level_data["plate_b"]) < 43.0
+	if str(level_data.get("plate_b_mode", "hold")) == "toggle":
+		switch_b_active = switch_b_latched
+	_draw_switch(level_data["plate_b"], "B", Color(1.0, 0.70, 0.34), switch_b_active)
 	_draw_gate()
 	_draw_portal(Vector2(1170, 365), door_open)
 	if level_data.has("echo_waypoint"):
