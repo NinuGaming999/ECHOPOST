@@ -35,8 +35,8 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Add Pulse Lock, a timed gate with a 3.5-second crossing window, timeout/retry handling, and a portal that stays powered after a successful crossing.
 - [ ] Add more switch types and carefully constrain puzzle complexity beyond the first ordered relay and timed-gate mechanics.
 - [ ] Add checkpoints, better reset messaging, and a campaign map.
-- [x] Add six optional Memory Shards with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
-- [ ] Expand narrative fragments and authored world storytelling beyond the six introductory memories.
+- [x] Add eight optional Memory Shards with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
+- [ ] Expand narrative fragments and authored world storytelling beyond the eight introductory memories.
 
 ## Milestone 3 — Art, animation, and audio
 
