@@ -18,7 +18,7 @@
 - One optional Memory Shard and lore fragment per chamber, rendered as a glowing violet diamond; collection is tracked in menu progress and saved locally. The Memory Archive allows rereading recovered fragments and shows undiscovered rooms.
 - Level-catalog validation for unique/non-empty names, room bounds, minimum route distance, switch separation, and safe sentinel patrol height/width/speed; arbitrary draft arrays can be validated without editing the canonical campaign.
 - Version-2 local campaign save data, Memory Shard collection persistence, validation of shard indices, and backward-compatible loading of version-1 saves.
-- Separate settings store with default values and normalization to supported movement presets.
+- Separate settings store with default values and normalization to supported movement presets; Options UI/handedness integration tests are green on both supported CI Godot versions.
 - Automatic pause on Android/iOS application suspension or application focus loss; held joystick input is cleared, in-progress recording state is preserved, and gameplay never auto-resumes without player input.
 - Campaign-data validator and smoke tests including intentionally malformed room drafts, unique room names, Memory Shard positions/lore, version-2 shard save round-trip and version-1 compatibility, isolated control-preference save/normalization, collection lore/persistence with save restoration, echo-track copy identity, exact eight-second cap, too-short feedback, sentinel interruption, restart cleanup, portal completion idempotency, scrollable chapter/archive/options UI, route validation, gate activation and lifecycle pause/resume.
 - Automated GitHub Actions workflow that imports/parses the project and runs both smoke-test scripts.
@@ -26,7 +26,7 @@
 
 ## Verification status
 
-Godot CI run 81 passed on both Godot 4.4.0 and 4.7.2 for the new separate settings store ([run 81](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40392848307)). The full integrated Options UI/left-handed joystick test is running in [run 82](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40392916662). Earlier Memory Shard code and save migration passed in [run 65](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390957517); the Memory Archive integration run has not yet been confirmed complete. Update this section after the current run finishes. Live visuals and controls still need manual inspection in the user's editor/device. No Android APK has been built or tested on a physical device; this remains an early development build, not release-ready.
+Godot CI run 82 passed on both Godot 4.4.0 and 4.7.2, including the Memory Archive UI test and the new Options screen integration test ([run 82](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40392916662)). The separate settings-store defaults/persistence/normalization test also passed in [run 81](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40392848307). The run-82 source includes the archive member-declaration fix as well as movement presets and left-handed joystick hit-testing. Memory Shard/save migration tests passed earlier in [run 65](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390957517). Live visuals and controls still need manual inspection in the user's editor/device. No Android APK has been built or tested on a physical device; this remains an early development build, not release-ready.
 
 ## Next work items
 
