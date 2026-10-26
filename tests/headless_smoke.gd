@@ -51,12 +51,17 @@ func _test_level_catalog() -> void:
 	_check(LevelCatalog.LEVELS.size() >= 6, "The early campaign should contain at least six chambers.")
 	_check(LevelCatalog.validate_levels().is_empty(), "The campaign catalog should pass its own level-data validator.")
 	var names_seen: Dictionary = {}
+	var relay_room_found := false
 	for index in range(LevelCatalog.LEVELS.size()):
 		var level: Dictionary = LevelCatalog.get_level(index)
 		var level_name := str(level.get("name", ""))
 		_check(not level_name.is_empty(), "Every chamber needs a non-empty name.")
 		_check(not names_seen.has(level_name), "Chamber names must be unique: %s" % level_name)
 		names_seen[level_name] = true
+		if level.has("echo_waypoint"):
+			relay_room_found = true
+			_check(level["echo_waypoint"] is Vector2, "Optional echo waypoints must use Vector2 positions.")
+	_check(relay_room_found, "The early campaign should include at least one relay-mechanic room.")
 		_check(level.has("name"), "Each level needs a display name.")
 		_check(level.has("spawn"), "Each level needs a spawn position.")
 		_check(level.has("plate_a") and level.has("plate_b"), "Each level needs both switch positions.")
@@ -79,6 +84,7 @@ func _test_level_validator_rejects_bad_drafts() -> void:
 	malformed_level["plate_a"] = Vector2(210, 210)
 	malformed_level["plate_b"] = Vector2(220, 210)
 	malformed_level["hazard_speed"] = -1.0
+	malformed_level["echo_waypoint"] = Vector2(-20, 220)
 	var draft_levels: Array[Dictionary] = [original_level, malformed_level]
 	var errors: PackedStringArray = LevelCatalog.validate_level_list(draft_levels)
 
@@ -86,6 +92,7 @@ func _test_level_validator_rejects_bad_drafts() -> void:
 	_check(_has_error(errors, "too close for a meaningful"), "Validator should reject a spawn too close to Switch A.")
 	_check(_has_error(errors, "must be separated by at least 86"), "Validator should reject overlapping switch positions.")
 	_check(_has_error(errors, "sentinel speed must be greater"), "Validator should reject non-positive sentinel speed.")
+	_check(_has_error(errors, "echo_waypoint is outside the playable room"), "Validator should reject a relay beacon outside room bounds.")
 
 
 func _has_error(errors: PackedStringArray, fragment: String) -> bool:
