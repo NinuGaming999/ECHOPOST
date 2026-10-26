@@ -21,6 +21,7 @@ func _run_tests() -> void:
 
 	_test_chapter_select_layout(game)
 	_test_memory_shard_collection(game)
+	_test_memory_archive_ui(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
@@ -271,6 +272,32 @@ func _test_memory_shard_collection(game: Control) -> void:
 	game.set("collected_shards", previous_shards)
 	game.call("_save_progress")
 	game.call("_update_menu_progress")
+
+
+
+func _test_memory_archive_ui(game: Control) -> void:
+	game.call("_open_memory_archive")
+	var panel: Panel = game.get("memory_archive_panel")
+	_check(panel.visible, "Opening Memory Archive from the menu should show its panel.")
+	var scroll_node := panel.get_node_or_null("ArchiveScroll")
+	_check(scroll_node is ScrollContainer, "The Memory Archive should use scrolling for its story entries.")
+	var title_labels: Array = game.get("memory_archive_title_labels")
+	var lore_labels: Array = game.get("memory_archive_lore_labels")
+	_check(title_labels.size() == LevelCatalog.LEVELS.size(), "Memory Archive should create one title for each chamber.")
+	_check(lore_labels.size() == LevelCatalog.LEVELS.size(), "Memory Archive should create one lore entry for each chamber.")
+
+	var already_collected: PackedInt32Array = game.get("collected_shards")
+	var first_title: String = str(title_labels[0].text)
+	var first_lore: String = str(lore_labels[0].text)
+	if already_collected.has(0):
+		_check(first_title.contains("RECOVERED"), "An already-collected shard should remain marked as recovered in the archive.")
+		_check(first_lore.contains("A courier logged this station"), "The archive should preserve a recovered lore fragment.")
+	else:
+		_check(first_title.contains("NOT FOUND"), "An uncollected shard should be marked as not found.")
+		_check(first_lore.contains("No memory recovered"), "Uncollected entries should explain where their lore comes from.")
+
+	game.call("_show_menu")
+	_check(not bool(panel.visible), "Returning to the menu should close the Memory Archive panel.")
 
 
 func _check(condition: bool, message: String) -> void:
