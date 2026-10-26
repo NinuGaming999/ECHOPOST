@@ -149,6 +149,23 @@ const LEVELS: Array[Dictionary] = [
 		"hazard_amplitude": 0.0,
 		"hazard_speed": 0.0,
 		"accent": Color(0.34, 0.92, 0.74)
+	},
+	{
+		"name": "Triune Relay",
+		"subtitle": "THREE NOTES. ONE SIGNAL.",
+		"hint": "Your echo must cross RELAY 1, RELAY 2, then RELAY 3—in that order—before ending on SWITCH A. Plan the full route before you send it.",
+		"spawn": Vector2(155, 500),
+		"plate_a": Vector2(870, 440),
+		"plate_b": Vector2(1010, 205),
+		"echo_waypoints": [Vector2(310, 280), Vector2(510, 480), Vector2(690, 250)],
+		"memory_shard": Vector2(700, 570),
+		"shard_lore": "Three relay keepers left their final signal in sequence. The station only understood them when nobody skipped a voice.",
+		"linger": 9.0,
+		"hazard": false,
+		"hazard_y": 365.0,
+		"hazard_amplitude": 0.0,
+		"hazard_speed": 0.0,
+		"accent": Color(0.42, 0.82, 1.0)
 	}
 ]
 
