@@ -85,6 +85,8 @@ func _run_tests() -> void:
 func _test_lifecycle_pause(game: Control) -> void:
 	game.set("is_recording", true)
 	game.set("recording_elapsed", 1.25)
+	game.set("door_open", true)
+	game.set("gate_open_timer", 2.0)
 	game.set("joystick_direction", Vector2.RIGHT)
 	game.call("_notification", Node.NOTIFICATION_APPLICATION_PAUSED)
 	_check(int(game.get("screen_state")) == 2, "Application suspension should pause active gameplay.")
@@ -93,6 +95,7 @@ func _test_lifecycle_pause(game: Control) -> void:
 	_check(is_equal_approx(float(game.get("recording_elapsed")), 1.25), "Lifecycle pause should preserve recording time.")
 	game.call("_process", 1.0)
 	_check(is_equal_approx(float(game.get("recording_elapsed")), 1.25), "Game timers should not advance while paused.")
+	_check(is_equal_approx(float(game.get("gate_open_timer")), 2.0), "The Pulse Lock countdown must freeze while the game is paused.")
 	game.call("_notification", Node.NOTIFICATION_APPLICATION_RESUMED)
 	_check(int(game.get("screen_state")) == 2, "Returning to the app should not resume gameplay without player input.")
 	game.call("_on_pause_pressed")
@@ -454,6 +457,11 @@ func _test_timed_gate_requires_crossing(game: Control) -> void:
 	game.call("_check_puzzle_state")
 	_check(bool(game.get("door_open")), "Holding both switches should open the Pulse Lock gate.")
 	_check(is_equal_approx(float(game.get("gate_open_timer")), gate_duration), "Opening Pulse Lock should start its authored countdown.")
+
+	# Exercise the real frame loop too: the gate countdown must tick during gameplay.
+	game.set("gate_open_timer", 2.0)
+	game.call("_process", 0.05)
+	_check(is_equal_approx(float(game.get("gate_open_timer")), 1.95), "Pulse Lock countdown should decrease by the frame delta while playing.")
 
 	# Let the timer expire while the player still stands on Switch B. The gate
 	# should close and must not immediately reopen while the same hold persists.
