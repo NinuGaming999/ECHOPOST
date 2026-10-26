@@ -681,6 +681,10 @@ func _is_relay_waypoint_linked(waypoint_index: int) -> bool:
 		route = recording_track
 	elif echo_visible:
 		route = echo_track
+	elif str(status_message).begins_with("ROUTE REJECTED"):
+		# Keep a useful progress trace after rejection so relays visited in the
+		# right partial order can remain lit while the player reviews the failed take.
+		route = recording_track
 	if route == null:
 		return false
 
