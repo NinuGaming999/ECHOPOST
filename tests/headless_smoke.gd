@@ -55,10 +55,14 @@ func _test_level_catalog() -> void:
 	var ordered_relay_room_found := false
 	var timed_gate_room_found := false
 	var triple_relay_room_found := false
+	var triune_relay_room_found := false
 	var relay_timer_combo_found := false
 	for index in range(LevelCatalog.LEVELS.size()):
 		var level: Dictionary = LevelCatalog.get_level(index)
 		var level_name := str(level.get("name", ""))
+		if level_name == "Triune Relay":
+			triune_relay_room_found = true
+			_check(level.has("echo_waypoints") and level["echo_waypoints"] is Array and level["echo_waypoints"].size() == 3, "Triune Relay should define exactly three ordered checkpoints.")
 		_check(not level_name.is_empty(), "Every chamber needs a non-empty name.")
 		_check(not names_seen.has(level_name), "Chamber names must be unique: %s" % level_name)
 		names_seen[level_name] = true
@@ -72,7 +76,6 @@ func _test_level_catalog() -> void:
 				_check(level["echo_waypoints"].size() >= 2, "An ordered relay room should require at least two checkpoints.")
 				if level["echo_waypoints"].size() >= 3:
 					triple_relay_room_found = true
-					_check(str(level_name) == "Triune Relay", "The three-checkpoint room should be named Triune Relay.")
 				for waypoint in level["echo_waypoints"]:
 					_check(waypoint is Vector2, "Every ordered relay checkpoint must use a Vector2 position.")
 		if level.has("gate_open_seconds"):
@@ -95,6 +98,7 @@ func _test_level_catalog() -> void:
 	_check(ordered_relay_room_found, "The early campaign should include a room with multiple ordered relay checkpoints.")
 	_check(timed_gate_room_found, "The early campaign should include a timed-gate room.")
 	_check(triple_relay_room_found, "The campaign should include a three-relay route challenge.")
+	_check(triune_relay_room_found, "The campaign should include Triune Relay as a named authored room.")
 	_check(relay_timer_combo_found, "The campaign should combine three ordered relays with a timed gate in at least one room.")
 	var original_name := str(LevelCatalog.LEVELS[0]["name"])
 	var isolated_copy: Dictionary = LevelCatalog.get_level(0)
