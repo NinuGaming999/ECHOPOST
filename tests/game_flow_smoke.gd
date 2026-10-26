@@ -27,6 +27,8 @@ func _run_tests() -> void:
 	game.call("_start_level", 0)
 	_test_too_short_recording(game)
 	_test_sentinel_reset(game)
+	_test_restart_clears_state(game)
+	_test_portal_completion_is_idempotent(game)
 	game.call("_start_level", 0)
 
 	var invalid_track = EchoTrackScript.new()
@@ -130,6 +132,72 @@ func _test_sentinel_reset(game: Control) -> void:
 	game.call("_check_sentinel_collision")
 	_check(game.get("player_position") == expected_spawn, "Sentinel contact should return the player to the room spawn.")
 	_check(str(game.get("status_message")).begins_with("SENTINEL CONTACT"), "Sentinel contact should explain why the player was reset.")
+
+
+func _test_restart_clears_state(game: Control) -> void:
+	game.call("_start_level", 0)
+	var expected_spawn: Vector2 = game.get("level_data")["spawn"]
+	var recording = EchoTrackScript.new()
+	recording.add_sample(0.0, expected_spawn)
+	recording.add_sample(1.0, Vector2(430, 365))
+	var echo = EchoTrackScript.new()
+	echo.add_sample(0.0, expected_spawn)
+	echo.add_sample(1.0, Vector2(430, 365))
+
+	game.set("is_recording", true)
+	game.set("recording_elapsed", 1.75)
+	game.set("record_sample_accumulator", 0.03)
+	game.set("recording_track", recording)
+	game.set("echo_track", echo)
+	game.set("echo_visible", true)
+	game.set("echo_playing", true)
+	game.set("echo_elapsed", 0.5)
+	game.set("echo_linger_left", 4.0)
+	game.set("door_open", true)
+	game.set("joystick_direction", Vector2.RIGHT)
+	game.call("_on_reset_pressed")
+
+	_check(int(game.get("screen_state")) == 1, "Restart should return the chamber to PLAYING.")
+	_check(game.get("player_position") == expected_spawn, "Restart should return the player to the authored spawn.")
+	_check(not bool(game.get("is_recording")), "Restart should stop an in-progress recording.")
+	_check(is_zero_approx(float(game.get("recording_elapsed"))), "Restart should reset the recording timer.")
+	_check((game.get("recording_track") as RefCounted).get("samples").is_empty(), "Restart should clear the unsubmitted recording track.")
+	_check(not bool(game.get("echo_visible")) and not bool(game.get("echo_playing")), "Restart should hide and stop an echo.")
+	_check((game.get("echo_track") as RefCounted).get("samples").is_empty(), "Restart should clear the previous echo track.")
+	_check(not bool(game.get("door_open")), "Restart should close the gate again.")
+	_check(game.get("joystick_direction") == Vector2.ZERO, "Restart should clear held joystick direction.")
+
+	# The restart button is also available from a paused chamber; it must recover a clean playable state.
+	game.call("_on_pause_pressed")
+	game.call("_on_reset_pressed")
+	_check(int(game.get("screen_state")) == 1, "Restarting a paused chamber should return to PLAYING.")
+	_check(not bool(game.get("is_recording")) and not bool(game.get("echo_visible")), "Restart from pause should also clear recording and echo state.")
+
+
+func _test_portal_completion_is_idempotent(game: Control) -> void:
+	# Save the in-memory campaign values so this integration test restores the user's actual
+	# progress file after exercising the real completion/save path.
+	var previous_unlocked := int(game.get("unlocked_level"))
+	var previous_completed := int(game.get("rooms_completed"))
+	game.call("_start_level", 0)
+	game.set("door_open", true)
+	game.set("player_position", Vector2(1170, 365))
+	game.call("_check_puzzle_state")
+
+	_check(int(game.get("screen_state")) == 3, "Entering the powered portal should complete the chamber.")
+	_check(bool(game.get("complete_panel").visible), "Portal completion should show the completion panel.")
+	_check(int(game.get("rooms_completed")) == previous_completed + 1, "Completing a chamber should count exactly one completion.")
+	var completed_count := int(game.get("rooms_completed"))
+
+	# Calling the state checker again must not award a second completion or write an extra count.
+	game.call("_check_puzzle_state")
+	_check(int(game.get("rooms_completed")) == completed_count, "Repeated portal checks must not count a completed chamber twice.")
+
+	# Restore the original persisted campaign values so running tests never permanently advances a save.
+	game.set("unlocked_level", previous_unlocked)
+	game.set("rooms_completed", previous_completed)
+	game.call("_save_progress")
+	game.call("_update_menu_progress")
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:
