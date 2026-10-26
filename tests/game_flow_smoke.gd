@@ -320,6 +320,11 @@ func _test_memory_archive_ui(game: Control) -> void:
 	game.call("_open_memory_archive")
 	var panel: Panel = game.get("memory_archive_panel")
 	_check(panel.visible, "Opening Memory Archive from the menu should show its panel.")
+	var archive_status_label: Label = game.get("memory_archive_status_label")
+	if (game.get("collected_shards") as PackedInt32Array).size() >= LevelCatalog.LEVELS.size():
+		_check(str(archive_status_label.text).contains("SIGNAL RESTORED"), "A complete collection should keep the restored-signal status visible.")
+	else:
+		_check(str(archive_status_label.text).contains("/ %d" % LevelCatalog.LEVELS.size()), "Archive placeholder/count should use the live room count, not a hard-coded six.")
 	var scroll_node := panel.get_node_or_null("ArchiveScroll")
 	_check(scroll_node is ScrollContainer, "The Memory Archive should use scrolling for its story entries.")
 	var title_labels: Array = game.get("memory_archive_title_labels")
