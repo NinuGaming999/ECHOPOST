@@ -179,6 +179,7 @@ func _build_interface() -> void:
 	_build_complete_panel()
 	_build_help_panel()
 	_build_level_select_panel()
+	_build_memory_archive_panel()
 
 
 func _build_menu() -> void:
@@ -200,8 +201,10 @@ func _build_menu() -> void:
 	chapters.pressed.connect(_open_level_select)
 	var help := _make_button(menu_root, "HowToPlayButton", Vector2(475, 510), Vector2(330, 52), "HOW TO PLAY", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 18)
 	help.pressed.connect(_open_help)
-	menu_progress_label = _make_label(menu_root, "Progress", Vector2(240, 600), Vector2(800, 32), "CHAMBERS DISCOVERED: 1 / 3", 15, Color(0.49, 0.61, 0.73), HORIZONTAL_ALIGNMENT_CENTER)
-	_make_label(menu_root, "Version", Vector2(22, 678), Vector2(260, 24), "ECHOPOST  •  EARLY DEVELOPMENT BUILD", 11, Color(0.30, 0.42, 0.55), HORIZONTAL_ALIGNMENT_LEFT)
+	var archive := _make_button(menu_root, "MemoryArchiveButton", Vector2(475, 568), Vector2(330, 46), "MEMORY ARCHIVE", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 16)
+	archive.pressed.connect(_open_memory_archive)
+	menu_progress_label = _make_label(menu_root, "Progress", Vector2(240, 621), Vector2(800, 28), "CHAMBERS DISCOVERED: 1 / 6   •   MEMORIES: 0 / 6", 14, Color(0.49, 0.61, 0.73), HORIZONTAL_ALIGNMENT_CENTER)
+	_make_label(menu_root, "Version", Vector2(22, 688), Vector2(260, 22), "ECHOPOST  •  EARLY DEVELOPMENT BUILD", 10, Color(0.30, 0.42, 0.55), HORIZONTAL_ALIGNMENT_LEFT)
 
 
 func _build_game_hud() -> void:
@@ -282,6 +285,91 @@ func _build_level_select_panel() -> void:
 	level_select_panel.hide()
 
 
+func _build_memory_archive_panel() -> void:
+	memory_archive_panel = _make_panel("MemoryArchivePanel", Vector2(300, 70), Vector2(680, 570))
+	_make_label(memory_archive_panel, "ArchiveTitle", Vector2(24, 18), Vector2(632, 42), "MEMORY ARCHIVE", 27, Color(0.88, 0.97, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	memory_archive_status_label = _make_label(memory_archive_panel, "ArchiveStatus", Vector2(35, 58), Vector2(610, 26), "RECOVERED: 0 / 6", 14, Color(0.76, 0.58, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+
+	var archive_scroll := ScrollContainer.new()
+	archive_scroll.name = "ArchiveScroll"
+	archive_scroll.position = Vector2(30, 92)
+	archive_scroll.size = Vector2(620, 370)
+	archive_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	archive_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	memory_archive_panel.add_child(archive_scroll)
+
+	var archive_list := VBoxContainer.new()
+	archive_list.name = "ArchiveList"
+	archive_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	archive_list.add_theme_constant_override("separation", 9)
+	archive_scroll.add_child(archive_list)
+
+	for i in range(LEVELS.size()):
+		var row := PanelContainer.new()
+		row.name = "MemoryEntry_%02d" % (i + 1)
+		row.custom_minimum_size = Vector2(590, 78)
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var row_style := StyleBoxFlat.new()
+		row_style.bg_color = Color(0.075, 0.10, 0.16, 0.98)
+		row_style.border_color = Color(0.28, 0.36, 0.48, 0.86)
+		row_style.set_border_width_all(1)
+		row_style.set_corner_radius_all(9)
+		row.add_theme_stylebox_override("panel", row_style)
+
+		var entry_text := VBoxContainer.new()
+		entry_text.add_theme_constant_override("separation", 3)
+		entry_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(entry_text)
+
+		var title_label := Label.new()
+		title_label.name = "MemoryTitle"
+		title_label.custom_minimum_size = Vector2(0, 24)
+		title_label.add_theme_font_size_override("font_size", 14)
+		title_label.text = ""
+		entry_text.add_child(title_label)
+		memory_archive_title_labels.append(title_label)
+
+		var lore_label := Label.new()
+		lore_label.name = "MemoryLore"
+		lore_label.custom_minimum_size = Vector2(0, 38)
+		lore_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lore_label.add_theme_font_size_override("font_size", 12)
+		lore_label.text = ""
+		entry_text.add_child(lore_label)
+		memory_archive_lore_labels.append(lore_label)
+		archive_list.add_child(row)
+
+	var back := _make_button(memory_archive_panel, "ArchiveBack", Vector2(220, 490), Vector2(240, 46), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 15)
+	back.pressed.connect(func():
+		memory_archive_panel.hide()
+		menu_root.show()
+	)
+	memory_archive_panel.hide()
+
+
+func _open_memory_archive() -> void:
+	_update_memory_archive()
+	menu_root.hide()
+	memory_archive_panel.show()
+
+
+func _update_memory_archive() -> void:
+	if not is_instance_valid(memory_archive_status_label):
+		return
+	for i in range(LEVELS.size()):
+		var found := collected_shards.has(i)
+		var room: Dictionary = LEVELS[i]
+		memory_archive_title_labels[i].text = "%02d   %s   •   %s" % [
+			i + 1,
+			str(room["name"]).to_upper(),
+			"RECOVERED" if found else "NOT FOUND"
+		]
+		memory_archive_title_labels[i].add_theme_color_override("font_color", Color(0.82, 0.68, 1.0) if found else Color(0.48, 0.57, 0.68))
+		memory_archive_lore_labels[i].text = str(room["shard_lore"]) if found else "No memory recovered. Find the violet Memory Shard in this chamber."
+		memory_archive_lore_labels[i].add_theme_color_override("font_color", Color(0.72, 0.82, 0.92) if found else Color(0.43, 0.51, 0.61))
+	memory_archive_status_label.text = "MEMORIES RECOVERED: %d / %d" % [collected_shards.size(), LEVELS.size()]
+
+
 func _make_panel(panel_name: String, panel_position: Vector2, panel_size: Vector2) -> Panel:
 	var panel := Panel.new()
 	panel.name = panel_name
@@ -356,6 +444,8 @@ func _show_menu() -> void:
 	complete_panel.hide()
 	help_panel.hide()
 	level_select_panel.hide()
+	if is_instance_valid(memory_archive_panel):
+		memory_archive_panel.hide()
 	_update_menu_progress()
 	queue_redraw()
 
@@ -390,6 +480,8 @@ func _start_level(level_index: int) -> void:
 	complete_panel.hide()
 	help_panel.hide()
 	level_select_panel.hide()
+	if is_instance_valid(memory_archive_panel):
+		memory_archive_panel.hide()
 	pause_button.text = "PAUSE"
 	_update_hud()
 	queue_redraw()
@@ -610,6 +702,8 @@ func _update_chapter_buttons() -> void:
 
 
 func _update_menu_progress() -> void:
+	if is_instance_valid(memory_archive_status_label):
+		_update_memory_archive()
 	if menu_progress_label:
 		menu_progress_label.text = "CHAMBERS DISCOVERED: %d / %d   •   MEMORIES: %d / %d" % [unlocked_level + 1, LEVELS.size(), collected_shards.size(), LEVELS.size()]
 	if start_button:
