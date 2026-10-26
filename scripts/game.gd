@@ -637,7 +637,7 @@ func _on_latch_switch_b_pressed() -> void:
 		_update_hud()
 		return
 
-	var echo_on_a := echo_visible and echo_position.distance_to(level_data["plate_a"]) < 43.0
+	var echo_on_a := echo_visible and not echo_playing and echo_position.distance_to(level_data["plate_a"]) < 43.0
 	if not echo_on_a:
 		status_message = "WAIT FOR ECHO — let it hold SWITCH A before latching B."
 	elif player_position.distance_to(level_data["plate_b"]) >= 50.0:
@@ -893,9 +893,9 @@ func _check_puzzle_state() -> void:
 		if player_position.distance_to(Vector2(1170, 365)) < 39.0:
 			_complete_level()
 		return
-	var echo_on_a := echo_visible and echo_position.distance_to(level_data["plate_a"]) < 43.0
-	var player_near_b := player_position.distance_to(level_data["plate_b"]) < 43.0
 	var toggle_switch_b := str(level_data.get("plate_b_mode", "hold")) == "toggle"
+	var echo_on_a := echo_visible and (not toggle_switch_b or not echo_playing) and echo_position.distance_to(level_data["plate_a"]) < 43.0
+	var player_near_b := player_position.distance_to(level_data["plate_b"]) < 43.0
 	var player_on_b := switch_b_latched if toggle_switch_b else player_near_b
 
 	# A missed timed-gate window cannot instantly re-open while the player is still
