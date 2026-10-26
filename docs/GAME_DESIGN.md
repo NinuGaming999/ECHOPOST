@@ -23,6 +23,19 @@ Make players feel that a successful run leaves a useful trace in the world. The 
 5. The gate opens; reach the portal to complete the room.
 6. Unlock the next chamber; progress is stored locally.
 
+## Current early campaign: six chambers
+
+The current six chambers deliberately vary route length, switch placement, and sentinel patrols while teaching the same two-switch echo mechanic. They are a content foundation, not the final campaign.
+
+- **The First Echo:** a safe introduction to recording, echo playback, and both switches.
+- **Long Memory:** introduces the roaming sentinel and separates Switch A from the real player's destination.
+- **Split Signal:** moves the switches to opposite sides and increases sentinel speed.
+- **Fractured Lane:** asks the player to record a longer diagonal crossing under a wide patrol.
+- **Crosscurrent:** places switches in opposite corners and tests route planning before moving toward B.
+- **Static Bloom:** uses a long route and wide sentinel sweep to create a busier timing puzzle.
+
+The chapter selector scrolls so future rooms do not collide with the navigation controls. New switch types, checkpoints, moving platforms, and truly different puzzle rules remain future work; do not describe the six current rooms as six distinct mechanics.
+
 ## Echo rules
 
 - A recording contains timestamped player positions. A route is accepted only when the final position is on Switch A, so a failed route is explained and can be retried.
