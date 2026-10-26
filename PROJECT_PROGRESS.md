@@ -9,7 +9,8 @@
 **Target:** Android-first landscape game; desktop builds support development and testing  
 **Recording-cap code commit:** `b5f36b6a4f764a595e5dd930e8d6b3cebd5ce3a8`  
 **Gameplay-test commit:** `11c3b30de34323c536b0b8302eb8604259248d52`  
-**Main controller source blob for the exact line map below:** `c3a8f0e4e0e8c76d0d529ceaae20b39bfe9cc03d` (775 lines)  
+**Latest feature/test commits:** game `35136940975cd771faeba1c9321857477dac4d2d`; save store `2b41d14ea8acd86098ddd3fd3c4e4169116b421d`; integration tests `6bc7d5dd40ed76dc38c16255d59dc5029c715310`  
+**Main controller source blob for the exact line map below:** `a1c2c1d2b08923647dbc3fe43c87695f865512c5` (816 lines)  
 **Status:** Early playable foundation / vertical slice — **not complete, not release-ready**.
 
 ---
@@ -35,7 +36,7 @@ The current source includes six authored chamber layouts:
 
 These six rooms still share the same core two-switch echo mechanic; they vary route geometry and sentinel patterns rather than introducing six separate mechanics.
 
-The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon is the main external art asset. Procedural visuals keep the project importable without an asset pack but are placeholder art, not final art.
+The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon is the main external art asset. Procedural visuals keep the project importable without an asset pack but are placeholder art, not final art. Each chamber also has one optional Memory Shard that reveals a short courier-network lore fragment.
 
 ## 2. Latest work in this development pass
 
@@ -112,6 +113,20 @@ This hardening pass addresses a real frame-step boundary issue and makes the min
 - `tests/game_flow_smoke.gd:L128–L154`: the sentinel test now verifies ordinary spawn reset and the interrupted-recording case: recording flag/timers reset, route samples cleared, and the user-facing message explains the loss.
 - [Godot CI run 54](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390169866) passed on Godot 4.4.0 and 4.7.2 with the sentinel-collision cancellation regression test.
 
+### Optional Memory Shards and save-schema version 2
+**Changed:** `scripts/data/level_catalog.gd`, `scripts/game.gd`, `scripts/data/progress_store.gd`, `tests/headless_smoke.gd`, and `tests/game_flow_smoke.gd`.
+
+- `scripts/data/level_catalog.gd:L12–L93` now gives each of the six rooms a `memory_shard: Vector2` pickup point and a `shard_lore` fragment. The six shards are optional; they never gate Switch A/B, the exit, or campaign unlocking.
+- `scripts/data/level_catalog.gd:L133–L172` requires the new fields, validates nonempty lore, bounds the shard position to the room, and keeps it at least 60 units away from spawn/A/B so the collectible is not hidden under a core objective.
+- `scripts/game.gd:L27` adds `collected_shards` as a `PackedInt32Array` of room indices. The game checks pickup in `L121` and collects a shard in `_check_memory_shard_collection()` at `L498–L511` when the player comes within 30 units. Collection displays the room's lore, persists the room index, refreshes the menu counters and redraws.
+- `scripts/game.gd:L614` shows `MEMORIES: collected / six` in the menu progress line. `L644–L654` loads and saves collection with the campaign. `L692–L693` draws an uncollected shard; `_draw_memory_shard()` at `L734–L750` renders a violet crystal labelled MEMORY.
+- `scripts/game.gd:L244–L251` explains in help that shards are optional and sentinels can destroy an unfinished take.
+- `scripts/data/progress_store.gd:L5` increments the save schema to version 2. `L8–L23` loads the old campaign fields and a normalized shard array; version-1 saves still load unlocked rooms/completion count and default to no shards. `L26–L37` persists shards; `L40–L58` sanitizes duplicate, negative and out-of-range indices.
+- `tests/headless_smoke.gd:L60–L61` checks every room includes a valid shard position and nonempty lore. `L96–L126` tests shard collection save round-trip, duplicate/invalid index sanitization, and compatibility with a handcrafted version-1 save.
+- `tests/game_flow_smoke.gd:L244–L273` simulates touching the first shard, checks the lore message and persisted collection, then restores the original saved progress so the test does not permanently alter the player's save.
+- [Godot CI run 65](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390957517) passed on Godot 4.4.0 and 4.7.2, including the room-data/parser tests, save migration tests and collection/persistence integration test.
+- The feature gives the campaign a light optional exploration reward, but it is not yet a branching narrative or a full collectible journal. Actual touch reach and pickup readability still need manual play-testing.
+
 ### Mobile lifecycle pause hardening
 **Changed:** `scripts/game.gd` and `tests/game_flow_smoke.gd`.
 
@@ -133,10 +148,10 @@ This change is covered by an automated headless integration test. It is **not ye
 | `scenes/main.tscn` | Very small main scene: full-rect `Control` attached to `scripts/game.gd`. |
 | `scripts/game.gd` | Main controller, menu/HUD construction, player movement, echo recording/playback, puzzle loop, sentinel, save flow, and all procedural rendering. **775 lines in the snapshot documented here; it is the largest refactor target later, but refactor only after tests protect behavior.** |
 | `scripts/core/echo_track.gd` | Data-only `RefCounted` script loaded through preloaded script resources; avoids global `class_name` lookup; stores points, clamps timestamps to nondecreasing order, copies tracks, returns duration, interpolates route positions, and holds endpoint outside the timestamp range. |
-| `scripts/data/level_catalog.gd` | Six authored room dictionaries, defensive-copy accessor, canonical/draft validator for schema, names, spacing, position bounds and hazard tuning. |
-| `scripts/data/progress_store.gd` | Versioned local save boundary (`user://echopost_save.cfg`) using `ConfigFile`; defaults safely when save is absent/unreadable and clamps unlocked level to campaign size. |
-| `tests/headless_smoke.gd` | Data-layer smoke tests for track order/interpolation/copying, six-room catalog schema and unique names, defensive copying, save/load and unlock clamping. |
-| `tests/game_flow_smoke.gd` | Main-scene integration tests for scrollable chapter selection, lifecycle pause, recording cap/feedback, sentinel recording cancellation, reset cleanup, portal-completion idempotency, invalid endpoint rejection, echo creation and gate activation. |
+| `scripts/data/level_catalog.gd` | Six authored room dictionaries with shard positions/lore, defensive-copy accessor, canonical/draft validator for schema, names, spacing, position bounds, shard placement and hazard tuning. |
+| `scripts/data/progress_store.gd` | Version-2 local save boundary (`user://echopost_save.cfg`) using `ConfigFile`; preserves v1 campaign progress and stores normalized Memory Shard room indices. |
+| `tests/headless_smoke.gd` | Data-layer smoke tests for echo interpolation/copying, six-room/shard schema, malformed-draft validation, v2 shard persistence/sanitization, v1-save compatibility, and campaign progress clamping. |
+| `tests/game_flow_smoke.gd` | Main-scene integration tests for scrollable chapter selection, Memory Shard lore/persistence, lifecycle pause, recording cap/feedback, sentinel recording cancellation, reset cleanup, portal-completion idempotency, route validation, echo creation and gate activation. |
 | `RUN_TESTS.bat` | Windows shortcut to run both headless smoke tests if Godot is on PATH. |
 | `.github/workflows/godot-checks.yml` | Imports/parses project then runs both tests on a Godot 4.4.0 / 4.7.2 matrix. |
 | `assets/echopost_icon.svg` | Original editable SVG project icon. |
@@ -155,63 +170,66 @@ This change is covered by an automated headless integration test. It is **not ye
 
 ## 4. Exact source line map — `scripts/game.gd`
 
-This function index is line-accurate for source blob SHA `c3a8f0e4e0e8c76d0d529ceaae20b39bfe9cc03d` (775 lines). Regenerate it after edits to this script.
+This function index is line-accurate for source blob SHA `a1c2c1d2b08923647dbc3fe43c87695f865512c5` (816 lines). Regenerate it after any future edit to this script.
 
 - **L1–L4:** Script header and procedural-art note.
-- **L6:** `ScreenState` enum.
-- **L8–L21:** Room bounds, player/recording constants and script/data preloads.
-- **L23–L44:** Campaign, actor, route, recording timer, gate/hazard and decorative state.
-- **L46–L49:** Touch/mouse virtual joystick state.
+- **L6:** `ScreenState` enum: MENU, PLAYING, PAUSED, COMPLETE.
+- **L8–L21:** Room bounds, player/recording constants and preloaded scripts/data.
+- **L23–L44:** Campaign and puzzle runtime state, player/echo route tracks, timers, gate/hazard state, messages and stars.
+- **L27:** `collected_shards` stores which room indices have had their Memory Shard collected.
+- **L46–L49:** Touch/mouse joystick state.
 - **L51–L67:** Dynamic UI references.
-- **L70–L74 — `_notification()`:** Handle application suspension/focus loss and delegate to lifecycle pause.
-- **L77–L87 — `_pause_for_lifecycle()`:** Pause only active play; clear joystick input, preserve recording state, and refresh the HUD.
-- **L90–L97 — `_ready()`:** Initialize stars, load saved progress, build UI, and show the menu.
-- **L100–L122 — `_process()`:** Update movement, clamp/sample recording time, advance echo/hazard state, check collisions/puzzle state, and refresh rendering.
-- **L125–L155 — `_input()`:** Translate touch/mouse events into virtual joystick input.
-- **L158–L159 — `_is_joystick_area()`:** Choose where touch can start a joystick.
-- **L162–L164 — `_update_joystick()`:** Convert pointer offset into a normalized joystick vector.
-- **L167–L171 — `_create_stars()`:** Generate deterministic decorative background stars.
-- **L174–L179 — `_build_interface()`:** Build the menu, HUD, completion, help, and chapter panels.
-- **L182–L202 — `_build_menu()`:** Create title, continue, chapter-select, help, and progress UI.
-- **L205–L224 — `_build_game_hud()`:** Create level labels, pause, record, restart, menu and control help.
-- **L227–L239 — `_build_complete_panel()`:** Create completion message and next/replay buttons.
-- **L242–L249 — `_build_help_panel()`:** Build the instructions panel.
-- **L252–L280 — `_build_level_select_panel()`:** Create a scrollable chapter list and fixed Back button.
-- **L283–L297 — `_make_panel()`:** Shared panel styling.
-- **L300–L312 — `_make_label()`:** Shared label typography and placement.
-- **L315–L343 — `_make_button()`:** Shared button style and colors.
-- **L346–L358 — `_show_menu()`:** Return to menu and clear transient recording/input state.
-- **L361–L362 — `_on_start_pressed()`:** Continue at the unlocked chamber.
-- **L365–L393 — `_start_level()`:** Initialize room state and show the gameplay HUD.
-- **L396–L412 — `_on_record_pressed()`:** Start route recording or attempt to stop/send it.
-- **L415–L440 — `_finish_recording()`:** Enforce minimum duration and Switch A endpoint before releasing the echo.
-- **L443–L444 — `_add_record_sample()`:** Append a timestamp/position pair to the current route.
-- **L447–L457 — `_update_player()`:** Apply movement, clamp to room bounds and block a closed gate.
-- **L460–L472 — `_update_echo()`:** Advance echo playback, hold its endpoint temporarily, then fade.
-- **L475–L493 — `_check_sentinel_collision()`:** Reset the player to spawn; cancel and clear an interrupted recording so it cannot store a fake teleport.
-- **L496–L515 — `_check_puzzle_state()`:** Evaluate switches, open the gate and detect portal completion.
-- **L518–L538 — `_complete_level()`:** Increment completion, unlock progress, save and show the completion panel.
-- **L541–L545 — `_on_next_level_pressed()`:** Advance to the next chamber or restart the campaign.
-- **L548–L549 — `_on_replay_pressed()`:** Restart the current chamber.
-- **L552–L553 — `_on_reset_pressed()`:** Restart the current chamber.
-- **L556–L569 — `_on_pause_pressed()`:** Toggle pause/resume and clear stale joystick input.
-- **L572–L573 — `_open_help()`:** Show instructions.
-- **L576–L578 — `_open_level_select()`:** Refresh chapter labels and show chapter selection.
-- **L581–L583 — `_on_chapter_selected()`:** Start a chamber only when it is unlocked.
-- **L586–L591 — `_update_chapter_buttons()`:** Update chapter labels and locked/unlocked state.
-- **L594–L599 — `_update_menu_progress()`:** Refresh campaign progress and continue label.
-- **L602–L623 — `_update_hud()`:** Update chamber title, status, echo timer and record button.
-- **L626–L629 — `_load_progress()`:** Load local campaign progress.
-- **L632–L635 — `_save_progress()`:** Persist progress and warn on failure.
-- **L638–L647 — `_draw()`:** Draw the background and select menu/room/paused render path.
-- **L650–L656 — `_draw_menu_art()`:** Draw menu decorations and procedural robots.
-- **L659–L709 — `_draw_room()`:** Draw the room, switches, gate, portal, hazards, recording preview, echo trail, actors and joystick.
-- **L712–L720 — `_draw_switch()`:** Draw a pressure switch and its state.
-- **L723–L733 — `_draw_gate()`:** Draw open/closed gate art.
-- **L736–L742 — `_draw_portal()`:** Draw the powered/unpowered exit portal.
-- **L745–L755 — `_draw_robot()`:** Draw a procedural player or echo robot.
-- **L758–L764 — `_draw_joystick()`:** Draw the active touch joystick.
-- **L767–L773 — `_draw_track_path()`:** Draw a sampled route in a given tint/width; shared by recording preview and echo trail.
+- **L71–L75 — `_notification()`:** Handle application suspension/focus loss and delegate to lifecycle pause.
+- **L78–L88 — `_pause_for_lifecycle()`:** Pause active play; clear joystick input, preserve recording state, and refresh the HUD.
+- **L91–L98 — `_ready()`:** Initialize stars, load saved progress, build UI, and show the menu.
+- **L101–L124 — `_process()`:** Update movement, clamp/sample recording time, advance echo/hazard state, check collisions, collect Memory Shards and evaluate puzzles.
+- **L127–L157 — `_input()`:** Translate touch/mouse events into virtual joystick input.
+- **L160–L161 — `_is_joystick_area()`:** Choose where touch can start a joystick.
+- **L164–L166 — `_update_joystick()`:** Convert pointer offset into a normalized joystick vector.
+- **L169–L173 — `_create_stars()`:** Generate deterministic decorative background stars.
+- **L176–L181 — `_build_interface()`:** Build the menu, HUD, completion, help, and chapter panels.
+- **L184–L204 — `_build_menu()`:** Create title, continue, chapter-select, help, and progress UI.
+- **L207–L226 — `_build_game_hud()`:** Create level labels, pause, record, restart, menu and control help.
+- **L229–L241 — `_build_complete_panel()`:** Create completion message and next/replay buttons.
+- **L244–L251 — `_build_help_panel()`:** Build the instructions panel, including optional Memory Shards and sentinel recording loss.
+- **L254–L282 — `_build_level_select_panel()`:** Create a scrollable chapter list and fixed Back button.
+- **L285–L299 — `_make_panel()`:** Shared panel styling.
+- **L302–L314 — `_make_label()`:** Shared label typography and placement.
+- **L317–L345 — `_make_button()`:** Shared button style and colors.
+- **L348–L360 — `_show_menu()`:** Return to menu and clear transient recording/input state.
+- **L363–L364 — `_on_start_pressed()`:** Continue at the unlocked chamber.
+- **L367–L395 — `_start_level()`:** Initialize room state and show the gameplay HUD.
+- **L398–L414 — `_on_record_pressed()`:** Start route recording or attempt to stop/send it.
+- **L417–L442 — `_finish_recording()`:** Enforce minimum duration and Switch A endpoint before releasing the echo.
+- **L445–L446 — `_add_record_sample()`:** Append a timestamp/position pair to the current route.
+- **L449–L459 — `_update_player()`:** Apply movement, clamp to room bounds and block a closed gate.
+- **L462–L474 — `_update_echo()`:** Advance echo playback, hold its endpoint temporarily, then fade.
+- **L477–L495 — `_check_sentinel_collision()`:** Reset the player to spawn; cancel and clear an interrupted recording to avoid a fake teleport.
+- **L498–L511 — `_check_memory_shard_collection()`:** Collect the current room's optional shard once, reveal lore, persist its room index and refresh progress.
+- **L514–L533 — `_check_puzzle_state()`:** Evaluate switches, open the gate and detect portal completion.
+- **L536–L556 — `_complete_level()`:** Increment completion, unlock progress, save and show the completion panel.
+- **L559–L563 — `_on_next_level_pressed()`:** Advance to the next chamber or restart the campaign.
+- **L566–L567 — `_on_replay_pressed()`:** Restart the current chamber.
+- **L570–L571 — `_on_reset_pressed()`:** Restart the current chamber.
+- **L574–L587 — `_on_pause_pressed()`:** Toggle pause/resume and clear stale joystick input.
+- **L590–L591 — `_open_help()`:** Show instructions.
+- **L594–L596 — `_open_level_select()`:** Refresh chapter labels and show chapter selection.
+- **L599–L601 — `_on_chapter_selected()`:** Start a chamber only when it is unlocked.
+- **L604–L609 — `_update_chapter_buttons()`:** Update chapter labels and locked/unlocked state.
+- **L612–L617 — `_update_menu_progress()`:** Refresh campaign and collected-memory counts.
+- **L620–L641 — `_update_hud()`:** Update chamber title, status, echo timer and record button.
+- **L644–L648 — `_load_progress()`:** Load local campaign progress, including migrated Memory Shard indices.
+- **L651–L654 — `_save_progress()`:** Persist campaign progress and collected Memory Shards.
+- **L657–L666 — `_draw()`:** Draw the background and choose menu/room/paused render path.
+- **L669–L675 — `_draw_menu_art()`:** Draw menu decorations and procedural robots.
+- **L678–L730 — `_draw_room()`:** Draw the room, switches, gate, portal, hazards, uncollected shard, recording preview, echo trail, actors and joystick.
+- **L734–L750 — `_draw_memory_shard()`:** Draw the optional collectible as a glowing violet crystal with a label.
+- **L753–L761 — `_draw_switch()`:** Draw a pressure switch and its state.
+- **L764–L774 — `_draw_gate()`:** Draw open/closed gate art.
+- **L777–L783 — `_draw_portal()`:** Draw the powered/unpowered exit portal.
+- **L786–L796 — `_draw_robot()`:** Draw a procedural player or echo robot.
+- **L799–L805 — `_draw_joystick()`:** Draw the active touch joystick.
+- **L808–L814 — `_draw_track_path()`:** Draw a sampled route in a given tint/width; shared by recording preview and echo trail.
 ## 5. Exact line map — supporting scripts and tests
 
 ### `scripts/core/echo_track.gd` (60 lines, blob SHA `9a433129a0cb8b04d9ab55c0964aeb4683ddab3a`)
@@ -222,45 +240,51 @@ This function index is line-accurate for source blob SHA `c3a8f0e4e0e8c76d0d529c
 - **L28–L31:** Route duration from the final timestamp; empty route is zero seconds.
 - **L34–L59:** Position lookup: handles empty/before-first/after-last times, walks consecutive samples, linearly interpolates between points and handles tiny/duplicate timestamp spans.
 
-### `scripts/data/level_catalog.gd` (164 lines, blob SHA `1ae64585cece1f4316716a5213ca8b9c2d174123`)
-- **L1–L3:** RefCounted data script and purpose.
-- **L4–L89:** Six authored room dictionaries and their positions, linger durations, hazard settings and visual accents.
-- **L91–L92:** Clamped defensive-copy accessor.
-- **L94–L95:** Campaign count helper.
-- **L99–L100:** Validate canonical campaign through `validate_level_list(LEVELS)`.
-- **L103–L120:** Validate arbitrary draft arrays and reject empty lists or blank/duplicate names.
-- **L121–L136:** Check required schema, point types, linger, and room bounds.
-- **L138–L148:** Enforce minimum spawn-to-A route distance and switch separation.
-- **L150–L163:** Validate sentinel height, sweep amplitude and speed.
+### `scripts/data/level_catalog.gd` (188 lines, blob SHA `c98f0dc765b13c5cfc5fe1930afd4638a6665032`)
+- **L1–L3:** RefCounted script and catalog purpose.
+- **L4–L101:** Six room dictionaries. Each now includes spawn/A/B, `memory_shard`, `shard_lore`, linger, hazard tuning and accent color.
+- **L103–L104:** Clamped defensive-copy getter.
+- **L106–L107:** Campaign count helper.
+- **L111–L112:** Validate the canonical `LEVELS` array using the same draft validator.
+- **L116–L132:** Arbitrary draft-list validation, empty-campaign rejection, and nonempty/unique names.
+- **L133–L145:** Required fields, Memory Shard Vector2 and nonempty lore validation.
+- **L146–L152:** Positive linger and room-bounds validation for spawn, switches and shard.
+- **L154–L158:** Enforce minimum meaningful spawn-to-Switch-A route.
+- **L160–L164:** Enforce Switch A/B separation.
+- **L166–L172:** Keep Memory Shards away from spawn and pressure switches.
+- **L174–L186:** Require hazard fields and bound patrol height, width and speed.
 
-### `scripts/data/progress_store.gd` (25 lines, blob SHA `cf3e1c4c830638b0ee3232ee6d56cf51574b680d`)
-- **L1–L5:** RefCounted save boundary, `user://echopost_save.cfg`, save schema version 1.
-- **L8–L16:** Load/default/clamp behavior; unknown future save versions are not read into current state.
-- **L19–L24:** Write save version and campaign unlock/completion count via ConfigFile.
+### `scripts/data/progress_store.gd` (58 lines, blob SHA `c74c684bab3ca4e40b8ea49b995633b795c4974a`)
+- **L1–L5:** `RefCounted` save boundary, `user://echopost_save.cfg`, schema version 2.
+- **L8–L13:** Load result defaults, including an empty `PackedInt32Array` for shard indices.
+- **L14–L23:** Load readable v1/v2 saves; retain/clamp campaign progress and normalize any shard array. V1 saves have no shard field, so their collection defaults to empty.
+- **L26–L37:** Write version 2 and campaign fields plus the normalized shard collection.
+- **L40–L50:** Accept packed arrays or ordinary arrays, filter invalid values, deduplicate and sort.
+- **L53–L58:** Append one shard index only if it is nonnegative, within the supplied level count, and not already present.
 
-### `tests/headless_smoke.gd` (111 lines, blob SHA `5d1bd092f50a22176eb173ae3dc6d6f265be7f86`)
-- **L1–L8:** Test harness, preloaded echo/level/save scripts, separate test save path.
-- **L13–L22:** Run data tests and return nonzero if any assertions fail.
-- **L25–L44:** Echo track creation, timestamp monotonicity, interpolation/endpoint hold, preloaded script identity and copy independence.
-- **L47–L66:** Require six uniquely named rooms, run the catalog validator, check required fields/positions/positive linger and verify level reads return isolated copies.
-- **L69–L83:** Pass malformed draft room data to the validator and check duplicate names, short spawn route, overlapping switches and negative sentinel speed are reported.
-- **L86–L90:** Shared validator-error fragment helper.
-- **L94–L104:** Save/load, unlock clamping and test-file cleanup.
-- **L107–L110:** Shared assertion helper.
-- **L82–L85:** Shared assertion helper.
+### `tests/headless_smoke.gd` (133 lines, blob SHA `1a56182e462a63f9992166941327310b55dfd693`)
+- **L1–L8:** Test harness, preloaded echo/level/save scripts, and a separate temporary save path.
+- **L13–L22:** Execute data tests and return nonzero if assertions fail.
+- **L25–L44:** Echo track monotonic timestamps, interpolation, endpoint hold, preloaded script identity and copy independence.
+- **L47–L68:** Require six uniquely named valid rooms; check required switch/shard/lore fields, positive linger and defensive copies.
+- **L71–L85:** Deliberately invalid room drafts test duplicate names, too-short spawn route, close switches and negative sentinel speed.
+- **L88–L92:** Error-message substring helper.
+- **L96–L126:** Campaign save/load, unlock clamping, shard-array normalization, and legacy v1-save compatibility.
+- **L129–L132:** Shared assertion helper.
 
-### `tests/game_flow_smoke.gd` (245 lines, blob SHA `ad1619cab76a9b626d84a7d7265338aafafacb95`)
-- **L1–L9:** Test harness and preloaded scene/track/level resources.
-- **L12–L13:** Defer the integration test runner.
-- **L16–L74:** Instantiate game and run chapter-select, lifecycle, recording cap, too-short, sentinel, reset, portal, route acceptance/rejection and gate tests.
-- **L78–L93:** Lifecycle pause and explicit-resume assertions.
-- **L96–L111:** Eight-second recording boundary test.
-- **L114–L125:** Too-short route behavior.
-- **L128–L154:** Sentinel spawn reset plus cancelled unfinished recording, cleared samples/timers, and loss message.
-- **L157–L194:** Restart cleanup while recording and echoing, plus restart from PAUSED.
-- **L197–L220:** Portal completion, idempotent count and restoring previous saves.
-- **L223–L238:** Scrollable chapter selector layout and row count.
-- **L241–L244:** Shared assertion helper.
+### `tests/game_flow_smoke.gd` (280 lines, blob SHA `c0ac23e2dccb7c35a44d628b01aaa967801ba4cf`)
+- **L1–L9:** Test harness and preloaded scene, echo-track, level-catalog and progress-store scripts.
+- **L12–L14:** Defer the integration test runner.
+- **L17–L76:** Instantiate game; test chapter layout, shard collection/persistence and save restoration, lifecycle pause, recording cap, short take, sentinel reset, restart cleanup, portal idempotency, route acceptance/rejection and gate activation.
+- **L80–L95:** Lifecycle pause preserves recording time/flag, clears movement input, and requires explicit resume.
+- **L98–L113:** Eight-second recording cap and exact saved echo duration.
+- **L116–L127:** Too-short recording messaging and preservation of the active recording.
+- **L130–L156:** Sentinel reset plus cancel/discard of the interrupted take.
+- **L159–L196:** Clean room restart while recording/echoing and restart from PAUSED.
+- **L199–L222:** Portal completion and idempotent counter; restore original progress after exercising save path.
+- **L225–L240:** Scrollable chapter selector and one row per authored room.
+- **L244–L273:** Touch the first Memory Shard, verify lore and persisted room index, restore original saved progress.
+- **L276–L279:** Shared assertion helper.
 
 ### `scenes/main.tscn` (13 lines)
 - **L1–L3:** Scene declaration and script external resource.
@@ -284,12 +308,11 @@ This function index is line-accurate for source blob SHA `c3a8f0e4e0e8c76d0d529c
 
 ## 6. Current verification status — be precise
 
-- **Most recent gameplay-code CI:** [Godot checks run 54](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390169866) passed on both Godot 4.4.0 and 4.7.2. The sentinel interrupted-recording cancellation code and regression test were included.
-- **Six-room campaign and scrollable chapter selector:** [run 42](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389230677) passed on both engine versions.
-- **Room validator hardening:** [run 49](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389764965) passed the malformed-draft negative tests on both engine versions.
-- **Recording cap/feedback and existing gameplay tests:** both versions continue to pass project import/parse plus data-layer/gameplay smoke tests; see the run 54 record above for the current code baseline.
-- **Local device test:** not performed by this assistant. The route preview and scrollable selector still require visual inspection in your Godot editor and on a real phone.
-- **Android APK/export:** no APK has been built or attached; export templates, package ID, signing and device QA remain.
+- **Latest feature/test CI:** [Godot checks run 65](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390957517) passed on Godot 4.4.0 and 4.7.2. This includes the Memory Shard data, version-2 progress store and collection/persistence integration test.
+- **Save migration:** data smoke tests verified that duplicate/out-of-range shard indices are sanitized and a version-1 save still retains unlocked-room and completion progress while defaulting to no shards.
+- **Existing gameplay coverage:** the latest passing suite also checks recording caps, too-short feedback, sentinel interruption, restart cleanup, portal completion idempotency, scrollable chapters, gate conditions, and lifecycle pause.
+- **Local device test:** not performed by this assistant. Shard visibility/reach, route preview and chapter scrolling still need manual inspection in your Godot editor and on a real phone.
+- **Android APK/export:** no APK has been built or attached; export templates, package ID, signing and physical-device QA remain.
 - **Runtime quality:** automated checks are not a substitute for manually playing all six rooms and validating their difficulty/fairness.
 
 
@@ -317,7 +340,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 7. **Mechanic coverage:** one recording slot, one hold-style Switch A/Switch B puzzle pattern, a single gate and hardcoded portal position. Timed/toggle/sequence switches, moving platforms and checkpoints are ideas only.
 8. **Recording edge cases:** the minimum is now `MIN_RECORD_SECONDS = 0.7` at `scripts/game.gd:L16`; a too-short stop deliberately keeps recording active and tells the player to continue. Verify that this interaction is understandable on touch.
 9. **Hazard edge cases:** collision now cancels an unfinished recording so it cannot include a fake teleport to spawn. Already-released echoes are separate; their behavior on sentinel contact still needs deliberate playtesting.
-10. **Save migration:** save schema is version 1 and locally stored only. No migration tests for future versions or cloud save exist.
+10. **Save migration:** schema version 2 now persists Memory Shard indices; version-1 campaign progress is backward-compatible and tested. Future-version behavior and cloud saves are not designed.
 11. **Level validation:** catches schema/name/position/spacing and sentinel tuning errors, but it is not a pathfinding solver and does not prove portal reachability or fairness against the sentinel's phase.
 12. **No online features or monetization:** no accounts, backend, community route uploads, cloud saves, ads, analytics or payments are implemented. Do not add these before offline puzzle quality, privacy and moderation are planned.
 
@@ -327,7 +350,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Fix Godot 4.4 `Identifier not found: EchoTrack` self-reference in `scripts/core/echo_track.gd:L19–L25`.
 - [x] Add a regression assertion for preloaded script identity at `tests/headless_smoke.gd:L39–L44`.
 - [x] Verify the code fix and regression test in [run 21](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385871675): Godot 4.4.0 and 4.7.2 both passed.
-- [x] Verify restart cleanup/portal completion (run 33), live route-preview parsing (run 34), six-room content/scrollable chapter selector (run 42), room validation (run 49), and interrupted-recording cancellation (run 54) on Godot 4.4.0 and 4.7.2.
+- [x] Verify restart/portal flows (run 33), route preview (run 34), six-room chapter UI (run 42), room validation (run 49), sentinel interruption (run 54), and Memory Shards plus v1 save compatibility (run 65) on Godot 4.4.0 and 4.7.2.
 - [ ] Ask for / perform a local pull and open the project in the user's Godot 4.4 editor to inspect the live route preview and confirm visuals on the actual machine.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
 
@@ -339,7 +362,8 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Test restart while recording and echo playback are active, and verify restart from PAUSED clears state.
 - [x] Test powered portal completion and ensure the completion count increments exactly once while the test restores the original save values.
 - [ ] Test lifecycle focus-out as well as application-paused notification; physical mobile app switching still needs manual QA.
-- [x] Expand the level validator for names, spawn-to-A distance, switch separation and sentinel tuning; keep adding solvability/fairness validation as room mechanics grow.
+- [x] Expand the level validator for room names, route/switch spacing, sentinel tuning and Memory Shard placement/lore.
+- [x] Add one optional Memory Shard per room, a short lore message, progress counter, save schema v2, v1 save compatibility, and collection/persistence regression tests.
 
 ### P2 — Mobile usability before adding lots of content
 - [ ] Manually inspect scrollable chapter selection and the live route preview on the user's Godot editor/phone; then review narrow/tall aspect ratios, safe areas and landscape touch reach.
@@ -365,7 +389,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 2. Check the most recent CI run before modifying code. A workflow run for a commit older than the code currently on `main` does not verify the current code.
 3. Choose **one focused improvement** at a time. Make changes in `main` only as permitted by the user/project workflow, and don't claim the project is finished.
 4. Test changes with Godot CI or available local Godot. Distinguish passed tests, tests not run, and manual device checks.
-5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `c3a8f0e4e0e8c76d0d529ceaae20b39bfe9cc03d`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
+5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `a1c2c1d2b08923647dbc3fe43c87695f865512c5`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
 6. Update `PROJECT_PROGRESS.md` in the same development pass as source changes. Record the new commit(s), source hashes/line references, CI URL/result and what the next session should do.
 7. Keep this game offline-capable and dependency-light. Never add network accounts, telemetry, uploads, payment or ads as an incidental code change.
 8. Don't produce an APK/release claim unless an actual export and install verification were completed.
