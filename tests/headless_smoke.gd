@@ -73,6 +73,7 @@ func _test_level_catalog() -> void:
 		if level_name == "Dead Air Protocol":
 			dead_air_room_found = true
 			_check(level.has("echo_waypoints") and level["echo_waypoints"] is Array and level["echo_waypoints"].size() == 4, "Dead Air Protocol should define four ordered relays.")
+			_check(level.has("plate_b") and level["plate_b"] is Vector2 and is_equal_approx(float(level["plate_b"].x), 850.0), "Dead Air Protocol should place Switch B far enough from the gate to require a real crossing run.")
 			_check(bool(level.get("hazard", false)), "Dead Air Protocol should keep its active sentinel.")
 			_check(is_equal_approx(float(level.get("gate_open_seconds", 0.0)), 1.8), "Dead Air Protocol should use a 1.8-second gate window.")
 			_check(is_equal_approx(float(level.get("linger", 0.0)), 6.5), "Dead Air Protocol should use its shorter 6.5-second echo linger.")
