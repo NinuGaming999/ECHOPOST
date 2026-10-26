@@ -221,7 +221,7 @@ func _is_joystick_area(point: Vector2) -> bool:
 	# predictable on phones with different landscape aspect ratios.
 	if point.y <= size.y * 0.56:
 		return false
-	var bottom_action_band := point.y > size.y * 0.90
+	var bottom_action_band := point.y >= size.y - 76.0
 	if left_handed_controls:
 		# Keep the right-side joystick clear of the bottom restart target.
 		return point.x > size.x * 0.77 and not (bottom_action_band and point.x > size.x * 0.85)
@@ -571,17 +571,20 @@ func _layout_responsive_ui() -> void:
 		var title := menu_root.get_node_or_null("Title") as Label
 		if title != null:
 			title.size.x = minf(1080.0, size.x - 32.0)
-			title.position = Vector2(center_x - title.size.x * 0.5, 64.0 if compact_height else 135.0)
+			title.size.y = 62.0 if compact_height else 100.0
+			title.position = Vector2(center_x - title.size.x * 0.5, 48.0 if compact_height else 135.0)
 			title.add_theme_font_size_override("font_size", clampi(roundi(70.0 * width_scale), 38, 70))
 		var tagline := menu_root.get_node_or_null("Tagline") as Label
 		if tagline != null:
 			tagline.size.x = minf(920.0, size.x - 40.0)
-			tagline.position = Vector2(center_x - tagline.size.x * 0.5, 132.0 if compact_height else 235.0)
+			tagline.size.y = 36.0 if compact_height else 42.0
+			tagline.position = Vector2(center_x - tagline.size.x * 0.5, 121.0 if compact_height else 235.0)
 			tagline.add_theme_font_size_override("font_size", clampi(roundi(22.0 * width_scale), 14, 22))
 		var intro := menu_root.get_node_or_null("Intro") as Label
 		if intro != null:
 			intro.size.x = minf(780.0, size.x - 64.0)
-			intro.position = Vector2(center_x - intro.size.x * 0.5, 170.0 if compact_height else 280.0)
+			intro.size.y = 48.0 if compact_height else 58.0
+			intro.position = Vector2(center_x - intro.size.x * 0.5, 165.0 if compact_height else 280.0)
 			intro.add_theme_font_size_override("font_size", clampi(roundi(18.0 * width_scale), 13, 18))
 		var progress := menu_root.get_node_or_null("Progress") as Label
 		if progress != null:
