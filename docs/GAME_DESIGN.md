@@ -43,6 +43,7 @@ The chapter selector scrolls so future rooms do not collide with the navigation 
 - Echo playback follows recorded samples in time order.
 - When playback ends, the echo holds its final recorded position temporarily.
 - Echoes press switches by occupying their active area; they do not push the real player or change the recording.
+- A room may require a route checkpoint. For Static Bloom, `echo_waypoint` is a required Relay Beacon: a route is accepted only if at least one segment passes within the beacon radius and the final player position is still on Switch A. A route that misses it is rejected without replacing the current echo route.
 - Sentinel contact returns the player to the chamber entrance. If the player is still recording, that unfinished take is cancelled and discarded rather than saving a fake teleport back to spawn. Already-released echo behavior is separate from the unfinished take.
 - Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. The Memory Archive can revisit a recovered fragment later. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
 - Save schema version 2 stores the collected room indices. Version 1 saves remain loadable and begin with no Memory Shards collected; duplicate, negative, and out-of-campaign indices are filtered during loading.
