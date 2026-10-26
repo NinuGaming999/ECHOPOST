@@ -61,7 +61,6 @@ func _test_level_catalog() -> void:
 		if level.has("echo_waypoint"):
 			relay_room_found = true
 			_check(level["echo_waypoint"] is Vector2, "Optional echo waypoints must use Vector2 positions.")
-	_check(relay_room_found, "The early campaign should include at least one relay-mechanic room.")
 		_check(level.has("name"), "Each level needs a display name.")
 		_check(level.has("spawn"), "Each level needs a spawn position.")
 		_check(level.has("plate_a") and level.has("plate_b"), "Each level needs both switch positions.")
@@ -69,6 +68,7 @@ func _test_level_catalog() -> void:
 		_check(not str(level.get("shard_lore", "")).strip_edges().is_empty(), "Each Memory Shard needs a lore fragment.")
 		_check(float(level.get("linger", 0.0)) > 0.0, "Each level needs a positive echo linger duration.")
 		_check(level["spawn"] is Vector2, "Spawn positions must be Vector2 values.")
+	_check(relay_room_found, "The early campaign should include at least one relay-mechanic room.")
 	var original_name := str(LevelCatalog.LEVELS[0]["name"])
 	var isolated_copy: Dictionary = LevelCatalog.get_level(0)
 	isolated_copy["name"] = "Changed only in this test copy"
