@@ -621,7 +621,7 @@ func _test_timed_gate_requires_crossing(game: Control) -> void:
 	game.set("gate_open_timer", 0.02)
 	game.call("_update_timed_gate", 0.03)
 	_check(not bool(game.get("door_open")), "The timed gate should close if the player does not cross before timeout.")
-	_check(is_zero_approx(float(game.call("_get_gate_timer_ratio")),), "The visual timer bar should be empty after the crossing window expires.")
+	_check(is_zero_approx(float(game.call("_get_gate_timer_ratio"))), "The visual timer bar should be empty after the crossing window expires.")
 	_check(bool(game.get("timed_gate_failed")), "A missed window should require the player to leave a switch before retrying.")
 	game.call("_check_puzzle_state")
 	_check(not bool(game.get("door_open")), "The timed gate must not immediately reopen while both switches remain held.")
