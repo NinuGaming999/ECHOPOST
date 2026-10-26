@@ -6,23 +6,24 @@
 
 ## Implemented in this source
 
-- Standalone project entry point and original SVG icon.
+- Standalone Godot project entry point and original SVG icon.
 - Main menu, chapter select, instructions, pause, completion, retry, and continue flows.
 - Keyboard movement and an on-screen joystick that also supports mouse testing.
 - Timestamped route recording, an 8-second recording limit, echo playback, final-position linger, and rejection feedback when a route does not end on Switch A.
 - Two-switch gate and portal completion flow.
 - Three authored room configurations; later rooms add moving sentinels.
 - Local versioned campaign save data and progress clamping.
-- A campaign-data validator plus headless smoke tests for the data layer.
+- Campaign-data validator, data-layer smoke tests, and a main-scene gameplay integration test.
+- Automated GitHub Actions workflow that imports/parses the project and runs both smoke-test scripts.
 - README, design document, roadmap, contribution guide, and MIT license.
 
 ## Verification status
 
-The Godot executable is not available in the file-building environment. The smoke tests have been added but **have not been executed in Godot here**. No Android APK has been built or tested on a physical device. The source is an early game foundation, not a release-ready claim.
+The Godot project import/parse step and data-layer tests passed in GitHub Actions. The gameplay integration test is now included in the workflow; its latest run should be checked on the Actions page before treating it as verified. No Android APK has been built or tested on a physical device. The source is an early game foundation, not a release-ready claim.
 
 ## Next work items
 
-1. Open `project.godot` in the current stable Godot 4 editor; fix parser/runtime issues and run the headless smoke tests.
+1. Confirm the latest workflow passes the gameplay integration test; fix any regressions it catches.
 2. Play through all three rooms with keyboard and touch input; tune switch radius, sentinel paths, timing, and messaging.
 3. Refactor the main controller into smaller scene/controller/renderer components as room count grows.
 4. Expand the campaign with reusable puzzle mechanics, clear checkpoints, and a reliable level validator.
