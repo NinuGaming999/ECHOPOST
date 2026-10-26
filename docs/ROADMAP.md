@@ -9,7 +9,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Desktop movement and touchscreen virtual joystick.
 - [x] Record, stop, replay, and linger behavior for one echo.
 - [x] Two-switch gate and exit loop.
-- [x] Seven authored room layouts with varied switch positions, sentinel patrol patterns, and a two-relay ordered-route challenge.
+- [x] Eight authored room layouts with varied switch positions, sentinel patrol patterns, a two-relay ordered-route challenge, and a timed-gate crossing.
 - [x] Moving sentinel in later rooms.
 - [x] Chapter unlocks, local save data, and a scrollable chapter selector.
 - [x] Separate echo-track, level-catalog, and progress-store code from the main scene.
@@ -19,7 +19,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 ## Milestone 1 — Core mechanic hardening
 
 - [x] Add headless tests for echo timestamp ordering, interpolation/copying, campaign-data validation, save/load, and unlock clamping.
-- [ ] Add remaining engine-level tests for lifecycle focus-out and save-failure edge cases. Recording cap, too-short recording, sentinel reset/cancelled interrupted take, restart cleanup, portal completion idempotency, ordered relay sequence, gate conditions, and lifecycle pause now have smoke coverage.
+- [ ] Add remaining engine-level tests for lifecycle focus-out and save-failure edge cases. Recording cap, too-short recording, sentinel reset/cancelled interrupted take, restart cleanup, portal completion idempotency, ordered relay sequence, timed-gate timeout/retry/crossing, gate conditions, and lifecycle pause now have smoke coverage.
 - [x] Add schema validation and diagnostics for level catalog data, including arbitrary draft lists, unique names, route/switch spacing, room bounds, and sentinel tuning.
 - [x] Add clear feedback for invalid recording endpoints and a live route preview while recording.
 - [x] Auto-pause active gameplay when the app loses focus or Android/iOS suspends it; clear held joystick input and require explicit player resume.
@@ -32,7 +32,8 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [ ] Create a reusable room scene/data model and a level validation tool.
 - [ ] Build 12–20 authored puzzles that teach one new idea at a time.
 - [x] Add a required Relay Beacon route checkpoint to Static Bloom and an ordered two-relay route to Chorus Route, including segment-distance validation and clear rejection feedback.
-- [ ] Add more switch types and carefully constrain puzzle complexity.
+- [x] Add Pulse Lock, a timed gate with a 3.5-second crossing window, timeout/retry handling, and a portal that stays powered after a successful crossing.
+- [ ] Add more switch types and carefully constrain puzzle complexity beyond the first ordered relay and timed-gate mechanics.
 - [ ] Add checkpoints, better reset messaging, and a campaign map.
 - [x] Add six optional Memory Shards with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
 - [ ] Expand narrative fragments and authored world storytelling beyond the six introductory memories.
