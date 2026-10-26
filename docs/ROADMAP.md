@@ -31,7 +31,8 @@ This roadmap is the intended path from the initial project foundation to a relea
 
 - [ ] Create a reusable room scene/data model and a level validation tool.
 - [ ] Build 12–20 authored puzzles that teach one new idea at a time.
-- [ ] Add new switch types and carefully constrain puzzle complexity.
+- [x] Add a required Relay Beacon route checkpoint to Static Bloom, including segment-distance validation and clear rejection feedback.
+- [ ] Add more switch types and carefully constrain puzzle complexity.
 - [ ] Add checkpoints, better reset messaging, and a campaign map.
 - [x] Add six optional Memory Shards with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
 - [ ] Expand narrative fragments and authored world storytelling beyond the six introductory memories.
