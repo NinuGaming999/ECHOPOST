@@ -57,6 +57,8 @@ func _test_level_catalog() -> void:
 		_check(level.has("name"), "Each level needs a display name.")
 		_check(level.has("spawn"), "Each level needs a spawn position.")
 		_check(level.has("plate_a") and level.has("plate_b"), "Each level needs both switch positions.")
+		_check(level.has("memory_shard") and level["memory_shard"] is Vector2, "Each level needs a Memory Shard position.")
+		_check(not str(level.get("shard_lore", "")).strip_edges().is_empty(), "Each Memory Shard needs a lore fragment.")
 		_check(float(level.get("linger", 0.0)) > 0.0, "Each level needs a positive echo linger duration.")
 		_check(level["spawn"] is Vector2, "Spawn positions must be Vector2 values.")
 	var original_name := str(LevelCatalog.LEVELS[0]["name"])
@@ -99,6 +101,26 @@ func _test_progress_store() -> void:
 	_check(int(progress["rooms_completed"]) == 7, "The save should preserve completed-room count.")
 	var limited_progress: Dictionary = ProgressStore.load_progress(2, TEST_SAVE_PATH)
 	_check(int(limited_progress["unlocked_level"]) == 1, "Progress should be clamped when the campaign is smaller.")
+
+	# Version 2 persists optional Memory Shards and sanitizes duplicate/out-of-range indices.
+	var expected_shards := PackedInt32Array([0, 2, 2, 99, -1])
+	save_error = ProgressStore.save_progress(1, 9, TEST_SAVE_PATH, expected_shards)
+	_check(save_error == OK, "Progress with collected Memory Shards should save successfully.")
+	var shard_progress: Dictionary = ProgressStore.load_progress(3, TEST_SAVE_PATH)
+	var saved_shards: PackedInt32Array = shard_progress["collected_shards"]
+	_check(saved_shards.size() == 2 and saved_shards.has(0) and saved_shards.has(2), "Shard saves should be unique, sorted, and clamped to existing rooms.")
+
+	# A version 1 save from before collectibles existed must still load without losing campaign progress.
+	var legacy_config := ConfigFile.new()
+	legacy_config.set_value("meta", "save_version", 1)
+	legacy_config.set_value("campaign", "unlocked_level", 1)
+	legacy_config.set_value("campaign", "rooms_completed", 4)
+	_check(legacy_config.save(TEST_SAVE_PATH) == OK, "A legacy v1 test save should be written.")
+	var legacy_progress: Dictionary = ProgressStore.load_progress(6, TEST_SAVE_PATH)
+	_check(int(legacy_progress["unlocked_level"]) == 1 and int(legacy_progress["rooms_completed"]) == 4, "Version 1 saves should preserve existing campaign progress.")
+	var legacy_shards: PackedInt32Array = legacy_progress["collected_shards"]
+	_check(legacy_shards.is_empty(), "Version 1 saves should default to no Memory Shards collected.")
+
 	var user_directory := DirAccess.open("user://")
 	if user_directory != null:
 		user_directory.remove("echopost_smoke_test_save.cfg")
