@@ -328,96 +328,97 @@ This function index matches source blob SHA `c96db82800a0f7e43104a11041965342628
 ## 5. Exact line map — supporting scripts and tests
 
 ### `scripts/core/echo_track.gd` (60 lines, blob SHA `9a433129a0cb8b04d9ab55c0964aeb4683ddab3a`)
-- **L1–L5:** `RefCounted` script header, purpose/comment about avoiding global `class_name` cache, and array of dictionaries shaped like `{"t": timestamp, "p": Vector2}`.
-- **L8–L9:** Clear all recorded samples.
-- **L12–L16:** Append sample; time is nonnegative and never earlier than the previous sample.
-- **L19–L25:** Copy route using `get_script().new()` and append duplicate sample dictionaries; this is the specific Godot 4.4 self-reference fix.
-- **L28–L31:** Route duration from the final timestamp; empty route is zero seconds.
-- **L34–L59:** Position lookup: handles empty/before-first/after-last times, walks consecutive samples, linearly interpolates between points and handles tiny/duplicate timestamp spans.
+- **L1–L5:** RefCounted header, class-cache independence note, and timestamp/position sample array.
+- **L8–L9:** Clear samples.
+- **L12–L16:** Add nonnegative timestamp while guaranteeing timestamps never move backwards.
+- **L19–L25:** Copy samples through `get_script().new()`; no global `EchoTrack` lookup, preventing the Godot 4.4 compile error.
+- **L28–L31:** Return route duration.
+- **L34–L59:** Resolve position before/after route, interpolate between ordered points, and tolerate near-duplicate timestamps.
 
-### `scripts/data/level_catalog.gd` (199 lines, blob SHA `96b8808cf6944d1b66a703930e3972a59b837139`)
-- **L1–L3:** RefCounted campaign catalog.
-- **L4–L101:** Six room dictionaries. Static Bloom has `echo_waypoint` at L92; the other rooms don't require a relay.
-- **L104–L111:** Clamped defensive-copy getter and campaign count.
-- **L112–L116:** Canonical validation delegates to the reusable draft validator.
-- **L117–L132:** Reject empty draft lists and blank/duplicate room names.
-- **L133–L148:** Required schema, waypoint type, required shard/lore fields, Vector2 point checks and playfield bounds.
-- **L150–L164:** Minimum spawn-to-A route and switch separation checks.
-- **L166–L172:** Keep optional Memory Shards away from spawn and core switches.
-- **L174–L186:** Validate sentinel tuning.
-- **L177–L185:** Validate Relay Beacon separation from spawn, switches and shard when present.
-
+### `scripts/data/level_catalog.gd` (266 lines, blob SHA `81f4645579f1ba7d65a47dff55eb75b18c1c10f1`)
+- **L1–L3:** RefCounted catalog and purpose.
+- **L4–L136:** Eight authored rooms. Chorus Route uses two ordered relay waypoints; Pulse Lock sets a 3.5-second gate window.
+- **L138–L142:** Clamped defensive-copy getter and room count.
+- **L145–L150:** Canonical validation entry point.
+- **L151–L182:** Validate nonempty campaigns, unique/nonblank names, required schema keys, core Vector2 positions, lore text and positive echo linger.
+- **L183–L199:** Validate single relay type, timed-gate duration numeric type/range, ordered-waypoint container type and room bounds for all point fields.
+- **L201–L211:** Keep spawn far enough from Switch A and switches far enough apart to avoid trivial/overlapping puzzles.
+- **L213–L227:** Validate Memory Shard and single Relay Beacon spacing from objectives.
+- **L229–L250:** Validate ordered relay arrays, each waypoint's type/bounds/objective separation, and separation between consecutive relay markers.
+- **L252–L265:** Validate sentinel patrol keys, height, sweep amplitude and speed.
 
 ### `scripts/data/progress_store.gd` (58 lines, blob SHA `c74c684bab3ca4e40b8ea49b995633b795c4974a`)
-- **L1–L5:** `RefCounted` save boundary, `user://echopost_save.cfg`, schema version 2.
-- **L8–L13:** Load result defaults, including an empty `PackedInt32Array` for shard indices.
-- **L14–L23:** Load readable v1/v2 saves; retain/clamp campaign progress and normalize any shard array. V1 saves have no shard field, so their collection defaults to empty.
-- **L26–L37:** Write version 2 and campaign fields plus the normalized shard collection.
-- **L40–L50:** Accept packed arrays or ordinary arrays, filter invalid values, deduplicate and sort.
-- **L53–L58:** Append one shard index only if it is nonnegative, within the supplied level count, and not already present.
+- **L1–L5:** Local campaign save boundary and schema version 2.
+- **L8–L23:** Load/default/clamp campaign values and read collected shard indices, preserving version-1 progress.
+- **L26–L37:** Save version, unlocked room, completion count and normalized shard data.
+- **L40–L50:** Normalize a shard collection, drop invalid/duplicate/out-of-campaign indices and sort.
+- **L53–L58:** Append an in-range shard index only once.
 
 ### `scripts/data/settings_store.gd` (40 lines, blob SHA `fd2c065bf2e6807f645449327b247a9e60cf19f3`)
-- **L1–L6:** RefCounted settings boundary, separate `user://echopost_settings.cfg` path, default speed 255 and supported speed presets 200/255/310.
-- **L9–L20:** Load preference defaults when the file is missing/unreadable; otherwise load and normalize movement speed and read left-handed mode.
-- **L23–L28:** Persist settings version, movement speed and joystick handedness separately from campaign progress.
-- **L31–L39:** Normalize arbitrary speeds to the nearest supported preset.
+- **L1–L6:** Separate local settings path, schema version and supported movement presets.
+- **L9–L20:** Load defaults or read/normalize saved speed and joystick handedness.
+- **L23–L28:** Persist control settings independently from campaign progress.
+- **L31–L39:** Normalize the requested speed to a supported preset.
 
-### `tests/headless_smoke.gd` (167 lines, blob SHA `06ca403b64d9873a7fa37a31f9eaac5be1a69a38`)
-- **L1–L10:** Test harness and preloaded data scripts/temp paths.
-- **L15–L25:** Run tests and exit nonzero on assertion failure.
-- **L28–L47:** Echo track timestamp order, interpolation, endpoint hold, script identity and copy independence.
-- **L50–L76:** Verify six uniquely named/valid rooms, Memory Shard data and at least one relay room with a Vector2 waypoint.
-- **L79–L95:** Invalid draft checks for duplicate names, route/switch spacing, sentinel speed and a relay waypoint outside the room.
-- **L98–L102:** Error-fragment helper.
-- **L106–L136:** Campaign save/load, shard normalization and v1 save compatibility.
-- **L140–L160:** Control-preference defaults, persistence and speed normalization.
-- **L163–L166:** Assertion helper.
+### `tests/headless_smoke.gd` (189 lines, blob SHA `e93e69d7472f421ad11a8ef07fd8917976760a02`)
+- **L1–L12:** Test runner/preloads and isolated temporary save/settings paths.
+- **L15–L25:** Run grouped tests and exit nonzero on assertion failure.
+- **L28–L47:** Timestamp order, interpolation, endpoint hold, preloaded-script identity and copy independence.
+- **L50–L93:** Check eight unique rooms, shard/lore fields, single and ordered relay rooms, and timed-gate configuration.
+- **L96–L117:** Submit intentionally invalid room drafts and assert validation errors for duplicate names, route geometry, sentinel parameters, out-of-bounds/mistyped relays and invalid timed-gate durations.
+- **L120–L124:** Search error strings by fragment.
+- **L128–L158:** Save/load campaign progress, sanitize shard indices and verify v1 save compatibility.
+- **L162–L182:** Verify settings defaults, preference persistence, handedness and speed normalization.
+- **L185–L188:** Assertion helper.
 
-### `tests/game_flow_smoke.gd` (382 lines, blob SHA `9cf7b31e88dad3ffca0670090d122c9501dc8a20`)
-- **L1–L10:** Test harness/preloads.
-- **L13–L14:** Defer the integration runner.
-- **L17–L79:** Test chapter/archive/options UI, shards, lifecycle pause, recording cap/feedback, sentinel cancellation, reset cleanup, portal idempotency, relay pass/miss, route acceptance/rejection and gate activation.
-- **L83–L98:** Lifecycle pause behavior.
-- **L101–L116:** Eight-second recording cap.
-- **L119–L130:** Too-short recording.
-- **L133–L159:** Sentinel contact cancels the unfinished recording.
-- **L162–L199:** Restart clears active tracks/timers/gate/input and works from pause.
-- **L202–L225:** Portal completion idempotency and saved-progress restore.
-- **L228–L243:** Scrollable chapter selector.
-- **L247–L276:** Shard collection, lore and save restoration.
-- **L280–L302:** Memory Archive UI and recovered/unfound rows.
-- **L306–L335:** Options/speed/left-handed joystick behavior.
-- **L339–L375:** Static Bloom Relay Beacon route acceptance/rejection; valid route crosses beacon between samples.
-- **L378–L381:** Assertion helper.
+### `tests/game_flow_smoke.gd` (501 lines, blob SHA `a460147b3e9339119c2bcd6d1c0bbe5dd620069b`)
+- **L1–L10:** Integration harness, main scene, relay/level/progress preloads.
+- **L13–L14:** Defer integration test entry point.
+- **L17–L81:** Run the game-flow suite: UI/shards/options, single/ordered-relay, lifecycle pause, recording max/too-short, sentinel, reset, portal, invalid/valid route and gate checks.
+- **L85–L103:** Verify application pause preserves recording state and freezes recording plus timed-gate countdown.
+- **L106–L121:** Exercise the real frame loop at the eight-second recording boundary.
+- **L124–L135:** Too-short stop keeps recording active, creates no echo and explains the remedy.
+- **L138–L164:** Sentinel reset and cancellation of interrupted takes.
+- **L167–L204:** Restart clears active recording/echo/timers/gate/input and works from pause.
+- **L207–L230:** Powered portal completion is idempotent and the test restores original saved progress.
+- **L233–L248:** Chapter list uses scrollable layout for the full room set.
+- **L252–L281:** Memory Shard pickup, lore message, save and test-progress restoration.
+- **L285–L307:** Memory Archive shows collected and undiscovered entries.
+- **L311–L340:** Options integration for speed presets and right/left joystick sides.
+- **L344–L383:** Static Bloom's single Relay Beacon requirement and segment-crossing acceptance.
+- **L387–L438:** Chorus Route requires Relay 1 before Relay 2; reversed routes are rejected, correctly ordered routes are accepted, and markers reflect route order.
+- **L442–L494:** Pulse Lock opens a timed window, ticks in active frames, freezes while paused, closes before the barrier on timeout, requires leaving a switch to retry, and stays powered after a successful crossing.
+- **L497–L500:** Shared assertion helper.
 
 ### `scenes/main.tscn` (13 lines)
-- **L1–L3:** Scene declaration and script external resource.
-- **L5–L13:** Full-rect Control root attached to `res://scripts/game.gd`.
+- **L1–L3:** Scene resource/script declaration.
+- **L5–L13:** Full-rect Control root bound to `scripts/game.gd`.
 
 ### `project.godot` (43 lines)
-- **L1–L10:** Config version, application metadata, SVG icon, startup scene and feature/renderer declaration.
-- **L12–L18:** 1280×720 viewport/window dimensions, canvas-item stretch and orientation configuration.
-- **L20–L24:** Compatibility renderer and background color.
-- **L26–L43:** Default left/right/up/down input map with WASD and arrow keys.
+- **L1–L10:** Project metadata, icon, main scene and feature declarations.
+- **L12–L18:** 1280×720 viewport/window settings, canvas stretch mode and orientation.
+- **L20–L24:** Compatibility renderer/background configuration.
+- **L26–L43:** WASD/arrow input map.
 
 ### `.github/workflows/godot-checks.yml` (38 lines)
-- **L1–L19:** Workflow triggers, read-only permissions, Ubuntu runner and two-version Godot matrix.
-- **L21–L29:** Checkout and Godot installer.
-- **L30–L38:** Headless editor import/parse then data and gameplay smoke tests.
+- **L1–L19:** Push/PR/manual triggers, permissions, runner and Godot 4.4.0/4.7.2 matrix.
+- **L21–L29:** Checkout and Godot installation.
+- **L30–L38:** Import/parse project and run both smoke-test scripts.
 
 ### `RUN_TESTS.bat` (25 lines)
-- **L1–L10:** Detect Godot on PATH and explain missing dependency.
-- **L12–L20:** Run both smoke tests and return success if they pass.
-- **L21–L25:** Failure handling and nonzero exit.
+- **L1–L10:** Detect Godot on PATH or print invocation help.
+- **L12–L20:** Run data and gameplay tests and return success.
+- **L21–L25:** Report failure and return a nonzero exit code.
 
 ## 6. Current verification status — be precise
 
-- **Latest verified source:** [Godot CI run 95](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40394410577) passed both Godot 4.4.0 and 4.7.2 on commit `2cb03959726094c526140b3e63282f0440453e74`. It includes the Static Bloom Relay Beacon, malformed-waypoint validator test, direct-route rejection, and route-segment crossing acceptance test.
-- **Options and Memory Archive:** run 82 passed the options/handedness UI and archive tests on both Godot versions.
-- **Settings and Memory Shard persistence:** runs 81 and 65 passed settings persistence and version-1 campaign save compatibility respectively.
-- **Device QA:** not performed; visual readability of Relay Beacon, route preview, memory collectibles, Archive and Options still needs manual testing in Godot/Android.
-- **Android APK/export:** no APK built or attached; export templates, package ID, signing and device tests remain.
-- **Campaign quality:** six rooms exist; only Static Bloom currently uses the new required waypoint mechanic.
+- **Latest passing code/test run:** [Godot CI run 122](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40397091984) passed on both Godot 4.4.0 and 4.7.2 after the Pulse Lock countdown, frame-loop timer test, pause-freeze assertion and ordered-relay feedback fix.
+- **Ordered Relay validation:** [run 119](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40396769674) passed both versions after correcting the reverse-route test expectation; Relay 1 cannot appear linked when Relay 2 was encountered first.
+- **Pulse Lock validation:** run 122 checked parsing, data tests and integration coverage for active-frame countdown, pause freeze, timeout closure, retry lockout/re-arm, and portal power after crossing.
+- **Source hashes:** current `scripts/game.gd` blob SHA is `c96db82800a0f7e43104a11041965342628b830d` (1210 lines); current gameplay-test blob SHA is `a460147b3e9339119c2bcd6d1c0bbe5dd620069b` (501 lines). Sections 4 and 5 are keyed to these current files.
+- **Device QA:** not performed by this assistant. The game has not been manually run in the user's Godot editor or on a physical Android device during this pass.
+- **Android export:** no APK built or attached. Android export preset, package identity, export templates, SDK/JDK, signing and real-device testing remain.
+- **Quality caveat:** automated tests verify logic, not visual clarity or whether the 3.5-second timed crossing feels fair on touch controls. Playtesting Pulse Lock at slow/normal/fast speeds is next.
 
 ### Commands to run in the repository root on Windows
 ```powershell
@@ -436,11 +437,11 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 1. **Mobile sizing / safe areas:** most layout coordinates and drawing coordinates are hard-coded around 1280×720. Safe areas, short/tall screens, scaling and button reach are not validated.
 2. **Controller size:** `scripts/game.gd` owns UI construction, gameplay state, input, persistence coordination and drawing. Refactor only incrementally; add tests first so game behavior does not regress.
-3. **Small content set:** six room dictionaries and six optional Memory Shards now exist, but the core two-switch pattern is reused and there is no full campaign or final narrative ending.
+3. **Small content set:** eight room dictionaries and eight optional Memory Shards now exist, but the core two-switch pattern is still the foundation and there is no full campaign or final narrative ending.
 4. **Procedural placeholder visuals:** no authored robot animations, environmental tilesets, VFX or transition animations.
 5. **No sound:** recording, rejected route, sentinel hits, gate opening and portal have text/visual feedback only. No SFX, music, mixer, or audio options exist.
-6. **Pause behavior needs real device QA:** the lifecycle logic is headlessly tested but actual Android app-switch lifecycle and focus behavior are unverified. The player must tap RESUME after returning.
-7. **Mechanic coverage:** one recording slot and the two-switch gate remain core; Static Bloom now also requires a route through one Relay Beacon. Timed/toggle/sequence switches, multiple relays, moving platforms, checkpoints and multi-echo puzzles remain future work.
+6. **Pause behavior needs real device QA:** lifecycle logic and timer freeze are headlessly tested, but actual Android app-switch lifecycle/focus behavior are unverified. The player must tap RESUME after returning.
+7. **Mechanic coverage:** one recording slot and the two-switch gate remain core; Static Bloom requires one relay, Chorus Route requires ordered relays, and Pulse Lock introduces a timed gate. Toggle/sequence switches, moving platforms, checkpoints and multi-echo puzzles remain future work.
 8. **Recording edge cases:** the minimum is now `MIN_RECORD_SECONDS = 0.7` at `scripts/game.gd:L16`; a too-short stop deliberately keeps recording active and tells the player to continue. Verify that this interaction is understandable on touch.
 9. **Hazard edge cases:** collision now cancels an unfinished recording so it cannot include a fake teleport to spawn. Already-released echoes are separate; their behavior on sentinel contact still needs deliberate playtesting.
 10. **Save migration/preferences:** schema version 2 persists Memory Shard indices and version-1 campaign progress remains loadable; speed/handedness use a separate v1 settings file. Future-version behavior and cloud saves are not designed.
@@ -455,6 +456,8 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Verify the code fix and regression test in [run 21](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385871675): Godot 4.4.0 and 4.7.2 both passed.
 - [x] Verify restart/portal flows (run 33), route preview (run 34), six-room chapter UI (run 42), room validation (run 49), sentinel interruption (run 54), and Memory Shards plus v1 save compatibility (run 65) on both Godot versions.
 - [x] Verify the Relay Beacon requirement, invalid-waypoint validator, and between-sample route-crossing test in run 95 on both Godot versions.
+- [x] Verify ordered-relay order/linked-state regression in [run 119](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40396769674) on both Godot versions.
+- [x] Verify Pulse Lock countdown visuals/frame ticking, timer freeze during pause, timeout, retry latch and successful crossing in [run 122](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40397091984) on both Godot versions.
 - [ ] Ask for / perform a local pull and open the project in the user's Godot 4.4 editor to inspect the live route preview and confirm visuals on the actual machine.
 - [x] Verify Memory Archive and Options UI, speed presets, and left-handed joystick region on both Godot versions in run 82.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
@@ -467,6 +470,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Test restart while recording and echo playback are active, and verify restart from PAUSED clears state.
 - [x] Test powered portal completion and ensure the completion count increments exactly once while the test restores the original save values.
 - [ ] Test lifecycle focus-out as well as application-paused notification; physical mobile app switching still needs manual QA.
+- [ ] Play Pulse Lock at slow, normal and fast movement speeds and decide whether its 3.5-second window is fair.
 - [x] Expand the level validator for room names, route/switch spacing, sentinel tuning and Memory Shard placement/lore.
 - [x] Add one optional Memory Shard per room, a short lore message, progress counter, save schema v2, v1 save compatibility, and collection/persistence regression tests.
 
@@ -479,7 +483,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 ### P3 — Build a real campaign / refactor safely
 - [ ] Create a reusable room scene/controller separation and richer authored-room schema.
-- [ ] Expand from six layouts to 12–20 authored chambers with new puzzle mechanics beyond route geometry, patrol timing and the first Relay Beacon checkpoint.
+- [ ] Expand from eight layouts to 12–20 authored chambers with new puzzle mechanics beyond route geometry, patrol timing, ordered relay checkpoints and the first timed gate.
 - [ ] Add checkpoint/lore fragments and a cohesive Act I ending.
 - [ ] Replace procedural placeholder art with original coherent art/audio, while keeping clarity and low-cost rendering on mobile.
 
@@ -502,4 +506,4 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 ---
 
-*Handoff note: this file is written to make future work resumable from concrete repository state, not to declare completion. The next session's first action should be checking the newest workflow run, then continue with P1 test coverage before beginning larger gameplay/content changes.*
+*Handoff note: this file is written to make future work resumable from concrete repository state, not to declare completion. The next session's first action should be checking the newest workflow run, then manually tune Pulse Lock if possible before designing another new mechanic.*
