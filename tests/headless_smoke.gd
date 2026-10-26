@@ -45,10 +45,15 @@ func _test_echo_track() -> void:
 
 
 func _test_level_catalog() -> void:
-	_check(LevelCatalog.LEVELS.size() >= 3, "The first campaign should have at least three chambers.")
+	_check(LevelCatalog.LEVELS.size() >= 6, "The early campaign should contain at least six chambers.")
 	_check(LevelCatalog.validate_levels().is_empty(), "The campaign catalog should pass its own level-data validator.")
+	var names_seen: Dictionary = {}
 	for index in range(LevelCatalog.LEVELS.size()):
 		var level: Dictionary = LevelCatalog.get_level(index)
+		var level_name := str(level.get("name", ""))
+		_check(not level_name.is_empty(), "Every chamber needs a non-empty name.")
+		_check(not names_seen.has(level_name), "Chamber names must be unique: %s" % level_name)
+		names_seen[level_name] = true
 		_check(level.has("name"), "Each level needs a display name.")
 		_check(level.has("spawn"), "Each level needs a spawn position.")
 		_check(level.has("plate_a") and level.has("plate_b"), "Each level needs both switch positions.")
