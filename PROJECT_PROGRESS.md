@@ -23,7 +23,7 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Main controller source blob for the exact line map below:** `f8e092e49b568b63eb2c48b8a5a6f2ede58a3b8b` (1289 lines)  
+**Main controller source blob for the exact line map below:** `30343671f2d673b8a19de6fb3bc15e784fc01905` (1289 lines)  
 **Triune Relay level-data commit:** `48aa2ccd090f7cda6b74c8d8a9a0bbdd016d9e3d`  
 **Initial ten-room schema-test commit (before Fracture Clock):** `76cc6722aea77edc5bba938aa36318271645afc2`  
 **Three-relay gameplay test commit:** `9f08fae5aa9a7a8588a01cae3dcad86cad03ca55`  
@@ -36,7 +36,9 @@
 **Dynamic relay rejection feedback commit:** `cea513b16e1c849942236c033a504e47048aabb6`  
 **Relay feedback regression-test correction:** `9eba2674ae7e64d78eb5011649182722b0bfbd08`  
 **Latch Protocol gameplay implementation:** `4dd340a159e818aa2f0ad0cf042163b6b97ceecc`  
-**Latch Protocol integration tests:** `8a057283461d7e7a4663e9c4ddedc43aa92fff7c`
+**Latch Protocol integration tests:** `8a057283461d7e7a4663e9c4ddedc43aa92fff7c`  
+**Latch echo-settled prerequisite commit:** `93d04401105fab9c89e1f5f90fc1865c1df605f7`  
+**Latch playback-prerequisite test commit:** `3218a6beeef7506ad56b3d8f5e04ac9f8db7f68e`
 **Status:** Early playable foundation / vertical slice — **not complete, not release-ready**.
 
 ---
@@ -77,12 +79,12 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 - `scripts/game.gd:L243–L265`: creates a dedicated `LATCH SWITCH B` button in the gameplay HUD. `_update_hud()` shows it only for rooms whose `plate_b_mode` is `toggle`, changes its label when latched, and disables it while paused or after the gate opens.
 - `scripts/game.gd:L145–L153`: keyboard E calls the same action as the touch button.
 - `scripts/game.gd:L571–L606`: starting/restarting any room resets `switch_b_latched` to false.
-- `scripts/game.gd:L630–L652`: `_on_latch_switch_b_pressed()` requires a toggle room, an echo currently holding Switch A, and the player near Switch B; otherwise it displays a clear reason. A successful activation toggles B's latch.
+- `scripts/game.gd:L630–L652`: `_on_latch_switch_b_pressed()` requires a toggle room, an echo currently holding Switch A, and the player near Switch B; the echo must be finished playing, not merely passing through A. Otherwise it displays a clear reason. A successful activation toggles B's latch.
 - `scripts/game.gd:L891–L930`: puzzle evaluation uses the latched state for toggle rooms rather than requiring the player to remain physically on B. The gate stays open after a valid latch and the status explains the switch/gate state.
 - `scripts/game.gd:L1116–L1120`: the drawn Switch B stays visually active while latched even after the player leaves.
-- `tests/game_flow_smoke.gd:L387–L438`: verifies the button is visible in Latch Protocol and hidden in hold-switch rooms, standing on B alone does not activate the gate, the echo must hold A before latching, leaving B does not close the gate, E activates the switch, and restart clears the latch.
+- `tests/game_flow_smoke.gd:L387–L446`: verifies the button is visible in Latch Protocol and hidden in hold-switch rooms, standing on B alone does not activate the gate, a missing or still-playing echo cannot latch B, leaving B does not close the gate, E activates the switch, and restart clears the latch.
 - Implementation commit: `4dd340a159e818aa2f0ad0cf042163b6b97ceecc`; integration-test commit: `8a057283461d7e7a4663e9c4ddedc43aa92fff7c`.
-- [Godot CI run 179](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40401941921) passed on Godot 4.4.0 and 4.7.2, including the new toggle-switch integration tests.
+- [Godot CI run 185](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40402444543) passed on Godot 4.4.0 and 4.7.2, including the new toggle-switch integration tests and the settled-echo prerequisite.
 
 This closes a gap where the level data and hint advertised a toggle switch but the main gameplay controller did not yet implement the button/key action and latched gate state.
 
@@ -344,7 +346,7 @@ This change is covered by an automated headless integration test. It is **not ye
 
 ## 4. Exact source line map — `scripts/game.gd`
 
-This function index matches source blob SHA `f8e092e49b568b63eb2c48b8a5a6f2ede58a3b8b` (1289 lines). It is authoritative for the current source. Older code-line references inside historical feature notes refer to the source revision at the time.
+This function index matches source blob SHA `30343671f2d673b8a19de6fb3bc15e784fc01905` (1289 lines). It is authoritative for the current source. Older code-line references inside historical feature notes refer to the source revision at the time.
 
 - **L1–L4:** Script header and procedural-art note.
 - **L6:** `ScreenState` enum (MENU, PLAYING, PAUSED, COMPLETE).
@@ -384,7 +386,7 @@ This function index matches source blob SHA `f8e092e49b568b63eb2c48b8a5a6f2ede58
 - **L567–L568 — `_on_start_pressed()`:** Continue from the highest unlocked chamber.
 - **L571–L606 — `_start_level()`:** Reset room, echo, latch, gate, recording and input state; show gameplay.
 - **L609–L625 — `_on_record_pressed()`:** Start recording or finish/send the current route.
-- **L630–L652 — `_on_latch_switch_b_pressed()`:** Require a toggle room, echo on A and player near B; toggle the persistent B latch and display actionable feedback.
+- **L630–L652 — `_on_latch_switch_b_pressed()`:** Require a toggle room, a settled (not playing) echo on A and player near B; toggle the persistent B latch and display actionable feedback.
 - **L655–L703 — `_finish_recording()`:** Enforce minimum duration, Switch A endpoint, single relay or ordered multi-relay requirements, build a complete sequence hint on rejection, then release a valid echo.
 - **L706–L707 — `_add_record_sample()`:** Append one time/position sample to the current take.
 - **L710–L711 — `_track_passes_waypoint()`:** Return whether a route reaches a single checkpoint within its radius.
@@ -396,7 +398,7 @@ This function index matches source blob SHA `f8e092e49b568b63eb2c48b8a5a6f2ede58
 - **L833–L851 — `_check_sentinel_collision()`:** Return player to spawn; cancel and clear unfinished take to prevent a fake teleport.
 - **L854–L871 — `_check_memory_shard_collection()`:** Collect each optional shard once, reveal lore, persist progress, and announce SIGNAL RESTORED when the last memory is found.
 - **L874–L888 — `_update_timed_gate()`:** Tick timed gates only during gameplay; timeout closes before the barrier, latches a missed attempt, or preserves power after crossing.
-- **L891–L930 — `_check_puzzle_state()`:** Evaluate Switch A, hold/toggle Switch B, timed-window/retry state and portal arrival.
+- **L891–L930 — `_check_puzzle_state()`:** Evaluate Switch A, hold/toggle Switch B, require the echo to be settled for toggle rooms, timed-window/retry state and portal arrival.
 - **L933–L953 — `_complete_level()`:** Guard against duplicate completion, increment completion/unlock state, save and show completion panel.
 - **L956–L960 — `_on_next_level_pressed()`:** Advance to next chamber or restart campaign.
 - **L963–L964 — `_on_replay_pressed()`:** Restart current chamber from completion UI.
@@ -471,7 +473,7 @@ This function index matches source blob SHA `f8e092e49b568b63eb2c48b8a5a6f2ede58
 - **L179–L199:** Verify settings defaults, preference persistence, handedness and speed normalization.
 - **L200–L203:** Assertion helper.
 
-### `tests/game_flow_smoke.gd` (727 lines, blob SHA `cb002c033d96ad184378246bf938557727b4d4a5`)
+### `tests/game_flow_smoke.gd` (735 lines, blob SHA `8a391362af87fe3b5f145653ead8ee70b648b36d`)
 - **L1–L10:** Integration harness, main scene, relay/level/progress preloads.
 - **L13–L14:** Defer integration test entry point.
 - **L17–L85:** Run UI/shards/options, Latch Protocol, single/two-/three-relay, Fracture Clock, lifecycle pause, recording limit/feedback, sentinel/reset/portal, and timed-gate suites.
@@ -486,13 +488,13 @@ This function index matches source blob SHA `f8e092e49b568b63eb2c48b8a5a6f2ede58
 - **L290–L319:** Collect final shard through pickup path and verify restored-signal reward; restore user's original campaign values afterward.
 - **L322–L350:** Archive status, recovered/unfound lore, all-memories reward, and dynamic room count.
 - **L354–L383:** Options integration for speed presets and right/left joystick sides.
-- **L387–L438:** Latch Protocol toggle behavior, required echo state, button visibility, leaving B, E shortcut, and restart reset.
-- **L442–L481:** Static Bloom single Relay Beacon requirement and segment-crossing acceptance.
-- **L485–L536:** Chorus Route rejects reverse order, accepts correct order, and verifies linked visual state.
-- **L540–L594:** Triune Relay rejects an out-of-order three-relay route, accepts Relay 1 → Relay 2 → Relay 3 → Switch A, and verifies all three linked states.
-- **L598–L661:** Fracture Clock rejects an out-of-order route with a complete hint, accepts the valid route, opens its 4.5-second gate, and preserves portal power after crossing.
-- **L665–L720:** Pulse Lock timer start, full/partial/empty timer-bar ratio, real-frame countdown, pause freeze, timeout, retry re-arm and powered exit after crossing.
-- **L723–L726:** Shared assertion helper.
+- **L387–L446:** Latch Protocol toggle behavior, button visibility, missing/still-playing echo rejection, leaving B, keyboard E, and restart reset.
+- **L450–L489:** Static Bloom single Relay Beacon requirement and segment-crossing acceptance.
+- **L493–L544:** Chorus Route rejects reverse order, accepts correct order, and verifies linked visual state.
+- **L548–L602:** Triune Relay rejects an out-of-order three-relay route, accepts Relay 1 → Relay 2 → Relay 3 → Switch A, and verifies all three linked states.
+- **L606–L669:** Fracture Clock rejects an out-of-order route with a complete hint, accepts the valid route, opens its 4.5-second gate, and preserves portal power after crossing.
+- **L673–L728:** Pulse Lock timer start, full/partial/empty timer-bar ratio, real-frame countdown, pause freeze, timeout, retry re-arm and powered exit after crossing.
+- **L731–L734:** Shared assertion helper.
 
 ### `scenes/main.tscn` (13 lines)
 - **L1–L3:** Scene resource/script declaration.
@@ -516,12 +518,12 @@ This function index matches source blob SHA `f8e092e49b568b63eb2c48b8a5a6f2ede58
 
 ## 6. Current verification status — be precise
 
-- **Latest passing code/test run:** [Godot CI run 179](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40401941921) passed on both Godot 4.4.0 and 4.7.2. It includes the functional Latch Protocol toggle button/E shortcut and reset tests, plus the eleven-room schema, complete ordered-relay rejection hints, and timed-gate bar tests.
+- **Latest passing code/test run:** [Godot CI run 185](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40402444543) passed on both Godot 4.4.0 and 4.7.2. It includes the functional Latch Protocol toggle button/E shortcut, missing/still-playing echo rejection, and reset tests, plus the eleven-room schema, complete ordered-relay rejection hints, and timed-gate bar tests.
 - **Triune Relay:** wrong order Relay 1 → Relay 3 → Relay 2 → Switch A is rejected; the correct route is accepted and all three markers become linked. Run 157 passed these assertions.
 - **Fracture Clock:** combines the same ordered route mechanic with the timed-gate rule; run 157 passed the integration test and catalog validation. The initial over-specific schema assertion was corrected so a campaign can contain more than one three-relay room.
 - **Timed-gate bar:** run 165 passed checks that the bar ratio starts at 1.0, tracks the timer proportionally after a frame, and reaches zero after timeout.
 - **Relay feedback:** run 173 passed both the two-relay and three-relay rejection-message assertions, including Fracture Clock's invalid-order attempt.
-- **Latch Protocol:** run 179 passed button visibility, echo prerequisite, latch persistence after leaving B, keyboard E, and reset cleanup assertions.
+- **Latch Protocol:** run 179 passed button visibility, echo prerequisite, latch persistence after leaving B, keyboard E, and reset cleanup assertions. Run 185 additionally verifies the echo must finish playback before latching.
 - **Previous verification:** run 140 passed the all-memory restored-signal reward; run 122 passed Pulse Lock countdown, pause freeze, timeout closure, retry latch/re-arm, and portal power after crossing.
 - **Source hashes:** current `scripts/game.gd` blob SHA is `f8e092e49b568b63eb2c48b8a5a6f2ede58a3b8b` (1289 lines); current `scripts/data/level_catalog.gd` blob SHA is `f19c6cbce0cbeb70e20615b759bdc54b4549ed2c` (324 lines); current `tests/headless_smoke.gd` blob SHA is `22ff362e952961c674b0fa40302236f184b13e24` (203 lines); current gameplay-test blob SHA is `cb002c033d96ad184378246bf938557727b4d4a5` (727 lines). Sections 4 and 5 are keyed to these current files.
 - **Device QA:** not performed by this assistant. The game has not been manually run in the user's Godot editor or on a physical Android device during this pass.
@@ -572,6 +574,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Add a shrinking amber progress bar to the timed-gate countdown and verify full/partial/empty ratio behavior in [run 165](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40401020392) on both Godot versions.
 - [x] Make ordered-route rejection hints list every relay in sequence and verify two-/three-relay feedback plus Fracture Clock's invalid route in [run 173](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40401469061).
 - [x] Implement Latch Protocol's actual toggle state, button and E shortcut; verify the echo prerequisite, persistent gate opening, button visibility and restart reset in [run 179](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40401941921).
+- [x] Tighten Latch Protocol so the echo must be finished playing and settled on A before B can latch; verify on both Godot versions in [run 185](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40402444543).
 - [ ] Ask for / perform a local pull and open the project in the user's Godot 4.4 editor to inspect the live route preview and confirm visuals on the actual machine.
 - [x] Verify Memory Archive and Options UI, speed presets, and left-handed joystick region on both Godot versions in run 82.
 - [x] Update this progress file, current source/test blob hashes, and exact line maps for Triune Relay and Fracture Clock.
