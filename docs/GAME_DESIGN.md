@@ -35,7 +35,7 @@ The eleven current chambers progress from the basic two-switch echo rule through
 - **Static Bloom:** uses a long route, wide sentinel sweep, and one required Relay Beacon checkpoint.
 - **Chorus Route:** requires two Relay Beacons to be encountered in order within the recorded route, not just somewhere along the path.
 - **Pulse Lock:** opens a 3.5-second crossing window when the echo holds A and the player holds B. If the player is still on the entrance side when the window expires, the gate closes and both switches must be released/rearmed for another attempt. A countdown label and shrinking amber bar show the remaining window. Once the player crosses the barrier in time, the portal remains powered.
-- **Latch Protocol:** Switch B is a toggle. Activate it while the echo holds A, then leave the switch; the latch stays active so the player can cross the gate without standing on B.
+- **Latch Protocol:** Switch B is a toggle. The player must be near B while the echo holds A, then tap the dedicated LATCH SWITCH B button or press E. The switch stays active after the player leaves it, allowing a clean crossing to the portal. Restarting the room clears the latch.
 - **Triune Relay:** requires three Relay Beacons to be crossed in order before the route finishes on Switch A. Skipping or reversing a checkpoint invalidates the recording.
 - **Fracture Clock:** combines three ordered Relay Beacons with a 4.5-second timed gate. The route must be valid before the player can use the echo to open the timed crossing.
 
