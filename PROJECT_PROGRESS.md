@@ -33,6 +33,20 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 
 ## 2. Latest work in this development pass
 
+### Godot 4.4 compile failure: EchoTrack self-reference
+**Reported by the user:** Godot 4.4 produced `Identifier not found: EchoTrack` at `res://scripts/core/echo_track.gd:20`. That caused the echo script to fail compilation; `scripts/game.gd` could not compile its dependent script, and subsequent `clear()` calls failed because the track variables were `Nil`.
+
+**Root cause:** `echo_track.gd` referenced the global name `EchoTrack` inside its own `copy_track()` method (`EchoTrack.new()`) and its return annotation. This was unnecessarily dependent on Godot's global script-class registration/cache even though all in-repository consumers already load the script with `preload()`.
+
+**Fix committed:**
+- `scripts/core/echo_track.gd:L1–L5`: removed `class_name EchoTrack`; the script remains a `RefCounted` resource and is instantiated through preloaded script references.
+- `scripts/core/echo_track.gd:L19–L25`: `copy_track()` no longer types its return as the global `EchoTrack` class and instantiates the same resource using `get_script().new()`, then copies all samples.
+- `scripts/game.gd:L17–L20` and `L34–L39`: already uses the `ECHO_TRACK_SCRIPT = preload(...)` resource and so required no modification. Its previous `Nil.clear()` errors were downstream symptoms, not separate root causes.
+- `tests/headless_smoke.gd:L39–L44`: added a regression check that a copied track's script is exactly the preloaded resource, as well as retaining copy independence/interpolation tests.
+- Code fix commit: `5179b423d0d00d4a2ee807bc9d621d376b04b49a`.
+- Regression-test commit: `3a02e78abafe8c5cd1bb923e2e00b644b5a9c3f7`.
+- [Godot CI run 21](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385871675) passed on Godot 4.4.0 and 4.7.2, including the new regression assertion.
+
 ### Mobile lifecycle pause hardening
 **Changed:** `scripts/game.gd` and `tests/game_flow_smoke.gd`.
 
@@ -53,7 +67,7 @@ This change is covered by an automated headless integration test. It is **not ye
 | `project.godot` | Application name, icon, landscape 1280×720 viewport, canvas-item stretch, compatibility renderer and WASD/arrow input map. |
 | `scenes/main.tscn` | Very small main scene: full-rect `Control` attached to `scripts/game.gd`. |
 | `scripts/game.gd` | Main controller, menu/HUD construction, player movement, echo recording/playback, puzzle loop, sentinel, save flow, and all procedural rendering. **728 lines in the snapshot documented here; it is the largest refactor target later, but refactor only after tests protect behavior.** |
-| `scripts/core/echo_track.gd` | Data-only, timestamped `EchoTrack`; stores points, clamps timestamps to nondecreasing order, copies tracks, returns duration, interpolates route positions, and holds endpoint outside the timestamp range. |
+| `scripts/core/echo_track.gd` | Data-only `RefCounted` script loaded through preloaded script resources; avoids global `class_name` lookup; stores points, clamps timestamps to nondecreasing order, copies tracks, returns duration, interpolates route positions, and holds endpoint outside the timestamp range. |
 | `scripts/data/level_catalog.gd` | Three authored level dictionaries plus defensive copy accessor and campaign-data validator. |
 | `scripts/data/progress_store.gd` | Versioned local save boundary (`user://echopost_save.cfg`) using `ConfigFile`; defaults safely when save is absent/unreadable and clamps unlocked level to campaign size. |
 | `tests/headless_smoke.gd` | Data-layer smoke tests for track order/interpolation/copying, level catalog validation/defensive copying, save/load and unlock clamping. |
@@ -135,13 +149,13 @@ The following is a **line-accurate index for the controller blob SHA shown at th
 
 ## 5. Exact line map — supporting scripts and tests
 
-### `scripts/core/echo_track.gd` (58 lines, blob SHA `2035917be5d51e8c18a7464c94510f6180d873f7`)
-- **L1–L5:** `EchoTrack` class declaration and array of dictionaries shaped like `{"t": timestamp, "p": Vector2}`.
+### `scripts/core/echo_track.gd` (60 lines, blob SHA `9a433129a0cb8b04d9ab55c0964aeb4683ddab3a`)
+- **L1–L5:** `RefCounted` script header, purpose/comment about avoiding global `class_name` cache, and array of dictionaries shaped like `{"t": timestamp, "p": Vector2}`.
 - **L8–L9:** Clear all recorded samples.
 - **L12–L16:** Append sample; time is nonnegative and never earlier than the previous sample.
-- **L19–L23:** Deep-ish route copy into a new EchoTrack, so adding to the copy does not mutate the original array.
-- **L26–L29:** Route duration from the final timestamp; empty route is zero seconds.
-- **L32–L57:** Position lookup: handles empty/before-first/after-last times, walks consecutive samples, linearly interpolates between points and handles tiny/duplicate timestamp spans.
+- **L19–L25:** Copy route using `get_script().new()` and append duplicate sample dictionaries; this is the specific Godot 4.4 self-reference fix.
+- **L28–L31:** Route duration from the final timestamp; empty route is zero seconds.
+- **L34–L59:** Position lookup: handles empty/before-first/after-last times, walks consecutive samples, linearly interpolates between points and handles tiny/duplicate timestamp spans.
 
 ### `scripts/data/level_catalog.gd` (87 lines, blob SHA `b9d35ba7feda149debddb3f31fb728fc319d9069`)
 - **L1–L3:** RefCounted data holder and its purpose.
@@ -155,13 +169,14 @@ The following is a **line-accurate index for the controller blob SHA shown at th
 - **L8–L16:** Load/default/clamp behavior; unknown future save versions are not read into current state.
 - **L19–L24:** Write save version and campaign unlock/completion count via ConfigFile.
 
-### `tests/headless_smoke.gd` (79 lines, blob SHA `b236c908828a01663e521c0d72497f17c26a0a50`)
-- **L1–L8:** Test harness and preloads; temp save path is separate from the real campaign save.
-- **L11–L22:** Run tests and exit nonzero if any assertion fails.
-- **L25–L43:** Timestamp ordering, duration, interpolation, endpoint holding and copy independence.
-- **L46–L60:** Campaign count/schema validation, required data, Vector2 spawn, and defensive-copy behavior.
-- **L62–L73:** Save/load values, clamping to a smaller campaign and removal of temp save.
-- **L75–L79:** Shared assertion helper.
+### `tests/headless_smoke.gd` (80 lines, blob SHA `ba642740ee18a93b5f45b7d3283f1c352615e1bc`)
+- **L1–L8:** Test harness and preloads; EchoTrack is intentionally loaded as a script resource, not a global class; temp save path is separate from the real campaign save.
+- **L13–L22:** Run tests and exit nonzero if any assertion fails.
+- **L25–L37:** Timestamp ordering, duration, interpolation and endpoint holding.
+- **L39–L44:** Regression coverage for copy script identity, copy independence, and interpolation after adding a sample to the copy.
+- **L47–L60:** Campaign count/schema validation, required data, Vector2 spawn, and defensive-copy behavior.
+- **L63–L73:** Save/load values, clamping to a smaller campaign and removal of temp save.
+- **L76–L80:** Shared assertion helper.
 
 ### `tests/game_flow_smoke.gd` (89 lines, blob SHA `ca0fb60d0cf8e261170ea60d00f22f60cbe79a57`)
 - **L1–L8:** Test harness, main scene and EchoTrack preload.
@@ -192,8 +207,9 @@ The following is a **line-accurate index for the controller blob SHA shown at th
 
 ## 6. Current verification status — be precise
 
-- **Latest completed workflow:** [Godot checks run 18](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385238320) passed on commit `19fb023877d8b6c65796ae6c5acaac55c4e1b4ef`. Both jobs completed successfully: Godot 4.4.0 and Godot 4.7.2. Each job imports/parses the project and runs the data-layer and gameplay smoke tests.
-- **Lifecycle-pause source/test validation:** this passing run includes the lifecycle pause code in `scripts/game.gd:L69–L86` and its integration assertions in `tests/game_flow_smoke.gd:L68–L83`. No runtime or test source changes have been made since the code-bearing changes already documented above; later commits updated documentation/handoff notes.
+- **Latest completed code + regression-test workflow:** [Godot checks run 21](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385871675) passed on commit `3a02e78abafe8c5cd1bb923e2e00b644b5a9c3f7`. Both jobs completed successfully: Godot 4.4.0 and Godot 4.7.2. Each job imports/parses the project and runs data-layer and gameplay smoke tests; the new EchoTrack self-reference regression test passed.
+- **Previously completed code-fix workflow:** [run 20](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385850496) also passed on both versions after the EchoTrack implementation was changed and before the extra regression assertion was committed.
+- **Lifecycle-pause source/test validation:** still covered by run 21, including `scripts/game.gd:L69–L86` and `tests/game_flow_smoke.gd:L68–L83`.
 - **Local device test:** not performed by this assistant. Do not imply the game was launched in the user's Godot editor or on a physical phone.
 - **Android APK/export:** no APK has been built or attached. Android export preset, signing, package identity, export templates/SDK/JDK and real-device checks remain.
 - **Runtime quality:** automated smoke tests are not a substitute for manually playing all three rooms at actual mobile resolution.
@@ -229,11 +245,11 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 ## 8. Prioritized next steps
 
-### P0 — Verify this change and prevent regressions
-- [x] Verify the lifecycle pause code/test commit with CI: run 14 passed on Godot 4.4.0 and 4.7.2.
-- [x] Verify the current snapshot in CI: run 18 passed on Godot 4.4.0 and 4.7.2. The next progress-file-only edit may trigger another workflow run, but it does not change game/test source.
-- [ ] Fix any Godot 4.4.0 or 4.7.2 warnings/errors triggered by the lifecycle test.
-- [ ] Ensure `docs/BUILD_STATUS.md`, `docs/ROADMAP.md`, README, and this file describe the same current status.
+### P0 — Keep the project compiling and the handoff current
+- [x] Fix Godot 4.4 `Identifier not found: EchoTrack` self-reference in `scripts/core/echo_track.gd:L19–L25`.
+- [x] Add a regression assertion for preloaded script identity at `tests/headless_smoke.gd:L39–L44`.
+- [x] Verify the code fix and regression test in [run 21](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385871675): Godot 4.4.0 and 4.7.2 both passed.
+- [ ] Ask for / perform a local pull and run the project in the user's Godot 4.4 editor to confirm the same reported error is gone on the actual machine.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
 
 ### P1 — Core mechanic test coverage
@@ -269,7 +285,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 2. Check the most recent CI run before modifying code. A workflow run for a commit older than the code currently on `main` does not verify the current code.
 3. Choose **one focused improvement** at a time. Make changes in `main` only as permitted by the user/project workflow, and don't claim the project is finished.
 4. Test changes with Godot CI or available local Godot. Distinguish passed tests, tests not run, and manual device checks.
-5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `5fa29fa19f67c542a601a51df39636ef86bab7cc`; if that blob SHA differs after edits, regenerate it.
+5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `5fa29fa19f67c542a601a51df39636ef86bab7cc`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
 6. Update `PROJECT_PROGRESS.md` in the same development pass as source changes. Record the new commit(s), source hashes/line references, CI URL/result and what the next session should do.
 7. Keep this game offline-capable and dependency-light. Never add network accounts, telemetry, uploads, payment or ads as an incidental code change.
 8. Don't produce an APK/release claim unless an actual export and install verification were completed.
