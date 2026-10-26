@@ -9,9 +9,9 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Desktop movement and touchscreen virtual joystick.
 - [x] Record, stop, replay, and linger behavior for one echo.
 - [x] Two-switch gate and exit loop.
-- [x] Three playable room configurations.
+- [x] Six authored room layouts with varied switch positions and sentinel patrol patterns.
 - [x] Moving sentinel in later rooms.
-- [x] Chapter unlocks and local save data.
+- [x] Chapter unlocks, local save data, and a scrollable chapter selector.
 - [x] Separate echo-track, level-catalog, and progress-store code from the main scene.
 - [x] README, design notes, roadmap, and contributor guidance.
 - [ ] Run the project in the Godot editor and fix any engine-version issues (requires a Godot 4 engine run).
