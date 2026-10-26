@@ -23,9 +23,9 @@ Make players feel that a successful run leaves a useful trace in the world. The 
 5. The gate opens; reach the portal to complete the room.
 6. Unlock the next chamber; progress is stored locally.
 
-## Current early campaign: eight chambers
+## Current early campaign: ten chambers
 
-The current eight chambers progress from the basic two-switch echo rule to route checkpoints and a short timed-gate crossing. They are a content foundation, not the final campaign.
+The ten current chambers progress from the basic two-switch echo rule through patrols, route checkpoints, a timed crossing, a latched toggle switch, and a three-beacon ordered route. They are a content foundation, not the final campaign.
 
 - **The First Echo:** a safe introduction to recording, echo playback, and both switches.
 - **Long Memory:** introduces the roaming sentinel and separates Switch A from the real player's destination.
@@ -35,8 +35,10 @@ The current eight chambers progress from the basic two-switch echo rule to route
 - **Static Bloom:** uses a long route, wide sentinel sweep, and one required Relay Beacon checkpoint.
 - **Chorus Route:** requires two Relay Beacons to be encountered in order within the recorded route, not just somewhere along the path.
 - **Pulse Lock:** opens a 3.5-second crossing window when the echo holds A and the player holds B. If the player is still on the entrance side when the window expires, the gate closes and both switches must be released/rearmed for another attempt. Once the player crosses the barrier in time, the portal remains powered.
+- **Latch Protocol:** Switch B is a toggle. Activate it while the echo holds A, then leave the switch; the latch stays active so the player can cross the gate without standing on B.
+- **Triune Relay:** requires three Relay Beacons to be crossed in order before the route finishes on Switch A. Skipping or reversing a checkpoint invalidates the recording.
 
-The chapter selector scrolls so future rooms do not collide with the navigation controls. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. New switch types, checkpoints, moving platforms, and more varied puzzle rules remain future work; the eight current rooms introduce a few additional rules but are not eight wholly distinct mechanics.
+The chapter selector scrolls so future rooms do not collide with the navigation controls. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. Moving platforms, multi-echo puzzles, checkpoints and more varied puzzle rules remain future work; the ten current rooms are still a foundation rather than a finished campaign.
 
 ## Echo rules
 
@@ -45,10 +47,10 @@ The chapter selector scrolls so future rooms do not collide with the navigation 
 - Echo playback follows recorded samples in time order.
 - When playback ends, the echo holds its final recorded position temporarily.
 - Echoes press switches by occupying their active area; they do not push the real player or change the recording.
-- A room may require route checkpoints. Static Bloom's `echo_waypoint` requires crossing one Relay Beacon; Chorus Route's `echo_waypoints` array requires Relay 1 then Relay 2 in path order. The game checks the nearest point on each sample-to-sample line segment so crossings between samples count. Wrong order or a missed checkpoint is rejected with explicit feedback.
+- A room may require route checkpoints. Static Bloom's `echo_waypoint` requires crossing one Relay Beacon; Chorus Route requires Relay 1 then Relay 2, and Triune Relay requires Relay 1, Relay 2, then Relay 3, all in path order. The game checks the nearest point on each sample-to-sample line segment so crossings between samples count. Wrong order or a missed checkpoint is rejected with explicit feedback.
 - Pulse Lock defines `gate_open_seconds`. When both switches activate it, the timer ticks only during PLAYING state; timeout closes the gate if the player has not crossed the barrier. A missed attempt stays latched until the player leaves a switch, so standing still cannot immediately reopen the gate. Crossing the barrier before timeout permanently powers the portal for that room.
 - Sentinel contact returns the player to the chamber entrance. If the player is still recording, that unfinished take is cancelled and discarded rather than saving a fake teleport back to spawn. Already-released echo behavior is separate from the unfinished take.
-- Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. The Memory Archive can revisit a recovered fragment later. Recovering all eight shards reveals a final “signal restored” reward in the play status and Archive. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
+- Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. The Memory Archive can revisit a recovered fragment later. Recovering all ten shards reveals a final “signal restored” reward in the play status and Archive. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
 - Save schema version 2 stores the collected room indices. Version 1 saves remain loadable and begin with no Memory Shards collected; duplicate, negative, and out-of-campaign indices are filtered during loading.
 - A future online version must validate uploaded recordings and isolate them from executable code. A recording should be data only, never a script.
 
@@ -69,14 +71,14 @@ A network of abandoned courier stations has lost its original inhabitants. A sma
 
 - **Act I — Signal:** learn movement, recording, latching switches, doors, and safe resets.
 - **Act II — Interference:** moving sentinels, timed platforms, one-way routes, and rooms where the recording must take a longer path.
-- **Act I extension — Chorus Route:** an ordered pair of Relay Beacons teaches players to plan a route through more than one required checkpoint before ending on Switch A.
+- **Act I extension — Relay sequence:** Chorus Route introduces an ordered pair of Relay Beacons; Triune Relay asks the player to plan three distinct checkpoints before ending on Switch A.
 - **Act III — Relay:** multi-echo puzzles, multiple recording anchors, and chained rooms that reinterpret earlier mechanics.
 - **Post-launch — Shared traces:** player-created echoes, curated community challenges, and a daily featured puzzle, contingent on moderation and backend capacity.
 
 ### Future mechanics
 
 - Multiple recording slots with explicit limits.
-- Moving platforms and switch types (hold, toggle, timed, sequence).
+- Moving platforms and switch types (hold, toggle, timed, sequence); Latch Protocol is the first toggle-switch implementation.
 - Ordered multi-relay route checkpoints and a retryable timed gate; the first implementations are Chorus Route and Pulse Lock, with more combinations planned only after usability testing.
 - Echo-safe surfaces and echo-only sensors.
 - More optional Memory Shards with branching lore fragments, never required to finish the main path.
