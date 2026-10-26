@@ -465,7 +465,10 @@ func _update_memory_archive() -> void:
 		memory_archive_title_labels[i].add_theme_color_override("font_color", Color(0.82, 0.68, 1.0) if found else Color(0.48, 0.57, 0.68))
 		memory_archive_lore_labels[i].text = str(room["shard_lore"]) if found else "No memory recovered. Find the violet Memory Shard in this chamber."
 		memory_archive_lore_labels[i].add_theme_color_override("font_color", Color(0.72, 0.82, 0.92) if found else Color(0.43, 0.51, 0.61))
-	memory_archive_status_label.text = "MEMORIES RECOVERED: %d / %d" % [collected_shards.size(), LEVELS.size()]
+	if collected_shards.size() >= LEVELS.size():
+		memory_archive_status_label.text = "SIGNAL RESTORED — ALL MEMORIES FOUND"
+	else:
+		memory_archive_status_label.text = "MEMORIES RECOVERED: %d / %d" % [collected_shards.size(), LEVELS.size()]
 
 
 func _make_panel(panel_name: String, panel_position: Vector2, panel_size: Vector2) -> Panel:
@@ -815,7 +818,11 @@ func _check_memory_shard_collection() -> void:
 
 	collected_shards.append(current_level_index)
 	collected_shards.sort()
-	status_message = "MEMORY: " + str(level_data.get("shard_lore", "A memory from the courier network survived."))
+	var lore_fragment := str(level_data.get("shard_lore", "A memory from the courier network survived."))
+	if collected_shards.size() >= LEVELS.size():
+		status_message = "SIGNAL RESTORED — every courier memory has returned. " + lore_fragment
+	else:
+		status_message = "MEMORY: " + lore_fragment
 	_save_progress()
 	_update_menu_progress()
 	_update_hud()
