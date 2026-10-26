@@ -13,6 +13,7 @@ const GATE_X := 1080.0
 const PLAYER_RADIUS := 15.0
 const MOVE_SPEED := 255.0
 const RECORD_SAMPLE_STEP := 0.05
+const MIN_RECORD_SECONDS := 0.7
 const MAX_RECORD_SECONDS := 8.0
 const ECHO_TRACK_SCRIPT = preload("res://scripts/core/echo_track.gd")
 const LEVEL_CATALOG = preload("res://scripts/data/level_catalog.gd")
@@ -104,7 +105,8 @@ func _process(delta: float) -> void:
 	_update_player(safe_delta)
 
 	if is_recording:
-		recording_elapsed += safe_delta
+		# Clamp elapsed time before sampling so frame-step rounding cannot exceed the 8-second cap.
+		recording_elapsed = minf(recording_elapsed + safe_delta, MAX_RECORD_SECONDS)
 		record_sample_accumulator += safe_delta
 		if record_sample_accumulator >= RECORD_SAMPLE_STEP:
 			record_sample_accumulator = fmod(record_sample_accumulator, RECORD_SAMPLE_STEP)
@@ -394,8 +396,8 @@ func _on_record_pressed() -> void:
 func _finish_recording() -> void:
 	if not is_recording:
 		return
-	if recording_elapsed < 0.65:
-		status_message = "Record for at least 0.7 seconds so your echo has a route."
+	if recording_elapsed < MIN_RECORD_SECONDS:
+		status_message = "TOO SHORT — keep recording until at least 0.7 seconds, then stop on SWITCH A."
 		return
 	_add_record_sample(recording_elapsed, player_position)
 	is_recording = false
