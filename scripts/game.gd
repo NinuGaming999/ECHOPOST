@@ -24,6 +24,7 @@ var screen_state: ScreenState = ScreenState.MENU
 var current_level_index: int = 0
 var unlocked_level: int = 0
 var rooms_completed: int = 0
+var collected_shards: PackedInt32Array = PackedInt32Array()
 var level_data: Dictionary = {}
 
 var player_position: Vector2 = Vector2(160, 365)
@@ -117,6 +118,7 @@ func _process(delta: float) -> void:
 	_update_echo(safe_delta)
 	hazard_time += safe_delta
 	_check_sentinel_collision()
+	_check_memory_shard_collection()
 	_check_puzzle_state()
 	_update_hud()
 	queue_redraw()
@@ -242,7 +244,7 @@ func _build_complete_panel() -> void:
 func _build_help_panel() -> void:
 	help_panel = _make_panel("HelpPanel", Vector2(340, 145), Vector2(600, 430))
 	_make_label(help_panel, "HelpTitle", Vector2(28, 24), Vector2(544, 50), "HOW TO LEAVE AN ECHO", 27, Color(0.88, 0.97, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
-	var text := "1. Tap RECORD ECHO and move to Switch A.\n\n2. While standing on A, tap STOP & SEND. Your\n   recorded route will replay as a ghost.\n\n3. Move to Switch B while the echo finishes and\n   remains on A. The gate opens when both switches\n   are held at the same time.\n\n4. Reach the portal on the right to continue.\n\nWatch for sentinels in later chambers. They send\nyou back to your starting point if they touch you."
+	var text := "1. Tap RECORD ECHO and move to Switch A.\n\n2. While standing on A, tap STOP & SEND. Your\n   recorded route will replay as a ghost.\n\n3. Move to Switch B while the echo finishes and\n   remains on A. The gate opens when both switches\n   are held at the same time.\n\n4. Reach the portal on the right to continue.\n\nOptional MEMORY SHARDS reveal fragments from the\ncourier network. They never block the exit.\n\nSentinels send you back to the entrance; if you\nare recording, the unfinished take is lost."
 	_make_label(help_panel, "HelpText", Vector2(40, 83), Vector2(520, 270), text, 16, Color(0.67, 0.80, 0.89), HORIZONTAL_ALIGNMENT_LEFT)
 	var close := _make_button(help_panel, "HelpClose", Vector2(185, 360), Vector2(230, 44), "GOT IT", Color(0.04, 0.48, 0.63), Color(0.06, 0.65, 0.80), 16)
 	close.pressed.connect(func(): help_panel.hide())
@@ -493,6 +495,22 @@ func _check_sentinel_collision() -> void:
 		queue_redraw()
 
 
+func _check_memory_shard_collection() -> void:
+	if not level_data.has("memory_shard") or collected_shards.has(current_level_index):
+		return
+	var shard_position: Vector2 = level_data["memory_shard"]
+	if player_position.distance_to(shard_position) > 30.0:
+		return
+
+	collected_shards.append(current_level_index)
+	collected_shards.sort()
+	status_message = "MEMORY: " + str(level_data.get("shard_lore", "A memory from the courier network survived."))
+	_save_progress()
+	_update_menu_progress()
+	_update_hud()
+	queue_redraw()
+
+
 func _check_puzzle_state() -> void:
 	if door_open:
 		if player_position.distance_to(Vector2(1170, 365)) < 39.0:
@@ -593,7 +611,7 @@ func _update_chapter_buttons() -> void:
 
 func _update_menu_progress() -> void:
 	if menu_progress_label:
-		menu_progress_label.text = "CHAMBERS DISCOVERED: %d / %d" % [unlocked_level + 1, LEVELS.size()]
+		menu_progress_label.text = "CHAMBERS DISCOVERED: %d / %d   •   MEMORIES: %d / %d" % [unlocked_level + 1, LEVELS.size(), collected_shards.size(), LEVELS.size()]
 	if start_button:
 		start_button.text = "CONTINUE JOURNEY  •  %02d" % (unlocked_level + 1)
 	_update_chapter_buttons()
@@ -627,10 +645,11 @@ func _load_progress() -> void:
 	var saved: Dictionary = PROGRESS_STORE.load_progress(LEVELS.size())
 	unlocked_level = int(saved["unlocked_level"])
 	rooms_completed = int(saved["rooms_completed"])
+	collected_shards = saved.get("collected_shards", PackedInt32Array())
 
 
 func _save_progress() -> void:
-	var error: int = PROGRESS_STORE.save_progress(unlocked_level, rooms_completed)
+	var error: int = PROGRESS_STORE.save_progress(unlocked_level, rooms_completed, PROGRESS_STORE.SAVE_PATH, collected_shards)
 	if error != OK:
 		push_warning("Could not save campaign progress. Error code: %s" % error)
 
@@ -670,6 +689,8 @@ func _draw_room() -> void:
 	_draw_switch(level_data["plate_b"], "B", Color(1.0, 0.70, 0.34), player_position.distance_to(level_data["plate_b"]) < 43.0)
 	_draw_gate()
 	_draw_portal(Vector2(1170, 365), door_open)
+	if level_data.has("memory_shard") and not collected_shards.has(current_level_index):
+		_draw_memory_shard(level_data["memory_shard"])
 
 	if bool(level_data.get("hazard", false)):
 		var hazard_x := 640.0 + sin(hazard_time * float(level_data["hazard_speed"])) * float(level_data["hazard_amplitude"])
@@ -707,6 +728,26 @@ func _draw_room() -> void:
 		draw_string(ThemeDB.fallback_font, Vector2(915, 145), "GATE POWERED", HORIZONTAL_ALIGNMENT_CENTER, 160, 13, Color(0.35, 1.0, 0.77))
 	else:
 		draw_string(ThemeDB.fallback_font, Vector2(1035, 145), "SEALED", HORIZONTAL_ALIGNMENT_CENTER, 90, 13, Color(0.47, 0.61, 0.72))
+
+
+
+func _draw_memory_shard(position: Vector2) -> void:
+	# Optional collectible: a luminous violet crystal, distinct from both switches.
+	draw_circle(position, 30.0, Color(0.72, 0.44, 1.0, 0.08))
+	draw_arc(position, 20.0, 0.0, TAU, 48, Color(0.76, 0.50, 1.0, 0.72), 2.0, true)
+	var diamond := PackedVector2Array([
+		position + Vector2(0, -15),
+		position + Vector2(12, 0),
+		position + Vector2(0, 15),
+		position + Vector2(-12, 0),
+		position,
+	])
+	draw_colored_polygon(PackedVector2Array([diamond[0], diamond[1], diamond[4]]), Color(0.91, 0.76, 1.0, 0.96))
+	draw_colored_polygon(PackedVector2Array([diamond[0], diamond[4], diamond[3]]), Color(0.64, 0.35, 0.92, 0.96))
+	draw_colored_polygon(PackedVector2Array([diamond[3], diamond[4], diamond[2]]), Color(0.46, 0.23, 0.73, 0.96))
+	draw_colored_polygon(PackedVector2Array([diamond[4], diamond[1], diamond[2]]), Color(0.78, 0.55, 1.0, 0.96))
+	draw_polyline(PackedVector2Array([diamond[0], diamond[1], diamond[2], diamond[3], diamond[0]]), Color(0.94, 0.82, 1.0, 0.98), 1.5, true)
+	draw_string(ThemeDB.fallback_font, position + Vector2(20, 4), "MEMORY", HORIZONTAL_ALIGNMENT_LEFT, 70, 10, Color(0.86, 0.72, 1.0))
 
 
 func _draw_switch(position: Vector2, letter: String, tint: Color, active: bool) -> void:
