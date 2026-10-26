@@ -26,7 +26,7 @@ GitHub Actions run 25 passed on both Godot 4.4.0 and 4.7.2 after the recording c
 
 ## Next work items
 
-1. Continue expanding integration tests for recording-duration limits, sentinel resets, pause/restart behavior, and full room completion.
+1. Add integration coverage for restart while recording/replaying/paused and full portal completion; recording cap, too-short recording, and sentinel reset already have regression checks.
 2. Play through all three rooms with keyboard and touch input; tune switch radius, sentinel paths, timing, and messaging.
 3. Add viewport/safe-area handling and test the game at mobile aspect ratios; the current layout is authored for 1280×720.
 4. Expand the campaign with reusable puzzle mechanics, clear checkpoints, and a reliable level validator.
