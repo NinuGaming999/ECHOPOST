@@ -22,6 +22,7 @@ func _run_tests() -> void:
 	_test_chapter_select_layout(game)
 	_test_memory_shard_collection(game)
 	_test_memory_archive_ui(game)
+	_test_options_panel(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
@@ -298,6 +299,39 @@ func _test_memory_archive_ui(game: Control) -> void:
 
 	game.call("_show_menu")
 	_check(not bool(panel.visible), "Returning to the menu should close the Memory Archive panel.")
+
+
+
+func _test_options_panel(game: Control) -> void:
+	var previous_speed := float(game.get("player_move_speed"))
+	var previous_handedness := bool(game.get("left_handed_controls"))
+	game.call("_show_menu")
+	var menu_root: Control = game.get("menu_root")
+	_check(menu_root.get_node_or_null("OptionsButton") is Button, "The main menu should expose an Options button.")
+
+	game.call("_open_options")
+	var panel: Panel = game.get("options_panel")
+	_check(panel.visible, "Opening Options should show the settings panel.")
+	_check(game.get("speed_slow_button") is Button, "Options should expose the slow movement preset.")
+	_check(game.get("speed_normal_button") is Button, "Options should expose the normal movement preset.")
+	_check(game.get("speed_fast_button") is Button, "Options should expose the fast movement preset.")
+	_check(game.get("left_handed_button") is Button, "Options should expose the left-handed joystick setting.")
+
+	game.call("_set_move_speed", 200.0)
+	_check(is_equal_approx(float(game.get("player_move_speed")), 200.0), "Selecting SLOW should affect the actual player movement speed.")
+	game.call("_set_left_handed_controls", true)
+	_check(bool(game.get("left_handed_controls")), "The left-handed setting should update active control state.")
+	game.size = Vector2(1280, 720)
+	_check(not bool(game.call("_is_joystick_area", Vector2(100, 600))), "Left-handed mode should stop starting a joystick on the left side.")
+	_check(bool(game.call("_is_joystick_area", Vector2(1180, 600))), "Left-handed mode should allow starting a joystick on the right side.")
+
+	# Integration tests must restore the player's real stored preferences.
+	game.call("_set_move_speed", previous_speed)
+	game.call("_set_left_handed_controls", previous_handedness)
+	game.call("_show_menu")
+	_check(not bool(panel.visible), "Returning from Options should hide the settings panel.")
+	_check(is_equal_approx(float(game.get("player_move_speed")), previous_speed), "The test should restore the original movement speed.")
+	_check(bool(game.get("left_handed_controls")) == previous_handedness, "The test should restore the original handedness preference.")
 
 
 func _check(condition: bool, message: String) -> void:
