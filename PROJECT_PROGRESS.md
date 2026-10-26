@@ -122,7 +122,7 @@ This hardening pass addresses a real frame-step boundary issue and makes the min
 
 - `scripts/data/level_catalog.gd:L12–L101` now gives each of the six rooms a `memory_shard: Vector2` pickup point and a `shard_lore` fragment. The six shards are optional; they never gate Switch A/B, the exit, or campaign unlocking.
 - `scripts/data/level_catalog.gd:L133–L172` requires the new fields, validates nonempty lore, bounds the shard position to the room, and keeps it at least 60 units away from spawn/A/B so the collectible is not hidden under a core objective.
-- `scripts/game.gd:L27` adds `collected_shards` as a `PackedInt32Array` of room indices. The game checks pickup in `L130–L133` and collects a shard in `_check_memory_shard_collection()` at `L590–L603` when the player comes within 30 units. Collection displays the room's lore, persists the room index, refreshes the menu counters/archive and redraws.
+- `scripts/game.gd:L28` adds `collected_shards` as a `PackedInt32Array` of room indices. The game checks pickup in `L130–L133` and collects a shard in `_check_memory_shard_collection()` at `L723–L736` when the player comes within 30 units. Collection displays the room's lore, persists the room index, refreshes the menu counters/archive and redraws.
 - `scripts/game.gd:L837–L844` shows `MEMORIES: collected / six` in the menu progress line and updates the archive count. `L871–L875` loads and `L890–L893` saves collection with the campaign. `L917–L971` draws room objects including an uncollected shard; `_draw_memory_shard()` at `L991–L1007` renders a violet crystal labelled MEMORY.
 - `scripts/game.gd:L269–L276` explains in help that shards are optional and sentinels can destroy an unfinished take.
 - `scripts/data/progress_store.gd:L5` increments the save schema to version 2. `L8–L23` loads the old campaign fields and a normalized shard array; version-1 saves still load unlocked rooms/completion count and default to no shards. `L26–L37` persists shards; `L40–L58` sanitizes duplicate, negative and out-of-range indices.
@@ -321,7 +321,7 @@ This function index is line-accurate for source blob SHA `d8accd3fe98eb478c07203
 - **L40–L50:** Accept packed arrays or ordinary arrays, filter invalid values, deduplicate and sort.
 - **L53–L58:** Append one shard index only if it is nonnegative, within the supplied level count, and not already present.
 
-### `scripts/data/settings_store.gd` (40 lines, blob SHA `fd2e3f6c021acb6c917d3cb6a67cb1358fdf6ab8`)
+### `scripts/data/settings_store.gd` (40 lines, blob SHA `fd2c065bf2e6807f645449327b247a9e60cf19f3`)
 - **L1–L6:** RefCounted settings boundary, separate `user://echopost_settings.cfg` path, default speed 255 and supported speed presets 200/255/310.
 - **L9–L20:** Load preference defaults when the file is missing/unreadable; otherwise load and normalize movement speed and read left-handed mode.
 - **L23–L28:** Persist settings version, movement speed and joystick handedness separately from campaign progress.
