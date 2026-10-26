@@ -567,9 +567,9 @@ func _layout_responsive_ui() -> void:
 			if control != null:
 				control.position.x = center_x - control.size.x * 0.5
 		for button_name in ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]:
-			var menu_button := menu_root.get_node_or_null(button_name) as Control
-			if menu_button != null:
-				menu_button.position.x = center_x - menu_button.size.x * 0.5
+			var centered_button := menu_root.get_node_or_null(button_name) as Control
+			if centered_button != null:
+				centered_button.position.x = center_x - centered_button.size.x * 0.5
 		var version_label := menu_root.get_node_or_null("Version") as Control
 		if version_label != null:
 			version_label.position.y = size.y - 32.0
@@ -582,15 +582,16 @@ func _layout_responsive_ui() -> void:
 			level_hint_label.size.x = maxf(620.0, size.x - 380.0)
 		if is_instance_valid(status_label):
 			status_label.position = Vector2(center_x - 370.0, size.y - 110.0)
-		if is_instance_valid(game_hud.get_node_or_null("MoveTip")):
-			game_hud.get_node("MoveTip").position.y = size.y - 105.0
-		var menu_button := game_hud.get_node_or_null("MenuButton") as Control
+		var move_tip := game_hud.get_node_or_null("MoveTip") as Control
+		if move_tip != null:
+			move_tip.position.y = size.y - 105.0
+		var bottom_menu_control := game_hud.get_node_or_null("MenuButton") as Control
 		var record_control := game_hud.get_node_or_null("RecordButton") as Control
 		var latch_control := game_hud.get_node_or_null("LatchSwitchBButton") as Control
 		var reset_control := game_hud.get_node_or_null("ResetButton") as Control
 		var bottom_y := size.y - 66.0
-		if menu_button != null:
-			menu_button.position.y = bottom_y
+		if bottom_menu_control != null:
+			bottom_menu_control.position.y = bottom_y
 		if record_control != null:
 			record_control.position = Vector2(center_x - 260.0, bottom_y)
 		if latch_control != null:
