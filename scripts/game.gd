@@ -66,6 +66,26 @@ var next_level_button: Button
 var chapter_buttons: Array[Button] = []
 
 
+func _notification(what: int) -> void:
+	# Stop gameplay time when Android/iOS suspends the app, or when the app loses focus.
+	# We intentionally do not auto-resume: the player must explicitly tap RESUME.
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_pause_for_lifecycle()
+
+
+func _pause_for_lifecycle() -> void:
+	if screen_state != ScreenState.PLAYING:
+		return
+	screen_state = ScreenState.PAUSED
+	joystick_touch_index = -1
+	joystick_mouse_active = false
+	joystick_direction = Vector2.ZERO
+	pause_button.text = "RESUME"
+	status_message = "Paused automatically because ECHOPOST lost focus. Press RESUME to continue."
+	_update_hud()
+	queue_redraw()
+
+
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
