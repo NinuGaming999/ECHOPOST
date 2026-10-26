@@ -277,7 +277,7 @@ This function index matches source blob SHA `81b5c3c8703fdad0d92cf7c66d91ff96b3c
 - **L105–L113 — `_ready()`:** Set full-screen layout, seed decoration, load progress/settings, construct UI, and show the menu.
 - **L116–L140 — `_process()`:** Advance gameplay only while PLAYING; clamp delta/recording time, move/sample, update echo/hazard/shards/timed gate/puzzle, and redraw.
 - **L143–L173 — `_input()`:** Translate touchscreen and mouse gestures into virtual joystick input.
-- **L176–L183 — `_is_joystick_area()`:** Choose the virtual joystick hit area for the selected handedness while preserving bottom-button space.
+- **L176–L183 — `_is_joystick_area()`:** Choose virtual joystick hit area for selected handedness while preserving bottom-button space.
 - **L186–L188 — `_update_joystick()`:** Convert pointer offset from joystick origin into normalized movement.
 - **L191–L195 — `_create_stars()`:** Generate stable decorative star positions.
 - **L198–L205 — `_build_interface()`:** Construct menu, HUD, completion, help, chapter, Memory Archive, and Options panels.
@@ -388,24 +388,25 @@ This function index matches source blob SHA `81b5c3c8703fdad0d92cf7c66d91ff96b3c
 - **L162–L182:** Verify settings defaults, preference persistence, handedness and speed normalization.
 - **L185–L188:** Assertion helper.
 
-### `tests/game_flow_smoke.gd` (501 lines, blob SHA `a460147b3e9339119c2bcd6d1c0bbe5dd620069b`)
+### `tests/game_flow_smoke.gd` (541 lines, blob SHA `b9dc05924d0534286c11e29b53def19c81d26599`)
 - **L1–L10:** Integration harness, main scene, relay/level/progress preloads.
 - **L13–L14:** Defer integration test entry point.
-- **L17–L81:** Run the game-flow suite: UI/shards/options, single/ordered-relay, lifecycle pause, recording max/too-short, sentinel, reset, portal, invalid/valid route and gate checks.
-- **L85–L103:** Verify application pause preserves recording state and freezes recording plus timed-gate countdown.
-- **L106–L121:** Exercise the real frame loop at the eight-second recording boundary.
-- **L124–L135:** Too-short stop keeps recording active, creates no echo and explains the remedy.
-- **L138–L164:** Sentinel reset and cancellation of interrupted takes.
-- **L167–L204:** Restart clears active recording/echo/timers/gate/input and works from pause.
-- **L207–L230:** Powered portal completion is idempotent and the test restores original saved progress.
-- **L233–L248:** Chapter list uses scrollable layout for the full room set.
-- **L252–L281:** Memory Shard pickup, lore message, save and test-progress restoration.
-- **L285–L307:** Memory Archive shows collected and undiscovered entries.
-- **L311–L340:** Options integration for speed presets and right/left joystick sides.
-- **L344–L383:** Static Bloom's single Relay Beacon requirement and segment-crossing acceptance.
-- **L387–L438:** Chorus Route requires Relay 1 before Relay 2; reversed routes are rejected, correctly ordered routes are accepted, and markers reflect route order.
-- **L442–L494:** Pulse Lock opens a timed window, ticks in active frames, freezes while paused, closes before the barrier on timeout, requires leaving a switch to retry, and stays powered after a successful crossing.
-- **L497–L500:** Shared assertion helper.
+- **L17–L82:** Run UI/shards/options, single/ordered-relay, lifecycle pause, recording limit/feedback, sentinel/reset/portal, and timed gate suite.
+- **L86–L104:** Verify pause preserves recording and freezes recording/timed-gate timer.
+- **L107–L122:** Exercise real frame loop at the exact eight-second recording boundary.
+- **L125–L136:** Too-short stop keeps recording active, creates no echo and explains the remedy.
+- **L139–L165:** Sentinel reset and cancellation of interrupted takes.
+- **L168–L205:** Restart clears active recording/echo/timers/gate/input and works from pause.
+- **L208–L231:** Powered portal completion is idempotent and test restores saved progress.
+- **L234–L249:** Chapter list uses scrollable layout for all authored rooms.
+- **L253–L282:** Memory Shard pickup, lore message, save and test-progress restoration.
+- **L287–L316:** Collect final shard through pickup path and verify restored-signal reward; restore user's original campaign values afterward.
+- **L319–L347:** Archive status, recovered/unfound lore, all-memories reward, and dynamic room count.
+- **L351–L380:** Options integration for speed presets and right/left joystick sides.
+- **L384–L423:** Static Bloom single Relay Beacon requirement and segment-crossing acceptance.
+- **L427–L478:** Chorus Route rejects reverse order, accepts correct order, and verifies linked visual state.
+- **L482–L534:** Pulse Lock timer start, real-frame countdown, pause freeze, timeout, retry re-arm and powered exit after crossing.
+- **L537–L540:** Shared assertion helper.
 
 ### `scenes/main.tscn` (13 lines)
 - **L1–L3:** Scene resource/script declaration.
@@ -429,13 +430,14 @@ This function index matches source blob SHA `81b5c3c8703fdad0d92cf7c66d91ff96b3c
 
 ## 6. Current verification status — be precise
 
-- **Latest passing code/test run:** [Godot CI run 122](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40397091984) passed on both Godot 4.4.0 and 4.7.2 after the Pulse Lock countdown, frame-loop timer test, pause-freeze assertion and ordered-relay feedback fix.
-- **Ordered Relay validation:** [run 119](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40396769674) passed both versions after correcting the reverse-route test expectation; Relay 1 cannot appear linked when Relay 2 was encountered first.
-- **Pulse Lock validation:** run 122 checked parsing, data tests and integration coverage for active-frame countdown, pause freeze, timeout closure, retry lockout/re-arm, and portal power after crossing.
-- **Source hashes:** current `scripts/game.gd` blob SHA is `c96db82800a0f7e43104a11041965342628b830d` (1210 lines); current gameplay-test blob SHA is `a460147b3e9339119c2bcd6d1c0bbe5dd620069b` (501 lines). Sections 4 and 5 are keyed to these current files.
+- **Latest passing code/test run:** [Godot CI run 140](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40398632047) passed on both Godot 4.4.0 and 4.7.2. It includes the all-memory restored-signal reward, the dynamic Archive count assertion, and the preceding Pulse Lock/ordered-relay tests.
+- **All-memory reward:** the full pickup-path test confirms the final shard produces `SIGNAL RESTORED`, the Memory Archive displays the reward, and the tests restore the user's previous campaign values. Run 140 passed the relevant integration assertions.
+- **Ordered Relay validation:** [run 119](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40396769674) passed both versions after correcting the reverse-route expectation.
+- **Pulse Lock validation:** [run 122](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40397091984) passed active-frame countdown, pause freeze, timeout closure, retry lockout/re-arm, and portal power after crossing.
+- **Source hashes:** current `scripts/game.gd` blob SHA is `81b5c3c8703fdad0d92cf7c66d91ff96b3c94053` (1217 lines); current gameplay-test blob SHA is `b9dc05924d0534286c11e29b53def19c81d26599` (541 lines). Sections 4 and 5 are keyed to these current files.
 - **Device QA:** not performed by this assistant. The game has not been manually run in the user's Godot editor or on a physical Android device during this pass.
 - **Android export:** no APK built or attached. Android export preset, package identity, export templates, SDK/JDK, signing and real-device testing remain.
-- **Quality caveat:** automated tests verify logic, not visual clarity or whether the 3.5-second timed crossing feels fair on touch controls. Playtesting Pulse Lock at slow/normal/fast speeds is next.
+- **Quality caveat:** automated tests verify logic, not visual clarity or whether the 3.5-second timed crossing feels fair on touch controls. Playtesting Pulse Lock at slow/normal/fast speeds remains next.
 
 ### Commands to run in the repository root on Windows
 ```powershell
@@ -475,6 +477,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Verify the Relay Beacon requirement, invalid-waypoint validator, and between-sample route-crossing test in run 95 on both Godot versions.
 - [x] Verify ordered-relay order/linked-state regression in [run 119](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40396769674) on both Godot versions.
 - [x] Verify Pulse Lock countdown visuals/frame ticking, timer freeze during pause, timeout, retry latch and successful crossing in [run 122](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40397091984) on both Godot versions.
+- [x] Verify the all-shards restored-signal reward and dynamic Memory Archive count in [run 140](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40398632047) on both Godot versions.
 - [ ] Ask for / perform a local pull and open the project in the user's Godot 4.4 editor to inspect the live route preview and confirm visuals on the actual machine.
 - [x] Verify Memory Archive and Options UI, speed presets, and left-handed joystick region on both Godot versions in run 82.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
@@ -489,7 +492,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [ ] Test lifecycle focus-out as well as application-paused notification; physical mobile app switching still needs manual QA.
 - [ ] Play Pulse Lock at slow, normal and fast movement speeds and decide whether its 3.5-second window is fair.
 - [x] Expand the level validator for room names, route/switch spacing, sentinel tuning and Memory Shard placement/lore.
-- [x] Add one optional Memory Shard per room, a short lore message, progress counter, save schema v2, v1 save compatibility, and collection/persistence regression tests.
+- [x] Add one optional Memory Shard per room, a short lore message, progress counter, save schema v2, v1 save compatibility, collection/persistence regression tests, and a non-blocking all-shards restored-signal reward.
 
 ### P2 — Mobile usability before adding lots of content
 - [ ] Manually inspect scrollable chapter selection and the live route preview on the user's Godot editor/phone; then review narrow/tall aspect ratios, safe areas and landscape touch reach.
@@ -516,7 +519,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 2. Check the most recent CI run before modifying code. A workflow run for a commit older than the code currently on `main` does not verify the current code.
 3. Choose **one focused improvement** at a time. Make changes in `main` only as permitted by the user/project workflow, and don't claim the project is finished.
 4. Test changes with Godot CI or available local Godot. Distinguish passed tests, tests not run, and manual device checks.
-5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `d8accd3fe98eb478c0720371b6f8e4f93f901421`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
+5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `81b5c3c8703fdad0d92cf7c66d91ff96b3c94053`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
 6. Update `PROJECT_PROGRESS.md` in the same development pass as source changes. Record the new commit(s), source hashes/line references, CI URL/result and what the next session should do.
 7. Keep this game offline-capable and dependency-light. Never add network accounts, telemetry, uploads, payment or ads as an incidental code change.
 8. Don't produce an APK/release claim unless an actual export and install verification were completed.
