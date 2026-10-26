@@ -48,12 +48,13 @@ func _test_echo_track() -> void:
 
 
 func _test_level_catalog() -> void:
-	_check(LevelCatalog.LEVELS.size() >= 8, "The early campaign should contain at least eight chambers.")
+	_check(LevelCatalog.LEVELS.size() >= 10, "The early campaign should contain at least ten chambers.")
 	_check(LevelCatalog.validate_levels().is_empty(), "The campaign catalog should pass its own level-data validator.")
 	var names_seen: Dictionary = {}
 	var relay_room_found := false
 	var ordered_relay_room_found := false
 	var timed_gate_room_found := false
+	var triple_relay_room_found := false
 	for index in range(LevelCatalog.LEVELS.size()):
 		var level: Dictionary = LevelCatalog.get_level(index)
 		var level_name := str(level.get("name", ""))
@@ -68,6 +69,9 @@ func _test_level_catalog() -> void:
 			_check(level["echo_waypoints"] is Array, "Ordered relay checkpoints must be stored as an Array.")
 			if level["echo_waypoints"] is Array:
 				_check(level["echo_waypoints"].size() >= 2, "An ordered relay room should require at least two checkpoints.")
+				if level["echo_waypoints"].size() >= 3:
+					triple_relay_room_found = true
+					_check(str(level_name) == "Triune Relay", "The three-checkpoint room should be named Triune Relay.")
 				for waypoint in level["echo_waypoints"]:
 					_check(waypoint is Vector2, "Every ordered relay checkpoint must use a Vector2 position.")
 		if level.has("gate_open_seconds"):
@@ -86,6 +90,7 @@ func _test_level_catalog() -> void:
 	_check(relay_room_found, "The early campaign should include at least one single-relay room.")
 	_check(ordered_relay_room_found, "The early campaign should include a room with multiple ordered relay checkpoints.")
 	_check(timed_gate_room_found, "The early campaign should include a timed-gate room.")
+	_check(triple_relay_room_found, "The campaign should include a three-relay route challenge.")
 	var original_name := str(LevelCatalog.LEVELS[0]["name"])
 	var isolated_copy: Dictionary = LevelCatalog.get_level(0)
 	isolated_copy["name"] = "Changed only in this test copy"
