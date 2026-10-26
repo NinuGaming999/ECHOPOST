@@ -24,6 +24,7 @@ func _run_tests() -> void:
 	_test_all_memories_restore_signal(game)
 	_test_memory_archive_ui(game)
 	_test_options_panel(game)
+	_test_latch_protocol_switch(game)
 	_test_echo_waypoint_requirement(game)
 	_test_ordered_echo_waypoints(game)
 	_test_three_ordered_echo_waypoints(game)
@@ -380,6 +381,61 @@ func _test_options_panel(game: Control) -> void:
 	_check(not bool(panel.visible), "Returning from Options should hide the settings panel.")
 	_check(is_equal_approx(float(game.get("player_move_speed")), previous_speed), "The test should restore the original movement speed.")
 	_check(bool(game.get("left_handed_controls")) == previous_handedness, "The test should restore the original handedness preference.")
+
+
+
+func _test_latch_protocol_switch(game: Control) -> void:
+	game.call("_start_level", 8)
+	var room: Dictionary = game.get("level_data")
+	var latch_button: Button = game.get("latch_switch_button")
+	_check(str(room.get("plate_b_mode", "")) == "toggle", "Latch Protocol should configure Switch B as a toggle.")
+	_check(latch_button is Button and latch_button.visible, "Latch Protocol should show a dedicated LATCH SWITCH B button.")
+
+	var plate_a: Vector2 = room["plate_a"]
+	var plate_b: Vector2 = room["plate_b"]
+	game.set("echo_visible", true)
+	game.set("echo_playing", false)
+	game.set("echo_position", plate_a)
+	game.set("player_position", plate_b)
+	game.set("switch_b_latched", false)
+	game.call("_check_puzzle_state")
+	_check(not bool(game.get("door_open")), "Standing on Switch B must not activate a toggle switch before it is latched.")
+
+	latch_button.emit_signal("pressed")
+	_check(bool(game.get("switch_b_latched")), "Tapping LATCH SWITCH B while the echo holds A should latch the switch.")
+	game.call("_check_puzzle_state")
+	_check(bool(game.get("door_open")), "A latched Switch B and an echo on A should open the gate.")
+	game.set("player_position", Vector2(650, 500))
+	game.call("_check_puzzle_state")
+	_check(bool(game.get("door_open")), "Leaving a latched Switch B should not close the gate.")
+	game.call("_update_hud")
+	_check(str(latch_button.text) == "SWITCH B LATCHED", "The control should communicate that the gate has been opened by the latch.")
+
+	# The player cannot latch B before the echo is holding A.
+	game.call("_start_level", 8)
+	room = game.get("level_data")
+	plate_b = room["plate_b"]
+	game.set("player_position", plate_b)
+	game.set("echo_visible", false)
+	latch_button.emit_signal("pressed")
+	_check(not bool(game.get("switch_b_latched")), "Switch B must not latch before the echo holds A.")
+	_check(str(game.get("status_message")).begins_with("WAIT FOR ECHO"), "An early latch attempt should explain that the echo must hold A first.")
+
+	# Keyboard E is the desktop equivalent of tapping the dedicated button.
+	plate_a = room["plate_a"]
+	game.set("echo_visible", true)
+	game.set("echo_position", plate_a)
+	var latch_key := InputEventKey.new()
+	latch_key.keycode = KEY_E
+	latch_key.pressed = true
+	game.call("_input", latch_key)
+	_check(bool(game.get("switch_b_latched")), "Pressing E near Switch B should latch Switch B.")
+	game.call("_check_puzzle_state")
+	_check(bool(game.get("door_open")), "The keyboard latch action should activate the two-switch gate.")
+
+	game.call("_start_level", 0)
+	_check(not bool(game.get("switch_b_latched")), "Restarting a room should clear any previous toggle latch.")
+	_check(not bool(latch_button.visible), "The latch button should be hidden in rooms that use a hold switch.")
 
 
 
