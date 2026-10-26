@@ -193,7 +193,7 @@ The following is a **line-accurate index for the controller blob SHA shown at th
 ## 6. Current verification status — be precise
 
 - **Latest completed code-bearing CI run:** [Godot checks run 14](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40384700347) completed successfully on commit `6cbfb8f61da84ab6b5c627ef7fc65207939964ad`. Both the Godot 4.4.0 and 4.7.2 jobs succeeded, including project import/parse, data smoke tests, and gameplay integration tests for the new lifecycle pause behavior.
-- **Newer workflow state at the time of this note:** [run 15](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40384988830) was queued on the progress-file commit `d970f1820daea7676de67d4b7d5cfdf426bb5fff`; that commit only adds handoff documentation and does not change game/test source. Check the current newest run on the next session, but run 14 already verifies the lifecycle code and test change.
+- **Documentation-only workflow follow-up:** [run 15](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40384988830) subsequently completed successfully on the progress-file commit `d970f1820daea7676de67d4b7d5cfdf426bb5fff`. The later progress/build-status documentation commits caused runs 16 and 17; both were still in progress at last check and do not change game/test source. Run 14 remains the latest completed CI result that includes the actual lifecycle code and test changes. Check current Actions status before starting new work.
 - **Local device test:** not performed by this assistant. Do not imply the game was launched in the user's Godot editor or on a physical phone.
 - **Android APK/export:** no APK has been built or attached. Android export preset, signing, package identity, export templates/SDK/JDK and real-device checks remain.
 - **Runtime quality:** automated smoke tests are not a substitute for manually playing all three rooms at actual mobile resolution.
@@ -230,7 +230,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 ### P0 — Verify this change and prevent regressions
 - [x] Verify the lifecycle pause code/test commit with CI: run 14 passed on Godot 4.4.0 and 4.7.2.
-- [ ] Check that the newest documentation-triggered workflow also completes, then update this file if any new failure appears.
+- [ ] Check that the documentation-triggered workflows after run 15 complete, then update this file if any failure appears.
 - [ ] Fix any Godot 4.4.0 or 4.7.2 warnings/errors triggered by the lifecycle test.
 - [ ] Ensure `docs/BUILD_STATUS.md`, `docs/ROADMAP.md`, README, and this file describe the same current status.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
