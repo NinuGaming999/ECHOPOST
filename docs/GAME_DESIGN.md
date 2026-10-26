@@ -66,6 +66,7 @@ A network of abandoned courier stations has lost its original inhabitants. A sma
 
 - **Act I — Signal:** learn movement, recording, latching switches, doors, and safe resets.
 - **Act II — Interference:** moving sentinels, timed platforms, one-way routes, and rooms where the recording must take a longer path.
+- **Act I extension — Chorus Route:** an ordered pair of Relay Beacons teaches players to plan a route through more than one required checkpoint before ending on Switch A.
 - **Act III — Relay:** multi-echo puzzles, multiple recording anchors, and chained rooms that reinterpret earlier mechanics.
 - **Post-launch — Shared traces:** player-created echoes, curated community challenges, and a daily featured puzzle, contingent on moderation and backend capacity.
 
@@ -73,6 +74,7 @@ A network of abandoned courier stations has lost its original inhabitants. A sma
 
 - Multiple recording slots with explicit limits.
 - Moving platforms and switch types (hold, toggle, timed, sequence).
+- Ordered multi-relay route checkpoints; the first implementation is the Chorus Route chamber, with further combinations planned only after usability testing.
 - Echo-safe surfaces and echo-only sensors.
 - More optional Memory Shards with branching lore fragments, never required to finish the main path.
 - A level authoring/validation format separate from gameplay code.
