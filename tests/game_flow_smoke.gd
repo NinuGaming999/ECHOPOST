@@ -608,17 +608,20 @@ func _test_timed_gate_requires_crossing(game: Control) -> void:
 	game.call("_check_puzzle_state")
 	_check(bool(game.get("door_open")), "Holding both switches should open the Pulse Lock gate.")
 	_check(is_equal_approx(float(game.get("gate_open_timer")), gate_duration), "Opening Pulse Lock should start its authored countdown.")
+	_check(is_equal_approx(float(game.call("_get_gate_timer_ratio")), 1.0), "The visual timer bar should start completely full.")
 
 	# Exercise the real frame loop too: the gate countdown must tick during gameplay.
 	game.set("gate_open_timer", 2.0)
 	game.call("_process", 0.05)
 	_check(is_equal_approx(float(game.get("gate_open_timer")), 1.95), "Pulse Lock countdown should decrease by the frame delta while playing.")
+	_check(is_equal_approx(float(game.call("_get_gate_timer_ratio")), 1.95 / gate_duration), "The visual timer bar should shrink proportionally as the gate countdown advances.")
 
 	# Let the timer expire while the player still stands on Switch B. The gate
 	# should close and must not immediately reopen while the same hold persists.
 	game.set("gate_open_timer", 0.02)
 	game.call("_update_timed_gate", 0.03)
 	_check(not bool(game.get("door_open")), "The timed gate should close if the player does not cross before timeout.")
+	_check(is_zero_approx(float(game.call("_get_gate_timer_ratio")),), "The visual timer bar should be empty after the crossing window expires.")
 	_check(bool(game.get("timed_gate_failed")), "A missed window should require the player to leave a switch before retrying.")
 	game.call("_check_puzzle_state")
 	_check(not bool(game.get("door_open")), "The timed gate must not immediately reopen while both switches remain held.")
