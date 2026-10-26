@@ -29,6 +29,7 @@ func _run_tests() -> void:
 	_test_ordered_echo_waypoints(game)
 	_test_three_ordered_echo_waypoints(game)
 	_test_relay_timer_combo(game)
+	_test_dead_air_protocol(game)
 	_test_timed_gate_requires_crossing(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
@@ -666,6 +667,94 @@ func _test_relay_timer_combo(game: Control) -> void:
 	game.call("_update_timed_gate", 0.03)
 	_check(bool(game.get("door_open")), "Crossing Fracture Clock's barrier in time should keep the portal powered.")
 	_check(str(game.get("status_message")).contains("GATE CROSSED"), "The combined puzzle should explain that the portal remains powered after crossing.")
+	game.call("_start_level", 0)
+
+
+
+func _test_dead_air_protocol(game: Control) -> void:
+	game.call("_start_level", 11)
+	var room: Dictionary = game.get("level_data")
+	_check(str(room.get("name", "")) == "Dead Air Protocol", "The twelfth chamber should be Dead Air Protocol.")
+	_check(bool(room.get("hazard", false)), "Dead Air Protocol should activate the moving sentinel.")
+	_check(room.has("gate_open_seconds") and is_equal_approx(float(room.get("gate_open_seconds", 0.0)), 2.2), "Dead Air Protocol should use a 2.2-second gate.")
+	_check(room.has("echo_waypoints") and room["echo_waypoints"] is Array and room["echo_waypoints"].size() == 4, "Dead Air Protocol should require four ordered relays.")
+	if not room.has("echo_waypoints") or not room["echo_waypoints"] is Array or room["echo_waypoints"].size() != 4:
+		game.call("_start_level", 0)
+		return
+
+	var spawn: Vector2 = room["spawn"]
+	var plate_a: Vector2 = room["plate_a"]
+	var plate_b: Vector2 = room["plate_b"]
+	var waypoints: Array = room["echo_waypoints"]
+
+	# A skipped checkpoint must reject the take and name the full sequence.
+	var invalid_route = EchoTrackScript.new()
+	invalid_route.add_sample(0.0, spawn)
+	invalid_route.add_sample(1.35, waypoints[0])
+	invalid_route.add_sample(2.7, waypoints[2])
+	invalid_route.add_sample(4.2, waypoints[1])
+	invalid_route.add_sample(5.45, waypoints[3])
+	invalid_route.add_sample(6.9, plate_a)
+	game.set("recording_track", invalid_route)
+	game.set("recording_elapsed", 6.9)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(not bool(game.get("echo_visible")), "Dead Air Protocol should reject relays visited out of order.")
+	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2, then RELAY 3, then RELAY 4 in order"), "Dead Air Protocol should explain the complete four-relay sequence.")
+
+	# A full four-relay route fits inside the eight-second recording cap.
+	var valid_route = EchoTrackScript.new()
+	valid_route.add_sample(0.0, spawn)
+	valid_route.add_sample(1.35, waypoints[0])
+	valid_route.add_sample(2.7, waypoints[1])
+	valid_route.add_sample(4.2, waypoints[2])
+	valid_route.add_sample(5.45, waypoints[3])
+	valid_route.add_sample(6.9, plate_a)
+	game.set("recording_track", valid_route)
+	game.set("recording_elapsed", 6.9)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(bool(game.get("echo_visible")), "Dead Air Protocol should accept all four relays in order before Switch A.")
+	if not bool(game.get("echo_visible")):
+		game.call("_start_level", 0)
+		return
+
+	# The gate opens with the authored short window; missing it before the
+	# barrier must close the gate and latch a retry requirement.
+	game.set("echo_playing", false)
+	game.set("echo_position", plate_a)
+	game.set("echo_linger_left", 6.0)
+	game.set("player_position", plate_b)
+	game.call("_check_puzzle_state")
+	_check(bool(game.get("door_open")), "An accepted route plus Switch B should open Dead Air Protocol.")
+	_check(is_equal_approx(float(game.get("gate_open_timer")), 2.2), "Dead Air Protocol should start its authored 2.2-second timer.")
+	game.set("gate_open_timer", 0.01)
+	game.call("_update_timed_gate", 0.02)
+	_check(not bool(game.get("door_open")), "Dead Air Protocol should close if its short window expires before the barrier.")
+	_check(bool(game.get("timed_gate_failed")), "Missing the Dead Air Protocol window should require a switch release before retry.")
+
+	# Sentinel contact during a new take must erase the recording and return to spawn.
+	game.call("_start_level", 11)
+	room = game.get("level_data")
+	var reset_spawn: Vector2 = room["spawn"]
+	var interrupted_track = EchoTrackScript.new()
+	interrupted_track.add_sample(0.0, reset_spawn)
+	interrupted_track.add_sample(1.0, Vector2(400, 400))
+	game.set("recording_track", interrupted_track)
+	game.set("is_recording", true)
+	game.set("recording_elapsed", 1.0)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("hazard_time", 0.0)
+	game.set("player_position", Vector2(640, float(room["hazard_y"])))
+	game.call("_check_sentinel_collision")
+	_check(game.get("player_position") == reset_spawn, "The Dead Air Protocol sentinel should send the player back to spawn.")
+	_check(not bool(game.get("is_recording")), "Sentinel contact should cancel the active Dead Air Protocol recording.")
+	_check(game.get("recording_track").samples.is_empty(), "Sentinel contact should erase the interrupted route.")
+	_check(str(game.get("status_message")).begins_with("SENTINEL CONTACT — recording lost"), "Sentinel interruption should explain why the route was lost.")
 	game.call("_start_level", 0)
 
 
