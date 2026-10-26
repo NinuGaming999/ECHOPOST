@@ -192,11 +192,12 @@ The following is a **line-accurate index for the controller blob SHA shown at th
 
 ## 6. Current verification status — be precise
 
-- **Latest completed code-bearing CI run:** [Godot checks run 14](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40384700347) completed successfully on commit `6cbfb8f61da84ab6b5c627ef7fc65207939964ad`. Both the Godot 4.4.0 and 4.7.2 jobs succeeded, including project import/parse, data smoke tests, and gameplay integration tests for the new lifecycle pause behavior.
-- **Documentation-only workflow follow-up:** [run 15](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40384988830) subsequently completed successfully on the progress-file commit `d970f1820daea7676de67d4b7d5cfdf426bb5fff`. The later progress/build-status documentation commits caused runs 16 and 17; both were still in progress at last check and do not change game/test source. Run 14 remains the latest completed CI result that includes the actual lifecycle code and test changes. Check current Actions status before starting new work.
+- **Latest completed workflow:** [Godot checks run 18](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385238320) passed on commit `19fb023877d8b6c65796ae6c5acaac55c4e1b4ef`. Both jobs completed successfully: Godot 4.4.0 and Godot 4.7.2. Each job imports/parses the project and runs the data-layer and gameplay smoke tests.
+- **Lifecycle-pause source/test validation:** this passing run includes the lifecycle pause code in `scripts/game.gd:L69–L86` and its integration assertions in `tests/game_flow_smoke.gd:L68–L83`. No runtime or test source changes have been made since the code-bearing changes already documented above; later commits updated documentation/handoff notes.
 - **Local device test:** not performed by this assistant. Do not imply the game was launched in the user's Godot editor or on a physical phone.
 - **Android APK/export:** no APK has been built or attached. Android export preset, signing, package identity, export templates/SDK/JDK and real-device checks remain.
 - **Runtime quality:** automated smoke tests are not a substitute for manually playing all three rooms at actual mobile resolution.
+
 
 ### Commands to run in the repository root on Windows
 ```powershell
@@ -230,7 +231,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 ### P0 — Verify this change and prevent regressions
 - [x] Verify the lifecycle pause code/test commit with CI: run 14 passed on Godot 4.4.0 and 4.7.2.
-- [ ] Check that the documentation-triggered workflows after run 15 complete, then update this file if any failure appears.
+- [x] Verify the current snapshot in CI: run 18 passed on Godot 4.4.0 and 4.7.2. The next progress-file-only edit may trigger another workflow run, but it does not change game/test source.
 - [ ] Fix any Godot 4.4.0 or 4.7.2 warnings/errors triggered by the lifecycle test.
 - [ ] Ensure `docs/BUILD_STATUS.md`, `docs/ROADMAP.md`, README, and this file describe the same current status.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
