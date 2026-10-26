@@ -43,6 +43,7 @@ The chapter selector scrolls so future rooms do not collide with the navigation 
 - Echo playback follows recorded samples in time order.
 - When playback ends, the echo holds its final recorded position temporarily.
 - Echoes press switches by occupying their active area; they do not push the real player or change the recording.
+- Sentinel contact returns the player to the chamber entrance. If the player is still recording, that unfinished take is cancelled and discarded rather than saving a fake teleport back to spawn. Already-released echo behavior is separate from the unfinished take.
 - A future online version must validate uploaded recordings and isolate them from executable code. A recording should be data only, never a script.
 
 ## Accessibility and usability
