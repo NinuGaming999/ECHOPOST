@@ -621,6 +621,16 @@ func _finish_recording() -> void:
 		_update_hud()
 		queue_redraw()
 		return
+	if level_data.has("echo_waypoints"):
+		var required_waypoints: Array = level_data["echo_waypoints"]
+		if not _track_passes_waypoints_in_order(recording_track, required_waypoints, 40.0):
+			echo_visible = false
+			echo_playing = false
+			echo_track.clear()
+			status_message = "ROUTE REJECTED — pass through RELAY 1, then RELAY 2 in order before finishing on SWITCH A."
+			_update_hud()
+			queue_redraw()
+			return
 	if level_data.has("echo_waypoint"):
 		var relay_position: Vector2 = level_data["echo_waypoint"]
 		if not _track_passes_waypoint(recording_track, relay_position, 40.0):
@@ -648,27 +658,59 @@ func _add_record_sample(sample_time: float, point: Vector2) -> void:
 
 
 func _track_passes_waypoint(track: Variant, waypoint: Vector2, radius: float) -> bool:
-	if track.samples.is_empty():
+	return _track_waypoint_progress(track, waypoint, radius, 0.0) >= 0.0
+
+
+func _track_passes_waypoints_in_order(track: Variant, waypoints: Array, radius: float) -> bool:
+	if track.samples.is_empty() or waypoints.is_empty():
 		return false
+
+	var minimum_route_progress := 0.0
+	for waypoint_value in waypoints:
+		if not (waypoint_value is Vector2):
+			return false
+		var route_progress := _track_waypoint_progress(track, waypoint_value, radius, minimum_route_progress)
+		if route_progress < 0.0:
+			return false
+		# A later relay must be encountered later along the sample path, not merely
+		# somewhere in the route. The tiny offset prevents reusing the same crossing.
+		minimum_route_progress = route_progress + 0.0001
+	return true
+
+
+func _track_waypoint_progress(track: Variant, waypoint: Vector2, radius: float, minimum_route_progress: float) -> float:
+	if track.samples.is_empty():
+		return -1.0
 	var safe_radius := maxf(0.0, radius)
 	var first_position: Vector2 = track.samples.front()["p"]
-	if first_position.distance_to(waypoint) <= safe_radius:
-		return true
+	if minimum_route_progress <= 0.0 and first_position.distance_to(waypoint) <= safe_radius:
+		return 0.0
+	if track.samples.size() < 2:
+		return -1.0
 
+	var best_progress := -1.0
 	for i in range(1, track.samples.size()):
 		var from_point: Vector2 = track.samples[i - 1]["p"]
 		var to_point: Vector2 = track.samples[i]["p"]
 		var segment := to_point - from_point
 		var segment_length_squared := segment.length_squared()
+		var segment_progress_start := float(i - 1)
 		if segment_length_squared <= 0.0001:
-			if from_point.distance_to(waypoint) <= safe_radius:
-				return true
+			if segment_progress_start + 0.0001 >= minimum_route_progress and from_point.distance_to(waypoint) <= safe_radius:
+				if best_progress < 0.0 or segment_progress_start < best_progress:
+					best_progress = segment_progress_start
 			continue
+
 		var weight := clampf((waypoint - from_point).dot(segment) / segment_length_squared, 0.0, 1.0)
 		var closest_point := from_point + segment * weight
-		if closest_point.distance_to(waypoint) <= safe_radius:
-			return true
-	return false
+		if closest_point.distance_to(waypoint) > safe_radius:
+			continue
+		var candidate_progress := segment_progress_start + weight
+		if candidate_progress + 0.0001 < minimum_route_progress:
+			continue
+		if best_progress < 0.0 or candidate_progress < best_progress:
+			best_progress = candidate_progress
+	return best_progress
 
 
 func _update_player(delta: float) -> void:
@@ -930,6 +972,10 @@ func _draw_room() -> void:
 	_draw_portal(Vector2(1170, 365), door_open)
 	if level_data.has("echo_waypoint"):
 		_draw_echo_waypoint(level_data["echo_waypoint"])
+	if level_data.has("echo_waypoints"):
+		var relay_waypoints: Array = level_data["echo_waypoints"]
+		for relay_index in range(relay_waypoints.size()):
+			_draw_echo_waypoint(relay_waypoints[relay_index], "RELAY %d" % (relay_index + 1))
 	if level_data.has("memory_shard") and not collected_shards.has(current_level_index):
 		_draw_memory_shard(level_data["memory_shard"])
 
@@ -972,7 +1018,7 @@ func _draw_room() -> void:
 
 
 
-func _draw_echo_waypoint(position: Vector2) -> void:
+func _draw_echo_waypoint(position: Vector2, label: String = "RELAY") -> void:
 	# Amber relay beacon: unlike Memory Shards, this marker is required to make the route valid.
 	draw_circle(position, 34.0, Color(1.0, 0.66, 0.25, 0.08))
 	draw_arc(position, 25.0, 0.0, TAU, 48, Color(1.0, 0.69, 0.30, 0.84), 2.5, true)
@@ -985,7 +1031,7 @@ func _draw_echo_waypoint(position: Vector2) -> void:
 	])
 	draw_colored_polygon(diamond, Color(1.0, 0.66, 0.27, 0.94))
 	draw_polyline(PackedVector2Array([diamond[0], diamond[1], diamond[2], diamond[3], diamond[0]]), Color(1.0, 0.88, 0.62, 0.98), 1.5, true)
-	draw_string(ThemeDB.fallback_font, position + Vector2(20, 4), "RELAY", HORIZONTAL_ALIGNMENT_LEFT, 65, 11, Color(1.0, 0.80, 0.47))
+	draw_string(ThemeDB.fallback_font, position + Vector2(20, 4), label, HORIZONTAL_ALIGNMENT_LEFT, 90, 11, Color(1.0, 0.80, 0.47))
 
 
 func _draw_memory_shard(position: Vector2) -> void:
