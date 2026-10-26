@@ -26,6 +26,7 @@ func _run_tests() -> void:
 	_test_options_panel(game)
 	_test_echo_waypoint_requirement(game)
 	_test_ordered_echo_waypoints(game)
+	_test_three_ordered_echo_waypoints(game)
 	_test_timed_gate_requires_crossing(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
@@ -475,6 +476,64 @@ func _test_ordered_echo_waypoints(game: Control) -> void:
 	_check(bool(game.get("echo_playing")), "An accepted ordered-relay route should start echo playback.")
 	_check(bool(game.call("_is_relay_waypoint_linked", 0)), "Relay 1 should remain marked linked after a valid route is sent.")
 	_check(bool(game.call("_is_relay_waypoint_linked", 1)), "Relay 2 should be marked linked only after Relay 1 in a valid route.")
+	game.call("_start_level", 0)
+
+
+
+func _test_three_ordered_echo_waypoints(game: Control) -> void:
+	game.call("_start_level", 9)
+	var room: Dictionary = game.get("level_data")
+	_check(str(room.get("name", "")) == "Triune Relay", "The tenth chamber should be Triune Relay.")
+	_check(room.has("echo_waypoints"), "Triune Relay should define ordered relay checkpoints.")
+	if not room.has("echo_waypoints") or not room["echo_waypoints"] is Array:
+		game.call("_start_level", 0)
+		return
+
+	var spawn: Vector2 = room["spawn"]
+	var plate_a: Vector2 = room["plate_a"]
+	var waypoints: Array = room["echo_waypoints"]
+	_check(waypoints.size() == 3, "Triune Relay should require exactly three checkpoints.")
+	if waypoints.size() != 3:
+		game.call("_start_level", 0)
+		return
+
+	var first_relay: Vector2 = waypoints[0]
+	var second_relay: Vector2 = waypoints[1]
+	var third_relay: Vector2 = waypoints[2]
+
+	# Crossing the third relay before the second must not satisfy the full chain.
+	var out_of_order_track = EchoTrackScript.new()
+	out_of_order_track.add_sample(0.0, spawn)
+	out_of_order_track.add_sample(1.0, first_relay)
+	out_of_order_track.add_sample(2.0, third_relay)
+	out_of_order_track.add_sample(3.0, second_relay)
+	out_of_order_track.add_sample(4.0, plate_a)
+	game.set("recording_track", out_of_order_track)
+	game.set("recording_elapsed", 4.0)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(not bool(game.get("echo_visible")), "Triune Relay must reject a route that visits Relay 3 before Relay 2.")
+	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2 in order"), "A failed three-relay route should explain that checkpoint order matters.")
+
+	# All three checkpoints in order followed by Switch A should be accepted.
+	var ordered_track = EchoTrackScript.new()
+	ordered_track.add_sample(0.0, spawn)
+	ordered_track.add_sample(1.0, first_relay)
+	ordered_track.add_sample(2.0, second_relay)
+	ordered_track.add_sample(3.0, third_relay)
+	ordered_track.add_sample(4.0, plate_a)
+	game.set("recording_track", ordered_track)
+	game.set("recording_elapsed", 4.0)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(bool(game.get("echo_visible")), "Triune Relay should accept a route crossing Relay 1, Relay 2, Relay 3, then Switch A.")
+	_check(bool(game.get("echo_playing")), "A valid three-relay route should start echo playback.")
+	for waypoint_index in range(3):
+		_check(bool(game.call("_is_relay_waypoint_linked", waypoint_index)), "Each relay should show linked after the full ordered route is accepted.")
 	game.call("_start_level", 0)
 
 
