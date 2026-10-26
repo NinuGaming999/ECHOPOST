@@ -790,7 +790,6 @@ func _finish_recording() -> void:
 			_update_hud()
 			queue_redraw()
 		return
-		return
 	if level_data.has("echo_waypoints"):
 		var required_waypoints: Array = level_data["echo_waypoints"]
 		if not _track_passes_waypoints_in_order(recording_track, required_waypoints, 40.0):
