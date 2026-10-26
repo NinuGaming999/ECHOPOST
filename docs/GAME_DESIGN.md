@@ -38,7 +38,7 @@ The twelve current chambers progress from the basic two-switch echo rule through
 - **Latch Protocol:** Switch B is a toggle. The player must be near B while the echo holds A, then tap the dedicated LATCH SWITCH B button or press E. The switch stays active after the player leaves it, allowing a clean crossing to the portal. Restarting the room clears the latch.
 - **Triune Relay:** requires three Relay Beacons to be crossed in order before the route finishes on Switch A. Skipping or reversing a checkpoint invalidates the recording.
 - **Fracture Clock:** combines three ordered Relay Beacons with a 4.5-second timed gate. The route must be valid before the player can use the echo to open the timed crossing.
-- **Dead Air Protocol:** the gauntlet room requires four ordered Relay Beacons, records while a fast sentinel patrol can interrupt the player, shortens echo linger to 6.5 seconds, and leaves only 2.2 seconds to cross the gate. Sentinel contact during a recording discards the entire take, so both route order and safe movement timing matter.
+- **Dead Air Protocol:** the gauntlet room requires four ordered Relay Beacons, records while a fast sentinel patrol can interrupt the player, shortens echo linger to 6.5 seconds, and moves Switch B farther from the gate and leaves only 1.8 seconds to cross it. Sentinel contact during a recording discards the entire take, so both route order and safe movement timing matter.
 
 The chapter selector scrolls so future rooms do not collide with the navigation controls. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. Moving platforms, multi-echo puzzles, checkpoints and more varied puzzle rules remain future work; the twelve current rooms are still a foundation rather than a finished campaign.
 
@@ -73,7 +73,7 @@ A network of abandoned courier stations has lost its original inhabitants. A sma
 
 - **Act I — Signal:** learn movement, recording, latching switches, doors, and safe resets.
 - **Act II — Interference:** moving sentinels, timed platforms, one-way routes, and rooms where the recording must take a longer path.
-- **Act I extension — Relay sequence:** Chorus Route introduces an ordered pair of Relay Beacons; Triune Relay asks the player to plan three distinct checkpoints before ending on Switch A; Fracture Clock combines that sequence with a timed gate; Dead Air Protocol asks for four checkpoints while the sentinel hunts the player and then tests a 2.2-second gate window.
+- **Act I extension — Relay sequence:** Chorus Route introduces an ordered pair of Relay Beacons; Triune Relay asks the player to plan three distinct checkpoints before ending on Switch A; Fracture Clock combines that sequence with a timed gate; Dead Air Protocol asks for four checkpoints while the sentinel hunts the player and then tests a 1.8-second gate window.
 - **Act III — Relay:** multi-echo puzzles, multiple recording anchors, and chained rooms that reinterpret earlier mechanics.
 - **Post-launch — Shared traces:** player-created echoes, curated community challenges, and a daily featured puzzle, contingent on moderation and backend capacity.
 
