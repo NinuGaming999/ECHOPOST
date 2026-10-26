@@ -21,6 +21,7 @@ func _run_tests() -> void:
 
 	_test_chapter_select_layout(game)
 	_test_memory_shard_collection(game)
+	_test_all_memories_restore_signal(game)
 	_test_memory_archive_ui(game)
 	_test_options_panel(game)
 	_test_echo_waypoint_requirement(game)
@@ -280,6 +281,39 @@ func _test_memory_shard_collection(game: Control) -> void:
 	game.call("_save_progress")
 	game.call("_update_menu_progress")
 
+
+
+
+func _test_all_memories_restore_signal(game: Control) -> void:
+	var previous_unlocked := int(game.get("unlocked_level"))
+	var previous_completed := int(game.get("rooms_completed"))
+	var previous_shards: PackedInt32Array = game.get("collected_shards")
+	var level_total := LevelCatalog.LEVELS.size()
+	var all_but_last := PackedInt32Array()
+	for room_index in range(level_total - 1):
+		all_but_last.append(room_index)
+	game.set("collected_shards", all_but_last)
+
+	# Collect the final room's shard through the same pickup path used in play.
+	game.call("_start_level", level_total - 1)
+	var final_room: Dictionary = game.get("level_data")
+	game.set("player_position", final_room["memory_shard"])
+	game.call("_check_memory_shard_collection")
+	var completed_shards: PackedInt32Array = game.get("collected_shards")
+	_check(completed_shards.size() == level_total, "Collecting the final Memory Shard should complete the archive.")
+	_check(str(game.get("status_message")).begins_with("SIGNAL RESTORED"), "The last Memory Shard should reward the player with the restored-signal message.")
+
+	game.call("_update_memory_archive")
+	var archive_status: Label = game.get("memory_archive_status_label")
+	_check(str(archive_status.text).contains("SIGNAL RESTORED"), "The Memory Archive should clearly mark the restored-signal reward.")
+
+	# This test must never permanently rewrite a player's campaign or collectibles.
+	game.set("unlocked_level", previous_unlocked)
+	game.set("rooms_completed", previous_completed)
+	game.set("collected_shards", previous_shards)
+	game.call("_save_progress")
+	game.call("_update_menu_progress")
+	game.call("_show_menu")
 
 
 func _test_memory_archive_ui(game: Control) -> void:
