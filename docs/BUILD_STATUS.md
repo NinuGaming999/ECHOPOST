@@ -29,7 +29,7 @@
 
 ## Verification status
 
-[Godot CI run 165](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40401020392) passed on both Godot 4.4.0 and 4.7.2 after adding the timed-gate countdown bar and ratio assertions. It verifies project import/parse plus data and gameplay smoke tests, including the eleven-room schema, three-relay route ordering, countdown-bar full/partial/empty states, timed-gate activation/crossing, save restoration, and existing gameplay flows.
+[Godot CI run 173](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40401469061) passed on both Godot 4.4.0 and 4.7.2 after improving ordered-relay rejection hints and adding assertions for the full three-relay sequence. It verifies project import/parse plus data and gameplay smoke tests, including eleven-room data, the timed-gate countdown bar's full/partial/empty states, dynamic relay-sequence feedback, timed-gate activation/crossing, save restoration, and existing gameplay flows.
 
 [Run 82](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40392916662) passed Memory Archive, Options UI, movement presets and left-handed joystick tests; [run 81](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40392848307) passed settings defaults/persistence/normalization; [run 65](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390957517) passed Memory Shard persistence and version-1 save compatibility. Live visuals and controls still need manual inspection in the user's editor/device. No Android APK has been built or tested on a physical device; this remains an early development build, not release-ready.
 
