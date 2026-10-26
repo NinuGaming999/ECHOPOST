@@ -459,7 +459,7 @@ func _test_ordered_echo_waypoints(game: Control) -> void:
 	_check(not bool(game.get("echo_visible")), "A route that visits the relay checkpoints in reverse order must be rejected.")
 	_check(not bool(game.call("_is_relay_waypoint_linked", 0)), "Relay 1 must not show linked when Relay 2 was encountered first.")
 	_check(not bool(game.call("_is_relay_waypoint_linked", 1)), "Relay 2 must not show linked when it was visited before Relay 1.")
-	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2, then RELAY 3 in order"), "An out-of-order route should explain the full three-relay sequence.")
+	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2 in order"), "An out-of-order two-relay route should explain the required sequence.")
 
 	# Visiting Relay 1 then Relay 2 before ending on A creates a valid echo.
 	var ordered_track = EchoTrackScript.new()
@@ -516,7 +516,7 @@ func _test_three_ordered_echo_waypoints(game: Control) -> void:
 	game.set("player_position", plate_a)
 	game.call("_finish_recording")
 	_check(not bool(game.get("echo_visible")), "Triune Relay must reject a route that visits Relay 3 before Relay 2.")
-	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2 in order"), "A failed three-relay route should explain that checkpoint order matters.")
+	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2, then RELAY 3 in order"), "A failed three-relay route should explain the full checkpoint order.")
 
 	# All three checkpoints in order followed by Switch A should be accepted.
 	var ordered_track = EchoTrackScript.new()
