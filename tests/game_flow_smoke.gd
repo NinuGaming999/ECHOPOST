@@ -412,7 +412,7 @@ func _test_ordered_echo_waypoints(game: Control) -> void:
 	game.set("player_position", plate_a)
 	game.call("_finish_recording")
 	_check(not bool(game.get("echo_visible")), "A route that visits the relay checkpoints in reverse order must be rejected.")
-	_check(bool(game.call("_is_relay_waypoint_linked", 0)), "Relay 1 should show linked once the route reaches it.")
+	_check(not bool(game.call("_is_relay_waypoint_linked", 0)), "Relay 1 must not show linked when Relay 2 was encountered first.")
 	_check(not bool(game.call("_is_relay_waypoint_linked", 1)), "Relay 2 must not show linked when it was visited before Relay 1.")
 	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2 in order"), "An out-of-order route should explain the required relay sequence.")
 
