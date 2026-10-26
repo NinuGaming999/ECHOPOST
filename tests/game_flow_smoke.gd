@@ -881,10 +881,12 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	game.size = Vector2(960, 540)
 	game.call("_layout_responsive_ui")
 	var title := game.get("menu_root").get_node("Title") as Label
+	var intro := game.get("menu_root").get_node("Intro") as Label
 	var progress := game.get("menu_root").get_node("Progress") as Label
 	var start := game.get("menu_root").get_node("StartButton") as Button
 	var options := game.get("menu_root").get_node("OptionsButton") as Button
 	_check(title.position.x >= 0.0 and title.size.x <= game.size.x, "Menu typography should fit a narrower landscape viewport.")
+	_check(start.position.y > intro.position.y + intro.size.y, "Compact menu navigation should start below the intro text.")
 	_check(options.position.y + options.size.y <= progress.position.y, "Compact menu controls should finish before the progress line.")
 	_check(is_equal_approx(record.position.y, game.size.y - 66.0), "Bottom gameplay controls should stay inside a compact-height viewport.")
 	_check(menu_button.position.x + menu_button.size.x < record.position.x, "Compact menu and record touch targets must not overlap.")
