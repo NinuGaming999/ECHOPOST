@@ -48,11 +48,12 @@ func _test_echo_track() -> void:
 
 
 func _test_level_catalog() -> void:
-	_check(LevelCatalog.LEVELS.size() >= 7, "The early campaign should contain at least seven chambers.")
+	_check(LevelCatalog.LEVELS.size() >= 8, "The early campaign should contain at least eight chambers.")
 	_check(LevelCatalog.validate_levels().is_empty(), "The campaign catalog should pass its own level-data validator.")
 	var names_seen: Dictionary = {}
 	var relay_room_found := false
 	var ordered_relay_room_found := false
+	var timed_gate_room_found := false
 	for index in range(LevelCatalog.LEVELS.size()):
 		var level: Dictionary = LevelCatalog.get_level(index)
 		var level_name := str(level.get("name", ""))
@@ -69,6 +70,12 @@ func _test_level_catalog() -> void:
 				_check(level["echo_waypoints"].size() >= 2, "An ordered relay room should require at least two checkpoints.")
 				for waypoint in level["echo_waypoints"]:
 					_check(waypoint is Vector2, "Every ordered relay checkpoint must use a Vector2 position.")
+		if level.has("gate_open_seconds"):
+			timed_gate_room_found = true
+			var gate_duration: Variant = level["gate_open_seconds"]
+			_check(gate_duration is int or gate_duration is float, "Timed gate duration must be numeric.")
+			if gate_duration is int or gate_duration is float:
+				_check(float(gate_duration) >= 1.0 and float(gate_duration) <= 15.0, "Timed gate duration must be between one and fifteen seconds.")
 		_check(level.has("name"), "Each level needs a display name.")
 		_check(level.has("spawn"), "Each level needs a spawn position.")
 		_check(level.has("plate_a") and level.has("plate_b"), "Each level needs both switch positions.")
@@ -78,6 +85,7 @@ func _test_level_catalog() -> void:
 		_check(level["spawn"] is Vector2, "Spawn positions must be Vector2 values.")
 	_check(relay_room_found, "The early campaign should include at least one single-relay room.")
 	_check(ordered_relay_room_found, "The early campaign should include a room with multiple ordered relay checkpoints.")
+	_check(timed_gate_room_found, "The early campaign should include a timed-gate room.")
 	var original_name := str(LevelCatalog.LEVELS[0]["name"])
 	var isolated_copy: Dictionary = LevelCatalog.get_level(0)
 	isolated_copy["name"] = "Changed only in this test copy"
@@ -95,6 +103,7 @@ func _test_level_validator_rejects_bad_drafts() -> void:
 	malformed_level["hazard_speed"] = -1.0
 	malformed_level["echo_waypoint"] = Vector2(-20, 220)
 	malformed_level["echo_waypoints"] = [Vector2(-20, 220), "not a point"]
+	malformed_level["gate_open_seconds"] = -1.0
 	var draft_levels: Array[Dictionary] = [original_level, malformed_level]
 	var errors: PackedStringArray = LevelCatalog.validate_level_list(draft_levels)
 
@@ -105,6 +114,7 @@ func _test_level_validator_rejects_bad_drafts() -> void:
 	_check(_has_error(errors, "echo_waypoint is outside the playable room"), "Validator should reject a relay beacon outside room bounds.")
 	_check(_has_error(errors, "echo_waypoints[0] is outside the playable room"), "Validator should reject an ordered relay outside room bounds.")
 	_check(_has_error(errors, "echo_waypoints[1] must be a Vector2"), "Validator should reject malformed waypoint types.")
+	_check(_has_error(errors, "gate_open_seconds must be between 1 and 15 seconds"), "Validator should reject invalid timed-gate durations.")
 
 
 func _has_error(errors: PackedStringArray, fragment: String) -> bool:
