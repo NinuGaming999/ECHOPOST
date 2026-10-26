@@ -321,7 +321,8 @@ func _test_memory_archive_ui(game: Control) -> void:
 	var panel: Panel = game.get("memory_archive_panel")
 	_check(panel.visible, "Opening Memory Archive from the menu should show its panel.")
 	var archive_status_label: Label = game.get("memory_archive_status_label")
-	if (game.get("collected_shards") as PackedInt32Array).size() >= LevelCatalog.LEVELS.size():
+	var archive_collected_shards: PackedInt32Array = game.get("collected_shards")
+	if archive_collected_shards.size() >= LevelCatalog.LEVELS.size():
 		_check(str(archive_status_label.text).contains("SIGNAL RESTORED"), "A complete collection should keep the restored-signal status visible.")
 	else:
 		_check(str(archive_status_label.text).contains("/ %d" % LevelCatalog.LEVELS.size()), "Archive placeholder/count should use the live room count, not a hard-coded six.")
