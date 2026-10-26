@@ -560,48 +560,87 @@ func _build_failure_panel() -> void:
 
 
 func _layout_responsive_ui() -> void:
-	# The puzzle world uses a 1280×720 design space, while the UI follows the
-	# available viewport so wide landscape phones do not leave controls stranded.
+	# Keep the game world in its 1280×720 design space while the interactive
+	# interface adjusts to compact landscape screens and wider desktop windows.
 	if size.x <= 0.0 or size.y <= 0.0:
 		return
 	var center_x := size.x * 0.5
+	var compact_height := size.y < 620.0
+	var width_scale := clampf(size.x / 1280.0, 0.70, 1.0)
 	if is_instance_valid(menu_root):
-		for control_name in ["Title", "Tagline", "Intro", "Progress"]:
-			var control := menu_root.get_node_or_null(control_name) as Control
-			if control != null:
-				control.position.x = center_x - control.size.x * 0.5
+		var title := menu_root.get_node_or_null("Title") as Label
+		if title != null:
+			title.size.x = minf(1080.0, size.x - 32.0)
+			title.position = Vector2(center_x - title.size.x * 0.5, 64.0 if compact_height else 135.0)
+			title.add_theme_font_size_override("font_size", clampi(roundi(70.0 * width_scale), 38, 70))
+		var tagline := menu_root.get_node_or_null("Tagline") as Label
+		if tagline != null:
+			tagline.size.x = minf(920.0, size.x - 40.0)
+			tagline.position = Vector2(center_x - tagline.size.x * 0.5, 132.0 if compact_height else 235.0)
+			tagline.add_theme_font_size_override("font_size", clampi(roundi(22.0 * width_scale), 14, 22))
+		var intro := menu_root.get_node_or_null("Intro") as Label
+		if intro != null:
+			intro.size.x = minf(780.0, size.x - 64.0)
+			intro.position = Vector2(center_x - intro.size.x * 0.5, 170.0 if compact_height else 280.0)
+			intro.add_theme_font_size_override("font_size", clampi(roundi(18.0 * width_scale), 13, 18))
+		var progress := menu_root.get_node_or_null("Progress") as Label
+		if progress != null:
+			progress.size.x = minf(800.0, size.x - 32.0)
+			progress.position = Vector2(center_x - progress.size.x * 0.5, size.y - 60.0 if compact_height else 619.0)
 		for button_name in ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]:
-			var centered_button := menu_root.get_node_or_null(button_name) as Control
-			if centered_button != null:
-				centered_button.position.x = center_x - centered_button.size.x * 0.5
+			var centered_button := menu_root.get_node_or_null(button_name) as Button
+			if centered_button == null:
+				continue
+			centered_button.size.x = minf(330.0, size.x - 48.0)
+			centered_button.position.x = center_x - centered_button.size.x * 0.5
+		if compact_height:
+			var compact_button_names := ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]
+			var compact_top := size.y * 0.41
+			var compact_gap := clampf(size.y * 0.083, 44.0, 50.0)
+			for i in range(compact_button_names.size()):
+				var compact_button := menu_root.get_node_or_null(compact_button_names[i]) as Button
+				if compact_button != null:
+					compact_button.position.y = compact_top + float(i) * compact_gap
+					compact_button.size.y = 44.0
 		var version_label := menu_root.get_node_or_null("Version") as Control
 		if version_label != null:
-			version_label.position.y = size.y - 32.0
+			version_label.position.y = size.y - 24.0
 	if is_instance_valid(game_hud):
+		if is_instance_valid(level_title_label):
+			level_title_label.size.x = minf(570.0, size.x * 0.43)
 		if is_instance_valid(echo_status_label):
 			echo_status_label.position.x = size.x - 475.0
 		if is_instance_valid(pause_button):
 			pause_button.position = Vector2(size.x - 170.0, 12.0)
 		if is_instance_valid(level_hint_label):
-			level_hint_label.size.x = maxf(620.0, size.x - 380.0)
+			level_hint_label.size.x = maxf(420.0, size.x - 380.0)
 		if is_instance_valid(status_label):
-			status_label.position = Vector2(center_x - 370.0, size.y - 110.0)
+			status_label.size.x = clampf(size.x - 540.0, 420.0, 740.0)
+			status_label.position = Vector2(center_x - status_label.size.x * 0.5, size.y - 110.0)
 		var move_tip := game_hud.get_node_or_null("MoveTip") as Control
 		if move_tip != null:
 			move_tip.position.y = size.y - 105.0
-		var bottom_menu_control := game_hud.get_node_or_null("MenuButton") as Control
-		var record_control := game_hud.get_node_or_null("RecordButton") as Control
-		var latch_control := game_hud.get_node_or_null("LatchSwitchBButton") as Control
-		var reset_control := game_hud.get_node_or_null("ResetButton") as Control
+		var bottom_menu_control := game_hud.get_node_or_null("MenuButton") as Button
+		var record_control := game_hud.get_node_or_null("RecordButton") as Button
+		var latch_control := game_hud.get_node_or_null("LatchSwitchBButton") as Button
+		var reset_control := game_hud.get_node_or_null("ResetButton") as Button
 		var bottom_y := size.y - 66.0
+		var nav_width := clampf(size.x * 0.105, 112.0, 150.0)
+		var action_width := clampf(size.x * 0.21, 205.0, 270.0)
+		var action_gap := clampf(size.x * 0.015, 10.0, 18.0)
+		var side_margin := maxf(18.0, size.x * 0.025)
 		if bottom_menu_control != null:
-			bottom_menu_control.position.y = bottom_y
+			bottom_menu_control.size.x = nav_width
+			bottom_menu_control.position = Vector2(side_margin, bottom_y)
 		if record_control != null:
-			record_control.position = Vector2(center_x - 260.0, bottom_y)
+			record_control.size.x = action_width
+			record_control.position = Vector2(center_x - action_width - action_gap * 0.5, bottom_y)
 		if latch_control != null:
-			latch_control.position = Vector2(center_x + 40.0, bottom_y)
+			latch_control.size.x = action_width
+			latch_control.position = Vector2(center_x + action_gap * 0.5, bottom_y)
 		if reset_control != null:
-			reset_control.position = Vector2(size.x - 280.0, bottom_y)
+			reset_control.size.x = nav_width
+			reset_control.position = Vector2(size.x - side_margin - nav_width, bottom_y)
 	_layout_centered_panels()
 
 
