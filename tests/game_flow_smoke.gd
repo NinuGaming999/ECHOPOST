@@ -5,6 +5,7 @@ extends SceneTree
 const MainScene = preload("res://scenes/main.tscn")
 const EchoTrackScript = preload("res://scripts/core/echo_track.gd")
 const LevelCatalog = preload("res://scripts/data/level_catalog.gd")
+const ProgressStore = preload("res://scripts/data/progress_store.gd")
 
 var failures: int = 0
 
@@ -19,6 +20,7 @@ func _run_tests() -> void:
 	await process_frame
 
 	_test_chapter_select_layout(game)
+	_test_memory_shard_collection(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
@@ -236,6 +238,39 @@ func _test_chapter_select_layout(game: Control) -> void:
 		if list_node is VBoxContainer:
 			_check(list_node.get_child_count() == LevelCatalog.LEVELS.size(), "The scroll list should contain every authored chamber.")
 	game.call("_show_menu")
+
+
+
+func _test_memory_shard_collection(game: Control) -> void:
+	# Temporarily make room 1's shard uncollected, then restore all saved campaign fields.
+	var previous_unlocked := int(game.get("unlocked_level"))
+	var previous_completed := int(game.get("rooms_completed"))
+	var previous_shards: PackedInt32Array = game.get("collected_shards")
+	var test_shards: PackedInt32Array = previous_shards.duplicate()
+	var existing_index := test_shards.find(0)
+	if existing_index >= 0:
+		test_shards.remove_at(existing_index)
+	game.set("collected_shards", test_shards)
+
+	game.call("_start_level", 0)
+	var room: Dictionary = game.get("level_data")
+	var shard_position: Vector2 = room["memory_shard"]
+	game.set("player_position", shard_position)
+	game.call("_check_memory_shard_collection")
+
+	var collected: PackedInt32Array = game.get("collected_shards")
+	_check(collected.has(0), "Touching an uncollected Memory Shard should mark it collected.")
+	_check(str(game.get("status_message")).contains(str(room["shard_lore"])), "Collecting a shard should reveal its lore fragment.")
+	var persisted: Dictionary = ProgressStore.load_progress(LevelCatalog.LEVELS.size())
+	var saved_shards: PackedInt32Array = persisted["collected_shards"]
+	_check(saved_shards.has(0), "Collecting a Memory Shard should persist it to the local save.")
+
+	# Restore existing user progress after testing persistence.
+	game.set("unlocked_level", previous_unlocked)
+	game.set("rooms_completed", previous_completed)
+	game.set("collected_shards", previous_shards)
+	game.call("_save_progress")
+	game.call("_update_menu_progress")
 
 
 func _check(condition: bool, message: String) -> void:
