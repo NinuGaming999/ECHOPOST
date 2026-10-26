@@ -681,23 +681,27 @@ func _is_relay_waypoint_linked(waypoint_index: int) -> bool:
 		route = recording_track
 	elif echo_visible:
 		route = echo_track
-	elif str(status_message).begins_with("ROUTE REJECTED"):
-		# Keep a useful progress trace after rejection so relays visited in the
-		# right partial order can remain lit while the player reviews the failed take.
-		route = recording_track
 	if route == null:
 		return false
 
-	# A beacon is only considered linked after the route reaches it in sequence.
-	var minimum_route_progress := 0.0
-	for i in range(waypoint_index + 1):
-		var waypoint_value: Variant = waypoints[i]
+	# Evaluate each beacon's first crossing. A later beacon visited before this
+	# one invalidates its linked state; the visual indicator mirrors route order.
+	var route_progresses: Array[float] = []
+	for waypoint_value in waypoints:
 		if not (waypoint_value is Vector2):
 			return false
-		var route_progress := _track_waypoint_progress(route, waypoint_value, 40.0, minimum_route_progress)
-		if route_progress < 0.0:
+		route_progresses.append(_track_waypoint_progress(route, waypoint_value, 40.0, 0.0))
+
+	for required_index in range(waypoint_index + 1):
+		if route_progresses[required_index] < 0.0:
 			return false
-		minimum_route_progress = route_progress + 0.0001
+		if required_index > 0 and route_progresses[required_index] <= route_progresses[required_index - 1]:
+			return false
+
+	var target_progress := route_progresses[waypoint_index]
+	for later_index in range(waypoint_index + 1, route_progresses.size()):
+		if route_progresses[later_index] >= 0.0 and route_progresses[later_index] < target_progress:
+			return false
 	return true
 
 
