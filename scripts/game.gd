@@ -313,7 +313,7 @@ func _build_level_select_panel() -> void:
 func _build_memory_archive_panel() -> void:
 	memory_archive_panel = _make_panel("MemoryArchivePanel", Vector2(300, 70), Vector2(680, 570))
 	_make_label(memory_archive_panel, "ArchiveTitle", Vector2(24, 18), Vector2(632, 42), "MEMORY ARCHIVE", 27, Color(0.88, 0.97, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
-	memory_archive_status_label = _make_label(memory_archive_panel, "ArchiveStatus", Vector2(35, 58), Vector2(610, 26), "RECOVERED: 0 / 6", 14, Color(0.76, 0.58, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	memory_archive_status_label = _make_label(memory_archive_panel, "ArchiveStatus", Vector2(35, 58), Vector2(610, 26), "MEMORIES RECOVERED: 0 / %d" % LEVELS.size(), 14, Color(0.76, 0.58, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
 
 	var archive_scroll := ScrollContainer.new()
 	archive_scroll.name = "ArchiveScroll"
