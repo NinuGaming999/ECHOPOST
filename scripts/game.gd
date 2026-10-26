@@ -94,7 +94,7 @@ var chapter_buttons: Array[Button] = []
 func _notification(what: int) -> void:
 	# Modal cards stay centered as a phone rotates or the desktop viewport is resized.
 	if what == NOTIFICATION_RESIZED:
-		call_deferred("_layout_centered_panels")
+		call_deferred("_layout_responsive_ui")
 	# Stop gameplay time when Android/iOS suspends the app, or when the app loses focus.
 	# We intentionally do not auto-resume: the player must explicitly tap RESUME.
 	elif what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
@@ -123,7 +123,7 @@ func _ready() -> void:
 	_load_progress()
 	_load_settings()
 	_build_interface()
-	_layout_centered_panels()
+	_layout_responsive_ui()
 	_show_menu()
 	queue_redraw()
 
@@ -553,6 +553,51 @@ func _build_failure_panel() -> void:
 	failure_progress_bar.add_theme_stylebox_override("fill", progress_fill)
 	failure_panel.add_child(failure_progress_bar)
 	failure_panel.hide()
+
+
+func _layout_responsive_ui() -> void:
+	# The puzzle world uses a 1280×720 design space, while the UI follows the
+	# available viewport so wide landscape phones do not leave controls stranded.
+	if size.x <= 0.0 or size.y <= 0.0:
+		return
+	var center_x := size.x * 0.5
+	if is_instance_valid(menu_root):
+		for control_name in ["Title", "Tagline", "Intro", "Progress"]:
+			var control := menu_root.get_node_or_null(control_name) as Control
+			if control != null:
+				control.position.x = center_x - control.size.x * 0.5
+		for button_name in ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]:
+			var menu_button := menu_root.get_node_or_null(button_name) as Control
+			if menu_button != null:
+				menu_button.position.x = center_x - menu_button.size.x * 0.5
+		var version_label := menu_root.get_node_or_null("Version") as Control
+		if version_label != null:
+			version_label.position.y = size.y - 32.0
+	if is_instance_valid(game_hud):
+		if is_instance_valid(echo_status_label):
+			echo_status_label.position.x = size.x - 475.0
+		if is_instance_valid(pause_button):
+			pause_button.position = Vector2(size.x - 170.0, 12.0)
+		if is_instance_valid(level_hint_label):
+			level_hint_label.size.x = maxf(620.0, size.x - 380.0)
+		if is_instance_valid(status_label):
+			status_label.position = Vector2(center_x - 370.0, size.y - 110.0)
+		if is_instance_valid(game_hud.get_node_or_null("MoveTip")):
+			game_hud.get_node("MoveTip").position.y = size.y - 105.0
+		var menu_button := game_hud.get_node_or_null("MenuButton") as Control
+		var record_control := game_hud.get_node_or_null("RecordButton") as Control
+		var latch_control := game_hud.get_node_or_null("LatchSwitchBButton") as Control
+		var reset_control := game_hud.get_node_or_null("ResetButton") as Control
+		var bottom_y := size.y - 66.0
+		if menu_button != null:
+			menu_button.position.y = bottom_y
+		if record_control != null:
+			record_control.position = Vector2(center_x - 260.0, bottom_y)
+		if latch_control != null:
+			latch_control.position = Vector2(center_x + 40.0, bottom_y)
+		if reset_control != null:
+			reset_control.position = Vector2(size.x - 280.0, bottom_y)
+	_layout_centered_panels()
 
 
 func _layout_centered_panels() -> void:
@@ -1315,7 +1360,7 @@ func _draw_room() -> void:
 	if joystick_touch_index != -1 or joystick_mouse_active or joystick_direction.length() > 0.05:
 		_draw_joystick()
 	else:
-		var joystick_hint := Vector2(size.x - 136.0 if left_handed_controls else 136.0, 555)
+		var joystick_hint := Vector2(size.x - 136.0 if left_handed_controls else 136.0, size.y * 0.77)
 		draw_circle(joystick_hint, 44.0, Color(0.12, 0.24, 0.34, 0.16))
 		draw_arc(joystick_hint, 44.0, 0, TAU, 40, Color(0.40, 0.72, 0.86, 0.27), 2.0, true)
 		draw_circle(joystick_hint, 17.0, Color(0.30, 0.78, 0.94, 0.14))
