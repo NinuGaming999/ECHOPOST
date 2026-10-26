@@ -115,6 +115,23 @@ const LEVELS: Array[Dictionary] = [
 		"hazard_amplitude": 0.0,
 		"hazard_speed": 0.0,
 		"accent": Color(0.98, 0.77, 0.36)
+	},
+	{
+		"name": "Pulse Lock",
+		"subtitle": "THE WINDOW IS SHORT",
+		"hint": "Hold both switches to open the pulse gate. Cross the gate before its 3.5-second window closes; once across, reach the portal.",
+		"spawn": Vector2(155, 420),
+		"plate_a": Vector2(410, 420),
+		"plate_b": Vector2(860, 420),
+		"memory_shard": Vector2(680, 200),
+		"shard_lore": "The pulse gate held for one breath. The couriers learned to cross together, never one at a time.",
+		"linger": 9.0,
+		"gate_open_seconds": 3.5,
+		"hazard": false,
+		"hazard_y": 365.0,
+		"hazard_amplitude": 0.0,
+		"hazard_speed": 0.0,
+		"accent": Color(0.96, 0.48, 0.32)
 	}
 ]
 
@@ -165,6 +182,14 @@ static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 			errors.append("%s must use a positive echo linger duration." % prefix)
 		if level.has("echo_waypoint") and not (level["echo_waypoint"] is Vector2):
 			errors.append("%s echo_waypoint must be a Vector2." % prefix)
+		if level.has("gate_open_seconds"):
+			var raw_gate_duration: Variant = level["gate_open_seconds"]
+			if not (raw_gate_duration is int or raw_gate_duration is float):
+				errors.append("%s gate_open_seconds must be numeric." % prefix)
+			else:
+				var gate_duration := float(raw_gate_duration)
+				if gate_duration < 1.0 or gate_duration > 15.0:
+					errors.append("%s gate_open_seconds must be between 1 and 15 seconds." % prefix)
 		if level.has("echo_waypoints") and not (level["echo_waypoints"] is Array):
 			errors.append("%s echo_waypoints must be an Array of Vector2 positions." % prefix)
 		for point_key in ["spawn", "plate_a", "plate_b", "memory_shard", "echo_waypoint"]:
