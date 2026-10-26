@@ -118,12 +118,12 @@ This hardening pass addresses a real frame-step boundary issue and makes the min
 
 - `scripts/data/level_catalog.gd:L12–L93` now gives each of the six rooms a `memory_shard: Vector2` pickup point and a `shard_lore` fragment. The six shards are optional; they never gate Switch A/B, the exit, or campaign unlocking.
 - `scripts/data/level_catalog.gd:L133–L172` requires the new fields, validates nonempty lore, bounds the shard position to the room, and keeps it at least 60 units away from spawn/A/B so the collectible is not hidden under a core objective.
-- `scripts/game.gd:L27` adds `collected_shards` as a `PackedInt32Array` of room indices. The game checks pickup in `L121` and collects a shard in `_check_memory_shard_collection()` at `L498–L511` when the player comes within 30 units. Collection displays the room's lore, persists the room index, refreshes the menu counters and redraws.
-- `scripts/game.gd:L614` shows `MEMORIES: collected / six` in the menu progress line. `L644–L654` loads and saves collection with the campaign. `L692–L693` draws an uncollected shard; `_draw_memory_shard()` at `L734–L750` renders a violet crystal labelled MEMORY.
-- `scripts/game.gd:L244–L251` explains in help that shards are optional and sentinels can destroy an unfinished take.
+- `scripts/game.gd:L27` adds `collected_shards` as a `PackedInt32Array` of room indices. The game checks pickup in `L121` and collects a shard in `_check_memory_shard_collection()` at `L590–L603` when the player comes within 30 units. Collection displays the room's lore, persists the room index, refreshes the menu counters/archive and redraws.
+- `scripts/game.gd:L704–L711` shows `MEMORIES: collected / six` in the menu progress line and updates the archive count. `L738–L748` loads and saves collection with the campaign. `L786–L787` draws an uncollected shard; `_draw_memory_shard()` at `L828–L844` renders a violet crystal labelled MEMORY.
+- `scripts/game.gd:L247–L254` explains in help that shards are optional and sentinels can destroy an unfinished take.
 - `scripts/data/progress_store.gd:L5` increments the save schema to version 2. `L8–L23` loads the old campaign fields and a normalized shard array; version-1 saves still load unlocked rooms/completion count and default to no shards. `L26–L37` persists shards; `L40–L58` sanitizes duplicate, negative and out-of-range indices.
 - `tests/headless_smoke.gd:L60–L61` checks every room includes a valid shard position and nonempty lore. `L96–L126` tests shard collection save round-trip, duplicate/invalid index sanitization, and compatibility with a handcrafted version-1 save.
-- `tests/game_flow_smoke.gd:L244–L273` simulates touching the first shard, checks the lore message and persisted collection, then restores the original saved progress so the test does not permanently alter the player's save.
+- `tests/game_flow_smoke.gd:L245–L274` simulates touching the first shard, checks the lore message and persisted collection, then restores the original saved progress so the test does not permanently alter the player's save.
 - [Godot CI run 65](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390957517) passed on Godot 4.4.0 and 4.7.2, including the room-data/parser tests, save migration tests and collection/persistence integration test.
 - The feature gives the campaign a light optional exploration reward, but it is not yet a branching narrative or a full collectible journal. Actual touch reach and pickup readability still need manual play-testing.
 
@@ -136,7 +136,7 @@ This hardening pass addresses a real frame-step boundary issue and makes the min
 - `scripts/game.gd:L436–L450` hides the archive when returning to the main menu; `L457–L487` closes it when starting a chamber; `L704–L711` refreshes its progress label when collection changes.
 - `tests/game_flow_smoke.gd:L278–L300` verifies the archive opens, uses a ScrollContainer, creates title/lore rows for all rooms, shows the correct recovered/not-found state for room 1, and closes when returning to the menu.
 - Archive implementation commit: `35417013566ede232f7dbacb0c36f2a5f10c5349`; archive integration-test commit: `7918208cd0d8c8d7422240f11cefadd9020d4cc8`.
-- **CI status at this snapshot:** run 72 (`https://github.com/NinuGaming999/ECHOPOST/actions/runs/40391672248`) was still in progress when checked. Do not mark the archive test as passed until the latest run completes successfully.
+- **CI status at this snapshot:** run 72 (`https://github.com/NinuGaming999/ECHOPOST/actions/runs/40391672248`) and doc-triggered runs 73–77 were still reported as in progress when checked. The runner status was not yet available as a completed pass/fail; do not mark the archive as verified until a completed run includes the current source and tests.
 - The archive is a simple readable list, not a visual novel or branching narrative. Larger text, localization, and accessibility adjustments still need manual QA.
 
 ### Mobile lifecycle pause hardening
@@ -158,7 +158,7 @@ This change is covered by an automated headless integration test. It is **not ye
 |---|---|
 | `project.godot` | Application name, icon, landscape 1280×720 viewport, canvas-item stretch, compatibility renderer and WASD/arrow input map. |
 | `scenes/main.tscn` | Very small main scene: full-rect `Control` attached to `scripts/game.gd`. |
-| `scripts/game.gd` | Main controller, menu/HUD construction, player movement, echo recording/playback, puzzle loop, sentinel, save flow, and all procedural rendering. **775 lines in the snapshot documented here; it is the largest refactor target later, but refactor only after tests protect behavior.** |
+| `scripts/game.gd` | Main controller, menu/HUD construction, player movement, echo recording/playback, puzzle loop, sentinel, save flow, and all procedural rendering. **910 lines in the snapshot documented here; it is the largest refactor target later, but refactor only after tests protect behavior.** |
 | `scripts/core/echo_track.gd` | Data-only `RefCounted` script loaded through preloaded script resources; avoids global `class_name` lookup; stores points, clamps timestamps to nondecreasing order, copies tracks, returns duration, interpolates route positions, and holds endpoint outside the timestamp range. |
 | `scripts/data/level_catalog.gd` | Six authored room dictionaries with shard positions/lore, defensive-copy accessor, canonical/draft validator for schema, names, spacing, position bounds, shard placement and hazard tuning. |
 | `scripts/data/progress_store.gd` | Version-2 local save boundary (`user://echopost_save.cfg`) using `ConfigFile`; preserves v1 campaign progress and stores normalized Memory Shard room indices. |
@@ -349,7 +349,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 1. **Mobile sizing / safe areas:** most layout coordinates and drawing coordinates are hard-coded around 1280×720. Safe areas, short/tall screens, scaling and button reach are not validated.
 2. **Controller size:** `scripts/game.gd` owns UI construction, gameplay state, input, persistence coordination and drawing. Refactor only incrementally; add tests first so game behavior does not regress.
-3. **Small content set:** six room dictionaries now exist, but the core two-switch pattern is reused and there is no full campaign or final narrative ending.
+3. **Small content set:** six room dictionaries and six optional Memory Shards now exist, but the core two-switch pattern is reused and there is no full campaign or final narrative ending.
 4. **Procedural placeholder visuals:** no authored robot animations, environmental tilesets, VFX or transition animations.
 5. **No sound:** recording, rejected route, sentinel hits, gate opening and portal have text/visual feedback only. No SFX, music, mixer, or audio options exist.
 6. **Pause behavior needs real device QA:** the lifecycle logic is headlessly tested but actual Android app-switch lifecycle and focus behavior are unverified. The player must tap RESUME after returning.
@@ -369,6 +369,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Verify restart/portal flows (run 33), route preview (run 34), six-room chapter UI (run 42), room validation (run 49), sentinel interruption (run 54), and Memory Shards plus v1 save compatibility (run 65) on both Godot versions.
 - [ ] Confirm the Memory Archive integration-test workflow passes before marking it verified.
 - [ ] Ask for / perform a local pull and open the project in the user's Godot 4.4 editor to inspect the live route preview and confirm visuals on the actual machine.
+- [ ] Verify Memory Archive integration-test run 72 (or a newer source-inclusive run); update this file and `docs/BUILD_STATUS.md` with its final status.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
 
 ### P1 — Core mechanic test coverage
