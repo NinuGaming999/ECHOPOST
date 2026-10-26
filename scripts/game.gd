@@ -269,7 +269,7 @@ func _build_complete_panel() -> void:
 func _build_help_panel() -> void:
 	help_panel = _make_panel("HelpPanel", Vector2(340, 145), Vector2(600, 430))
 	_make_label(help_panel, "HelpTitle", Vector2(28, 24), Vector2(544, 50), "HOW TO LEAVE AN ECHO", 27, Color(0.88, 0.97, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
-	var text := "1. Tap RECORD ECHO and move to Switch A.\n\n2. While standing on A, tap STOP & SEND. Your\n   recorded route will replay as a ghost.\n\n3. Move to Switch B while the echo finishes and\n   remains on A. The gate opens when both switches\n   are held at the same time.\n\n4. Reach the portal on the right to continue.\n\nOptional MEMORY SHARDS reveal fragments from the\ncourier network. They never block the exit.\n\nSentinels send you back to the entrance; if you\nare recording, the unfinished take is lost."
+	var text := "1. Tap RECORD ECHO and move to Switch A.\n\n2. While standing on A, tap STOP & SEND. Your\n   recorded route will replay as a ghost.\n\n3. Move to Switch B while the echo finishes and\n   remains on A. The gate opens when both switches\n   are held at the same time.\n\n4. Reach the portal on the right to continue.\n\nOptional MEMORY SHARDS reveal fragments from the\ncourier network. They never block the exit. Some\nrooms require your recording to cross a RELAY.\n\nSentinels send you back to the entrance; if you\nare recording, the unfinished take is lost."
 	_make_label(help_panel, "HelpText", Vector2(40, 83), Vector2(520, 270), text, 16, Color(0.67, 0.80, 0.89), HORIZONTAL_ALIGNMENT_LEFT)
 	var close := _make_button(help_panel, "HelpClose", Vector2(185, 360), Vector2(230, 44), "GOT IT", Color(0.04, 0.48, 0.63), Color(0.06, 0.65, 0.80), 16)
 	close.pressed.connect(func(): help_panel.hide())
@@ -621,6 +621,16 @@ func _finish_recording() -> void:
 		_update_hud()
 		queue_redraw()
 		return
+	if level_data.has("echo_waypoint"):
+		var relay_position: Vector2 = level_data["echo_waypoint"]
+		if not _track_passes_waypoint(recording_track, relay_position, 40.0):
+			echo_visible = false
+			echo_playing = false
+			echo_track.clear()
+			status_message = "ROUTE REJECTED — pass through the RELAY BEACON before finishing on SWITCH A."
+			_update_hud()
+			queue_redraw()
+			return
 	echo_track = recording_track.copy_track()
 	echo_playing = echo_track.samples.size() > 1
 	echo_visible = echo_playing
@@ -635,6 +645,30 @@ func _finish_recording() -> void:
 
 func _add_record_sample(sample_time: float, point: Vector2) -> void:
 	recording_track.add_sample(sample_time, point)
+
+
+func _track_passes_waypoint(track: Variant, waypoint: Vector2, radius: float) -> bool:
+	if track.samples.is_empty():
+		return false
+	var safe_radius := maxf(0.0, radius)
+	var first_position: Vector2 = track.samples.front()["p"]
+	if first_position.distance_to(waypoint) <= safe_radius:
+		return true
+
+	for i in range(1, track.samples.size()):
+		var from_point: Vector2 = track.samples[i - 1]["p"]
+		var to_point: Vector2 = track.samples[i]["p"]
+		var segment := to_point - from_point
+		var segment_length_squared := segment.length_squared()
+		if segment_length_squared <= 0.0001:
+			if from_point.distance_to(waypoint) <= safe_radius:
+				return true
+			continue
+		var weight := clampf((waypoint - from_point).dot(segment) / segment_length_squared, 0.0, 1.0)
+		var closest_point := from_point + segment * weight
+		if closest_point.distance_to(waypoint) <= safe_radius:
+			return true
+	return false
 
 
 func _update_player(delta: float) -> void:
@@ -894,6 +928,8 @@ func _draw_room() -> void:
 	_draw_switch(level_data["plate_b"], "B", Color(1.0, 0.70, 0.34), player_position.distance_to(level_data["plate_b"]) < 43.0)
 	_draw_gate()
 	_draw_portal(Vector2(1170, 365), door_open)
+	if level_data.has("echo_waypoint"):
+		_draw_echo_waypoint(level_data["echo_waypoint"])
 	if level_data.has("memory_shard") and not collected_shards.has(current_level_index):
 		_draw_memory_shard(level_data["memory_shard"])
 
@@ -934,6 +970,22 @@ func _draw_room() -> void:
 	else:
 		draw_string(ThemeDB.fallback_font, Vector2(1035, 145), "SEALED", HORIZONTAL_ALIGNMENT_CENTER, 90, 13, Color(0.47, 0.61, 0.72))
 
+
+
+func _draw_echo_waypoint(position: Vector2) -> void:
+	# Amber relay beacon: unlike Memory Shards, this marker is required to make the route valid.
+	draw_circle(position, 34.0, Color(1.0, 0.66, 0.25, 0.08))
+	draw_arc(position, 25.0, 0.0, TAU, 48, Color(1.0, 0.69, 0.30, 0.84), 2.5, true)
+	draw_arc(position, 15.0, 0.0, TAU, 48, Color(1.0, 0.83, 0.53, 0.65), 1.5, true)
+	var diamond := PackedVector2Array([
+		position + Vector2(0, -13),
+		position + Vector2(11, 0),
+		position + Vector2(0, 13),
+		position + Vector2(-11, 0),
+	])
+	draw_colored_polygon(diamond, Color(1.0, 0.66, 0.27, 0.94))
+	draw_polyline(PackedVector2Array([diamond[0], diamond[1], diamond[2], diamond[3], diamond[0]]), Color(1.0, 0.88, 0.62, 0.98), 1.5, true)
+	draw_string(ThemeDB.fallback_font, position + Vector2(20, 4), "RELAY", HORIZONTAL_ALIGNMENT_LEFT, 65, 11, Color(1.0, 0.80, 0.47))
 
 
 func _draw_memory_shard(position: Vector2) -> void:
