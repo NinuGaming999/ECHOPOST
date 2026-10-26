@@ -200,7 +200,7 @@ This function index is line-accurate for source blob SHA `95bdc17a4a9250b44011ed
 - **L92–L107:** Regression test for automatic stop at eight seconds and an exactly eight-second echo track.
 - **L110–L121:** Too-short recording feedback and preservation of active recording.
 - **L124–L132:** Sentinel spawn reset and user-facing status.
-- **L134–L138:** Shared assertion helper.
+- **L134–L137:** Shared assertion helper.
 - **Known coverage gap:** No automated full-portal completion test yet; restart-during-recording/echo and lifecycle focus-out edge cases still need dedicated assertions.
 
 ### `scenes/main.tscn` (13 lines)
@@ -255,7 +255,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 5. **No sound:** recording, rejected route, sentinel hits, gate opening and portal have text/visual feedback only. No SFX, music, mixer, or audio options exist.
 6. **Pause behavior needs real device QA:** the lifecycle logic is headlessly tested but actual Android app-switch lifecycle and focus behavior are unverified. The player must tap RESUME after returning.
 7. **Mechanic coverage:** one recording slot, one hold-style Switch A/Switch B puzzle pattern, a single gate and hardcoded portal position. Timed/toggle/sequence switches, moving platforms and checkpoints are ideas only.
-8. **Recording edge cases:** minimum valid recording is 0.65 seconds; a too-short stop currently keeps recording active and explains that the route needs to be longer. Verify that this interaction is understandable on touch.
+8. **Recording edge cases:** the minimum is now `MIN_RECORD_SECONDS = 0.7` at `scripts/game.gd:L16`; a too-short stop deliberately keeps recording active and tells the player to continue. Verify that this interaction is understandable on touch.
 9. **Hazard edge cases:** sentinel collision resets the real player's position. Verify whether the echo and an active recording should remain unchanged on collision; decide and add tests before redesigning behavior.
 10. **Save migration:** save schema is version 1 and locally stored only. No migration tests for future versions or cloud save exist.
 11. **Level validation:** checks core required fields and basic bounds, but does not yet enforce all hazard ranges, layout spacing, switch/gate collision assumptions, or portal reachability.
@@ -271,9 +271,10 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [ ] Every further code change must update this progress file and refresh affected line maps.
 
 ### P1 — Core mechanic test coverage
-- [ ] Add an integration case for the maximum 8-second recording duration.
-- [ ] Add an integration case for the too-short recording interaction.
-- [ ] Test sentinel contact and clarify whether it clears recording/echo or only resets player position.
+- [x] Add an integration test for automatic recording stop and verify the echo route is exactly 8.0 seconds.
+- [x] Test the too-short recording interaction: no echo is created, recording remains active, and the message says to keep recording.
+- [x] Test sentinel contact resets the player to the room spawn and displays feedback.
+- [ ] Decide whether sentinel contact should clear an active recording/echo, then test the chosen behavior.
 - [ ] Test restart while echo is replaying, while recording, and while paused.
 - [ ] Test closing the gate then entering the portal and verify exactly one completion/save event fires.
 - [ ] Test lifecycle focus-out as well as application-paused notification; physical mobile app switching still needs manual QA.
