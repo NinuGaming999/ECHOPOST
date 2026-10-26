@@ -595,6 +595,7 @@ func _layout_responsive_ui() -> void:
 			if centered_button == null:
 				continue
 			centered_button.size.x = minf(330.0, size.x - 48.0)
+			centered_button.pivot_offset = centered_button.size * 0.5
 			centered_button.position.x = center_x - centered_button.size.x * 0.5
 		if compact_height:
 			var compact_button_names := ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]
@@ -634,15 +635,19 @@ func _layout_responsive_ui() -> void:
 		var side_margin := maxf(18.0, size.x * 0.025)
 		if bottom_menu_control != null:
 			bottom_menu_control.size.x = nav_width
+			bottom_menu_control.pivot_offset = bottom_menu_control.size * 0.5
 			bottom_menu_control.position = Vector2(side_margin, bottom_y)
 		if record_control != null:
 			record_control.size.x = action_width
+			record_control.pivot_offset = record_control.size * 0.5
 			record_control.position = Vector2(center_x - action_width - action_gap * 0.5, bottom_y)
 		if latch_control != null:
 			latch_control.size.x = action_width
+			latch_control.pivot_offset = latch_control.size * 0.5
 			latch_control.position = Vector2(center_x + action_gap * 0.5, bottom_y)
 		if reset_control != null:
 			reset_control.size.x = nav_width
+			reset_control.pivot_offset = reset_control.size * 0.5
 			reset_control.position = Vector2(size.x - side_margin - nav_width, bottom_y)
 	_layout_centered_panels()
 
