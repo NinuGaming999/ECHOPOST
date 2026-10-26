@@ -48,13 +48,14 @@ func _test_echo_track() -> void:
 
 
 func _test_level_catalog() -> void:
-	_check(LevelCatalog.LEVELS.size() >= 10, "The early campaign should contain at least ten chambers.")
+	_check(LevelCatalog.LEVELS.size() >= 11, "The early campaign should contain at least eleven chambers.")
 	_check(LevelCatalog.validate_levels().is_empty(), "The campaign catalog should pass its own level-data validator.")
 	var names_seen: Dictionary = {}
 	var relay_room_found := false
 	var ordered_relay_room_found := false
 	var timed_gate_room_found := false
 	var triple_relay_room_found := false
+	var relay_timer_combo_found := false
 	for index in range(LevelCatalog.LEVELS.size()):
 		var level: Dictionary = LevelCatalog.get_level(index)
 		var level_name := str(level.get("name", ""))
@@ -76,6 +77,9 @@ func _test_level_catalog() -> void:
 					_check(waypoint is Vector2, "Every ordered relay checkpoint must use a Vector2 position.")
 		if level.has("gate_open_seconds"):
 			timed_gate_room_found = true
+			if level.has("echo_waypoints") and level["echo_waypoints"] is Array and level["echo_waypoints"].size() >= 3:
+				relay_timer_combo_found = true
+				_check(str(level_name) == "Fracture Clock", "The room combining three relays and a timed gate should be named Fracture Clock.")
 			var gate_duration: Variant = level["gate_open_seconds"]
 			_check(gate_duration is int or gate_duration is float, "Timed gate duration must be numeric.")
 			if gate_duration is int or gate_duration is float:
@@ -91,6 +95,7 @@ func _test_level_catalog() -> void:
 	_check(ordered_relay_room_found, "The early campaign should include a room with multiple ordered relay checkpoints.")
 	_check(timed_gate_room_found, "The early campaign should include a timed-gate room.")
 	_check(triple_relay_room_found, "The campaign should include a three-relay route challenge.")
+	_check(relay_timer_combo_found, "The campaign should combine three ordered relays with a timed gate in at least one room.")
 	var original_name := str(LevelCatalog.LEVELS[0]["name"])
 	var isolated_copy: Dictionary = LevelCatalog.get_level(0)
 	isolated_copy["name"] = "Changed only in this test copy"
