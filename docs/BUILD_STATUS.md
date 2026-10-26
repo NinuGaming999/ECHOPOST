@@ -14,20 +14,21 @@
 - Echo track copies instantiate from their preloaded script resource instead of relying on a global `EchoTrack` class registration; this fixes the Godot 4.4 compile failure reported during local testing.
 - Two-switch gate and portal completion flow.
 - Six authored room layouts with varied switch positions and sentinel sweep patterns; the chapter list scrolls as the campaign grows.
+- One optional Memory Shard and lore fragment per chamber, rendered as a glowing violet diamond; collection is tracked in the menu progress and saved locally.
 - Level-catalog validation for unique/non-empty names, room bounds, minimum route distance, switch separation, and safe sentinel patrol height/width/speed; arbitrary draft arrays can be validated without editing the canonical campaign.
-- Local versioned campaign save data and progress clamping.
+- Version-2 local campaign save data, Memory Shard collection persistence, validation of shard indices, and backward-compatible loading of version-1 saves.
 - Automatic pause on Android/iOS application suspension or application focus loss; held joystick input is cleared, in-progress recording state is preserved, and gameplay never auto-resumes without player input.
-- Campaign-data validator and smoke tests including intentionally malformed draft rooms, echo-track copy identity, the exact eight-second cap, too-short recording feedback, sentinel collision during recording (cancels/clears the unfinished route), restart cleanup, portal completion idempotency with save restoration, scrollable chapter UI, route validation, gate activation and lifecycle pause/resume.
+- Campaign-data validator and smoke tests including intentionally malformed room drafts, unique room names, Memory Shard positions/lore, version-2 shard save round-trip, duplicate/out-of-range index sanitization, version-1 save compatibility, collection lore/persistence with save restoration, echo-track copy identity, exact eight-second cap, too-short feedback, sentinel interruption, restart cleanup, portal completion idempotency, scrollable chapter UI, route validation, gate activation and lifecycle pause/resume.
 - Automated GitHub Actions workflow that imports/parses the project and runs both smoke-test scripts.
 - README, design document, roadmap, contribution guide, and MIT license.
 
 ## Verification status
 
-Godot CI run 42 passed on both Godot 4.4.0 and 4.7.2 after the six-room catalog and scrollable chapter selector were added ([run 42](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389230677)). Latest room-validator run 49 passed both versions with the stronger room-draft validator and invalid-draft regression tests ([run 49](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389764965)). The new sentinel-recording interruption test also passed in [run 54](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390169866). Both workflows import/parse the project and run data and gameplay smoke tests. Live route preview and chapter scrolling still need manual inspection in the user's editor/device. No Android APK has been built or tested on a physical device; this remains an early development build, not release-ready.
+Godot CI run 65 passed on both Godot 4.4.0 and 4.7.2 after Memory Shards, version-2 save persistence, version-1 compatibility, and the collection integration test were added ([run 65](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390957517)). The checks import/parse the project and run data-layer/gameplay smoke tests, including shard index sanitization, old-save compatibility, displaying lore, and saving collection while restoring test progress afterward. Live visuals and gameplay still need manual inspection in the user's editor/device. No Android APK has been built or tested on a physical device; this remains an early development build, not release-ready.
 
 ## Next work items
 
-1. Manually inspect the live route preview and six-room scrollable chapter selector in Godot; play through the new rooms and tune patrol fairness and puzzle pacing.
+1. Manually inspect the live route preview, violet Memory Shards, and six-room scrollable chapter selector in Godot; play through the rooms and tune patrol fairness and puzzle pacing.
 2. Play through all six rooms with keyboard and touch input; tune switch radius, sentinel paths, timing, and messaging.
 3. Add viewport/safe-area handling and test the game at mobile aspect ratios; the current layout is authored for 1280×720.
 4. Build toward 12–20 authored chambers and introduce at least one new puzzle mechanic beyond switch placement/sentinel patrol variants.
