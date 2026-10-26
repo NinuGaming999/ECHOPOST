@@ -391,33 +391,35 @@ This function index matches source blob SHA `dd2d8d8b9bb9968095ee22a2a0ba35ae0c6
 - **L104–L116 — _pause_for_lifecycle():** Pause active gameplay without interrupting a failure-reset sequence.
 - **L119–L128 — _ready():** Load saves/preferences, build UI, apply responsive layout, show menu.
 - **L131–L180 — _process():** Countdown/restart handling; stop frame evaluation when sentinel contact starts a reset.
-- **L183–L215:** Keyboard/touch/mouse input handling and joystick control.
-- **L219–L228 — _is_joystick_area():** Proportional left/right joystick zones and protected bottom-action band.
-- **L231–L241:** Joystick movement normalization and deterministic star decoration.
-- **L244–L275 — _build_interface() / _build_menu():** Build screen panels and main menu.
-- **L278–L305 — _build_game_hud():** Header/status and pause/record/latch/restart/menu controls.
-- **L308–L424:** Completion, Help, chapter select, Memory Archive and Options panels.
-- **L427–L521:** Options actions, settings persistence and archive status.
-- **L524–L559 — _build_failure_panel():** Failure reason/detail card and shrinking reset indicator.
+- **L180–L218 — _input():** Keyboard latch shortcut, touch/mouse joystick handling and movement events; input is ignored during reset.
+- **L219–L231 — _is_joystick_area():** Proportional left/right joystick zones and a protected bottom-action band.
+- **L232–L243:** Joystick movement normalization and deterministic star decoration.
+- **L244–L281 — _build_interface() / _build_menu():** Build screen panels and main menu.
+- **L282–L306 — _build_game_hud():** Header/status and pause/record/latch/restart/menu controls.
+- **L307–L430:** Completion, Help, chapter select, Memory Archive and Options panels.
+- **L431–L523:** Options actions, settings persistence and archive status.
+- **L524–L561 — _build_failure_panel():** Failure reason/detail card and shrinking reset indicator.
 - **L562–L649 — _layout_responsive_ui():** Center/shrink menu text, compact-height menu stack, and compute a non-overlapping bottom action row.
 - **L650–L655 — _layout_centered_panels():** Recenter modals after viewport changes.
 - **L656–L692 — _make_panel() / _make_label():** Shared panel depth/radius/border and typography construction.
 - **L693–L750 — _make_button() / _animate_button():** Shared rounded/bordered states and short press/hover animations.
 - **L751–L777 — _show_menu() / _on_start_pressed():** Cancel pending reset and navigate from menu.
-- **L778–L819 — _start_level() and record/latch actions:** Initialize a clean chamber and guard actions during reset.
-- **L866–L913 — _finish_recording():** Validate minimum duration, Switch A endpoint and single/ordered relay requirements; failed relay attempts schedule reset.
-- **L916–L970:** Track sample insertion, relay linked state, ordered-waypoint progression and segment crossing tests.
-- **L971–L1044:** Player/echo movement, linger behavior and relay-room detection.
-- **L1045–L1080 — _room_requires_relay() / _schedule_room_reset():** Clear failed take, block input, show explanation and restart countdown.
-- **L1081–L1100 — _check_sentinel_collision():** Sentinel contact cancels the take and triggers full room reset.
+- **L778–L819 — _start_level():** Initialize a clean chamber and clear pending reset state.
+- **L820–L865 — record/latch actions:** Start/finish a route or validate the toggle switch, guarding against input during reset.
+- **L866–L917 — _finish_recording():** Validate minimum duration, Switch A endpoint and single/ordered relay requirements; failed relay attempts schedule reset.
+- **L918–L1016:** Track sample insertion, relay linked state, ordered-waypoint progression and segment crossing tests.
+- **L1017–L1048:** Player/echo movement, linger behavior and relay-room detection.
+- **L1045–L1048 — _room_requires_relay():** Identify chambers with required relay checkpoints.
+- **L1049–L1080 — _schedule_room_reset():** Clear the failed take, block input, show explanation and schedule same-room restart.
+- **L1081–L1092 — _check_sentinel_collision():** Sentinel contact cancels the take and triggers full room reset.
 - **L1103–L1140:** Memory Shard collection and timed-gate retry/crossing logic.
-- **L1141–L1182 — _check_puzzle_state():** Evaluate switches, latching, gate and portal completion.
-- **L1183–L1261:** Completion/save, pause, chapter navigation and menu progress.
+- **L1130–L1171 — _check_puzzle_state():** Evaluate switches, latching, gate and portal completion.
+- **L1172–L1261:** Completion/save, pause, chapter navigation and menu progress.
 - **L1262–L1294 — _update_hud():** Dynamic status, button captions/disabled states during reset.
-- **L1295–L1319:** Local campaign/settings load and save.
+- **L1296–L1320:** Local campaign/settings load and save.
 - **L1320–L1347:** Background/menu art and gate-timer ratio.
-- **L1348–L1427 — _draw_room():** Room, switches, gate, portal, relays, shard, sentinel, echo trail and joystick hint.
-- **L1428–L1531:** Procedural relay, shard, switch, gate, portal, robot, joystick and route drawing.
+- **L1349–L1428 — _draw_room():** Room, switches, gate, portal, relays, shard, sentinel, echo trail and joystick hint.
+- **L1429–L1531:** Procedural relay, shard, switch, gate, portal, robot, joystick and route drawing.
 
 ## 5. Exact line map — supporting scripts and tests
 
@@ -488,7 +490,8 @@ This function index matches source blob SHA `dd2d8d8b9bb9968095ee22a2a0ba35ae0c6
 - **L681–L770:** Dead Air Protocol validates invalid/valid four-relay sequence, 1.8-second gate/timeout, plus full room reset on relay failure and sentinel contact.
 - **L771–L830:** Pulse Lock start/countdown bar, real-frame countdown, pause freeze, timeout/rearm/retry and crossing.
 - **L831–L850 — `_finish_failure_reset()`:** Advance countdown without input and assert the same room returns with failed recording/echo, gate and latch cleared.
-- **L851–L878 — `_test_premium_mobile_ui()`:** Touch-target sizing, shared button style, responsive control/modal placement and proportional joystick zones.
+- **L851–L901 — `_test_premium_mobile_ui()`:** Touch-target sizing, shared button style, wide/compact viewport reflow, menu fit, control spacing and proportional joystick zones.
+- **L904–L907:** Assertion helper.
 - **L879–L882:** Assertion helper.
 
 
