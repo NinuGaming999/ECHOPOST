@@ -30,7 +30,7 @@
 
 ## Verification status
 
-[Godot CI run 192](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40412180460) passed on both Godot 4.4.0 and 4.7.2 after adding Dead Air Protocol. It verifies project import/parse plus data and gameplay smoke tests for twelve-room data, four-relay valid/invalid routes, the complete sequence hint, the farther Switch B placement, the 1.8-second gate and timeout, and sentinel interruption cancelling the take; existing Latch Protocol and timed-gate tests remain green.
+[Godot CI run 206](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40412947281) passed on both Godot 4.4.0 and 4.7.2 after tightening Dead Air Protocol's gate. It verifies project import/parse plus data and gameplay smoke tests for twelve-room data, four-relay valid/invalid routes, the complete sequence hint, Switch B's farther placement, the 1.8-second timer/timeout, and sentinel interruption cancelling the take; existing Latch Protocol and timed-gate tests remain green.
 
 [Run 82](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40392916662) passed Memory Archive, Options UI, movement presets and left-handed joystick tests; [run 81](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40392848307) passed settings defaults/persistence/normalization; [run 65](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390957517) passed Memory Shard persistence and version-1 save compatibility. Live visuals and controls still need manual inspection in the user's editor/device. No Android APK has been built or tested on a physical device; this remains an early development build, not release-ready.
 
