@@ -1,10 +1,12 @@
 # ECHOPOST
 
+[![Godot checks](https://github.com/NinuGaming999/ECHOPOST/actions/workflows/godot-checks.yml/badge.svg)](https://github.com/NinuGaming999/ECHOPOST/actions/workflows/godot-checks.yml)
+
 **Every player leaves a ghost.** ECHOPOST is a mobile-first 2D puzzle adventure about recording your movement and using its echo to solve rooms you cannot solve alone.
 
 This repository is the long-term home of the full game. The current source implements a playable vertical slice: movement, touch controls, recording/playback echoes with endpoint validation, pressure switches, gates/exits, three campaign rooms, roaming sentinels, chapter unlocks, local save data, and procedural graphics so it runs without external art assets.
 
-> **Development status:** Early development. The source has not yet had a Godot-engine smoke test in the current build environment. Production art/audio, accessibility options, online echo sharing, and Android release packaging remain future work.
+> **Development status:** Early development. Automated Godot CI parses the project and runs smoke tests on every push and pull request. Production art/audio, accessibility options, online echo sharing, and Android release packaging remain future work.
 
 ## Run the game
 
@@ -44,6 +46,8 @@ ECHOPOST/
 ├── scripts/data/progress_store.gd
 ├── assets/echopost_icon.svg
 ├── tests/headless_smoke.gd
+├── tests/game_flow_smoke.gd
+├── .github/workflows/godot-checks.yml
 ├── docs/GAME_DESIGN.md
 ├── docs/ROADMAP.md
 ├── docs/BUILD_STATUS.md
@@ -54,13 +58,14 @@ ECHOPOST/
 
 ## Smoke tests
 
-With Godot available on PATH, run:
+With Godot available on PATH, run both tests:
 
 ```sh
 godot --headless --path . --script res://tests/headless_smoke.gd
+godot --headless --path . --script res://tests/game_flow_smoke.gd
 ```
 
-On Windows, double-click `RUN_TESTS.bat`. The tests cover echo-track timing/interpolation, campaign data and validation, and local save/load boundaries. They must still be executed in Godot to confirm runtime behavior.
+On Windows, run `RUN_TESTS.bat`. The data tests cover echo-track timing/interpolation, campaign validation, and save/load boundaries. The gameplay integration test verifies valid recording, invalid endpoint rejection, echo creation, and two-switch gate activation. GitHub Actions installs Godot and runs these tests on each push and pull request.
 
 ## Android
 
