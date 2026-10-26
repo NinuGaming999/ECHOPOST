@@ -36,6 +36,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [ ] Add more switch types and carefully constrain puzzle complexity beyond the first ordered relay and timed-gate mechanics.
 - [ ] Add checkpoints, better reset messaging, and a campaign map.
 - [x] Add eight optional Memory Shards with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
+- [x] Add a non-blocking restored-signal reward when all eight memories are recovered, both in the play status and Memory Archive.
 - [ ] Expand narrative fragments and authored world storytelling beyond the eight introductory memories.
 
 ## Milestone 3 — Art, animation, and audio
