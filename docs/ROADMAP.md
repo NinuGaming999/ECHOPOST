@@ -19,7 +19,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 ## Milestone 1 — Core mechanic hardening
 
 - [x] Add headless tests for echo timestamp ordering, interpolation/copying, campaign-data validation, save/load, and unlock clamping.
-- [ ] Add remaining engine-level tests for lifecycle focus-out and save-failure edge cases. Recording cap, too-short recording, sentinel reset, restart cleanup, portal completion idempotency, gate conditions, and lifecycle pause now have smoke coverage.
+- [ ] Add remaining engine-level tests for lifecycle focus-out and save-failure edge cases. Recording cap, too-short recording, sentinel reset/cancelled interrupted take, restart cleanup, portal completion idempotency, gate conditions, and lifecycle pause now have smoke coverage.
 - [x] Add schema validation and diagnostics for level catalog data, including arbitrary draft lists, unique names, route/switch spacing, room bounds, and sentinel tuning.
 - [x] Add clear feedback for invalid recording endpoints and a live route preview while recording.
 - [x] Auto-pause active gameplay when the app loses focus or Android/iOS suspends it; clear held joystick input and require explicit player resume.
