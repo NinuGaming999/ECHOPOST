@@ -20,6 +20,7 @@ func _run_tests() -> void:
 	await process_frame
 
 	_test_chapter_select_layout(game)
+	_test_premium_mobile_ui(game)
 	_test_memory_shard_collection(game)
 	_test_all_memories_restore_signal(game)
 	_test_memory_archive_ui(game)
@@ -149,6 +150,7 @@ func _test_sentinel_reset(game: Control) -> void:
 	game.call("_check_sentinel_collision")
 	_check(game.get("player_position") == expected_spawn, "Sentinel contact should return the player to the room spawn.")
 	_check(str(game.get("status_message")).begins_with("SENTINEL CONTACT"), "Sentinel contact should explain why the player was reset.")
+	_finish_failure_reset(game)
 
 	# A recording interrupted by a sentinel must not contain a fake teleport to spawn.
 	var interrupted_track = EchoTrackScript.new()
@@ -167,6 +169,7 @@ func _test_sentinel_reset(game: Control) -> void:
 	_check(is_zero_approx(float(game.get("record_sample_accumulator"))), "Sentinel contact should reset the sample accumulator.")
 	_check(cleared_track.samples.is_empty(), "Sentinel contact should clear the interrupted route instead of recording a teleport.")
 	_check(str(game.get("status_message")).contains("recording lost"), "The collision message should explain that the interrupted recording was lost.")
+	_finish_failure_reset(game)
 
 
 func _test_restart_clears_state(game: Control) -> void:
@@ -469,6 +472,7 @@ func _test_echo_waypoint_requirement(game: Control) -> void:
 	_check(not bool(game.get("echo_visible")), "A route that misses the required relay beacon must not create an echo.")
 	_check(not bool(game.call("_is_relay_waypoint_linked", 0)), "A route that misses the beacon must leave its marker unlinked.")
 	_check(str(game.get("status_message")).contains("RELAY BEACON"), "A rejected relay route should explain the missing beacon.")
+	_finish_failure_reset(game)
 
 	# The beacon should count even when the player only passes near it between sampled points.
 	# Neither segment endpoint is the beacon itself; the segment's closest point is inside its radius.
@@ -525,6 +529,7 @@ func _test_ordered_echo_waypoints(game: Control) -> void:
 	_check(not bool(game.call("_is_relay_waypoint_linked", 0)), "Relay 1 must not show linked when Relay 2 was encountered first.")
 	_check(not bool(game.call("_is_relay_waypoint_linked", 1)), "Relay 2 must not show linked when it was visited before Relay 1.")
 	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2 in order"), "An out-of-order two-relay route should explain the required sequence.")
+	_finish_failure_reset(game)
 
 	# Visiting Relay 1 then Relay 2 before ending on A creates a valid echo.
 	var ordered_track = EchoTrackScript.new()
@@ -582,6 +587,7 @@ func _test_three_ordered_echo_waypoints(game: Control) -> void:
 	game.call("_finish_recording")
 	_check(not bool(game.get("echo_visible")), "Triune Relay must reject a route that visits Relay 3 before Relay 2.")
 	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2, then RELAY 3 in order"), "A failed three-relay route should explain the full checkpoint order.")
+	_finish_failure_reset(game)
 
 	# All three checkpoints in order followed by Switch A should be accepted.
 	var ordered_track = EchoTrackScript.new()
@@ -633,6 +639,7 @@ func _test_relay_timer_combo(game: Control) -> void:
 	game.call("_finish_recording")
 	_check(not bool(game.get("echo_visible")), "Fracture Clock should reject a route that visits Relay 3 before Relay 2.")
 	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2, then RELAY 3 in order"), "Fracture Clock's rejection hint should list every required relay.")
+	_finish_failure_reset(game)
 
 	var route = EchoTrackScript.new()
 	route.add_sample(0.0, spawn)
@@ -703,6 +710,7 @@ func _test_dead_air_protocol(game: Control) -> void:
 	game.call("_finish_recording")
 	_check(not bool(game.get("echo_visible")), "Dead Air Protocol should reject relays visited out of order.")
 	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2, then RELAY 3, then RELAY 4 in order"), "Dead Air Protocol should explain the complete four-relay sequence.")
+	_finish_failure_reset(game)
 
 	# A full four-relay route fits inside the eight-second recording cap.
 	var valid_route = EchoTrackScript.new()
@@ -755,6 +763,7 @@ func _test_dead_air_protocol(game: Control) -> void:
 	_check(not bool(game.get("is_recording")), "Sentinel contact should cancel the active Dead Air Protocol recording.")
 	_check(game.get("recording_track").samples.is_empty(), "Sentinel contact should erase the interrupted route.")
 	_check(str(game.get("status_message")).begins_with("SENTINEL CONTACT — recording lost"), "Sentinel interruption should explain why the route was lost.")
+	_finish_failure_reset(game)
 	game.call("_start_level", 0)
 
 
@@ -816,6 +825,53 @@ func _test_timed_gate_requires_crossing(game: Control) -> void:
 	_check(str(game.get("status_message")).contains("GATE CROSSED"), "A successful crossing should confirm that the portal remains powered.")
 	game.call("_start_level", 0)
 
+
+
+
+func _finish_failure_reset(game: Control) -> void:
+	var reset_timer := float(game.get("failure_reset_timer"))
+	_check(reset_timer > 0.0, "A failed relay or sentinel contact should schedule an automatic room reset.")
+	_check(bool(game.get("failure_panel").visible), "A failure should show the reset overlay.")
+	_check(not bool(game.get("game_hud").visible), "The normal HUD should not accept taps during the reset transition.")
+	var failed_level_index := int(game.get("current_level_index"))
+	for _frame in range(24):
+		if float(game.get("failure_reset_timer")) <= 0.0:
+			break
+		game.call("_process", 0.05)
+	_check(is_zero_approx(float(game.get("failure_reset_timer"))), "The automatic reset countdown should finish without input.")
+	_check(int(game.get("current_level_index")) == failed_level_index, "A room failure should restart the same chamber.")
+	_check(bool(game.get("game_hud").visible) and not bool(game.get("failure_panel").visible), "Room restart should restore the HUD and dismiss the failure overlay.")
+	_check(not bool(game.get("is_recording")), "Room restart should clear recording state.")
+	_check(not bool(game.get("echo_visible")) and not bool(game.get("echo_playing")), "Room restart should clear the released echo.")
+	_check(not bool(game.get("door_open")), "Room restart should close the gate.")
+	_check(not bool(game.get("switch_b_latched")), "Room restart should clear the toggle latch.")
+	_check(str(game.get("status_message")).begins_with("ROOM RESET"), "The restarted room should confirm that automatic recovery completed.")
+
+
+func _test_premium_mobile_ui(game: Control) -> void:
+	var record: Button = game.get("record_button")
+	var latch: Button = game.get("latch_switch_button")
+	var pause: Button = game.get("pause_button")
+	var menu_button := game.get("game_hud").get_node("MenuButton") as Button
+	var restart_button := game.get("game_hud").get_node("ResetButton") as Button
+	_check(record.size.y >= 52.0, "The primary recording control should have a phone-friendly touch height.")
+	_check(latch.size.y >= 52.0, "The latch control should have a phone-friendly touch height.")
+	_check(menu_button.size.y >= 52.0 and restart_button.size.y >= 52.0, "Bottom navigation and restart controls should have generous touch targets.")
+	_check(pause.size.y >= 46.0, "The pause control should be easy to hit on a touchscreen.")
+	_check(record.get_theme_stylebox("normal") != null, "Buttons should use the shared premium visual style.")
+	game.size = Vector2(1480, 820)
+	game.call("_layout_centered_panels")
+	var options_panel: Panel = game.get("options_panel")
+	var failure_panel: Panel = game.get("failure_panel")
+	_check(options_panel.position.is_equal_approx((game.size - options_panel.size) * 0.5), "Options should remain centered when the viewport changes size.")
+	_check(failure_panel.position.is_equal_approx((game.size - failure_panel.size) * 0.5), "The failure/restart card should remain centered when the viewport changes size.")
+	_check(bool(game.call("_is_joystick_area", Vector2(100, 800))), "The left joystick area should adapt to a wider/taller viewport.")
+	game.set("left_handed_controls", true)
+	_check(bool(game.call("_is_joystick_area", Vector2(1400, 800))), "The right joystick area should adapt in left-handed mode.")
+	game.size = Vector2(1280, 720)
+	game.call("_layout_centered_panels")
+	game.call("_set_left_handed_controls", bool(game.get("left_handed_controls")))
+	game.call("_show_menu")
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:
