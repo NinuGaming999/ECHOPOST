@@ -14,15 +14,16 @@
 - Echo track copies instantiate from their preloaded script resource instead of relying on a global `EchoTrack` class registration; this fixes the Godot 4.4 compile failure reported during local testing.
 - Two-switch gate and portal completion flow.
 - Six authored room layouts with varied switch positions and sentinel sweep patterns; the chapter list scrolls as the campaign grows.
+- Level-catalog validation for unique/non-empty names, room bounds, minimum route distance, switch separation, and safe sentinel patrol height/width/speed; arbitrary draft arrays can be validated without editing the canonical campaign.
 - Local versioned campaign save data and progress clamping.
 - Automatic pause on Android/iOS application suspension or application focus loss; held joystick input is cleared, in-progress recording state is preserved, and gameplay never auto-resumes without player input.
-- Campaign-data validator and smoke tests covering echo-track copy identity, a recording capped to exactly eight seconds, too-short recording feedback, sentinel collision reset, restart cleanup while recording/echoing and from pause, portal completion counting exactly once with save restoration, invalid-route rejection, accepted echo creation, gate activation, and lifecycle pause/resume.
+- Campaign-data validator and smoke tests including intentionally malformed draft rooms, echo-track copy identity, the exact eight-second cap, too-short recording feedback, sentinel collision reset, restart cleanup, portal completion idempotency with save restoration, scrollable chapter UI, route validation, gate activation and lifecycle pause/resume.
 - Automated GitHub Actions workflow that imports/parses the project and runs both smoke-test scripts.
 - README, design document, roadmap, contribution guide, and MIT license.
 
 ## Verification status
 
-Godot CI run 39 passed on both Godot 4.4.0 and 4.7.2 after the campaign expanded to six chambers ([run 39](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389126011)). Run 42 also passed both versions after the scrollable chapter selector and UI regression test were added ([run 42](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389230677)); it imports/parses the project and runs data and gameplay tests. Live route preview and chapter scrolling still need manual inspection in the user's editor/device. No Android APK has been built or tested on a physical device; this remains an early development build, not release-ready.
+Godot CI run 42 passed on both Godot 4.4.0 and 4.7.2 after the six-room catalog and scrollable chapter selector were added ([run 42](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389230677)). Latest run 49 also passed both versions with the stronger room-draft validator and invalid-draft regression tests ([run 49](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389764965)). Both workflows import/parse the project and run data and gameplay smoke tests. Live route preview and chapter scrolling still need manual inspection in the user's editor/device. No Android APK has been built or tested on a physical device; this remains an early development build, not release-ready.
 
 ## Next work items
 
