@@ -22,7 +22,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [ ] Add engine-level tests for recording-duration limits, gate conditions, sentinel resets, pause/restart behavior, and full room completion.
 - [ ] Add schema validation and diagnostics for level catalog data.
 - [ ] Add clear feedback for invalid recording endpoints and a small route preview.
-- [ ] Make restart, pause, and transitions robust when the app loses focus or Android suspends it.
+- [x] Auto-pause active gameplay when the app loses focus or Android/iOS suspends it; clear held joystick input and require explicit player resume.
 - [ ] Support multiple aspect ratios and device safe areas.
 - [ ] Add an in-game level-state debug view for development builds.
 
@@ -44,7 +44,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 
 ## Milestone 4 — Mobile QA and release preparation
 
-- [ ] Add proper pause/resume behavior for Android lifecycle events.
+- [ ] Validate lifecycle pause/resume on physical Android devices and unusual background/foreground transitions.
 - [ ] Test physical Android devices, low-end GPU performance, and battery use.
 - [ ] Tune touch targets, joystick sensitivity, landscape handling, and screen cutouts.
 - [ ] Set package ID, icons, versioning, privacy disclosures, crash reporting policy, and signing.
