@@ -9,12 +9,12 @@
 **Target:** Android-first landscape game; desktop builds support development and testing  
 **Recording-cap code commit:** `b5f36b6a4f764a595e5dd930e8d6b3cebd5ce3a8`  
 **Gameplay-test commit:** `11c3b30de34323c536b0b8302eb8604259248d52`  
-**Latest feature/test commits:** game `35136940975cd771faeba1c9321857477dac4d2d`; save store `2b41d14ea8acd86098ddd3fd3c4e4169116b421d`; integration tests `6bc7d5dd40ed76dc38c16255d59dc5029c715310`  
-**Options/source fix commit:** `45ee5b1b5b6854fea8f17934897a539a47abd0da`  
+**Options source fix commit:** `45ee5b1b5b6854fea8f17934897a539a47abd0da`  
 **Settings store commit:** `2def61fffff0679c21f09c7f3da1fe6fb79bb2ed`  
-**Settings data-test commit:** `31ed8b0d00094eab2e5f1cb76605ef50617f0d5b`  
-**Options UI test commit:** `ef4e77b48736604fa9cb2b7e41afb769ec503ad4`  
-**Main controller source blob for the exact line map below:** `4b567b8fbbbe31a7f2f6acfa8677f8ab78483fb7` (1021 lines)  
+**Options integration test commit:** `ef4e77b48736604fa9cb2b7e41afb769ec503ad4`  
+**Relay Beacon source commit:** `4989b12597ff1f9977607865e7cf7c5e86ae4b43`  
+**Relay test commits:** `4ba4d9cf849bfe3e8d3ac8914ba7c4e77f3b5990`, `f6781f6ddf0d9532ecb2c1adb31ebdd671d532b7`, `dc9b79d223f50e0e9737d2b2edce437060c7a3af`, `2cb03959726094c526140b3e63282f0440453e74`  
+**Main controller source blob for the exact line map below:** `d8accd3fe98eb478c0720371b6f8e4f93f901421` (1073 lines)  
 **Status:** Early playable foundation / vertical slice — **not complete, not release-ready**.
 
 ---
@@ -36,9 +36,9 @@ The current source includes six authored chamber layouts:
 - **Split Signal:** faster/larger sentinel movement and opposite-side switches.
 - **Fractured Lane:** a longer diagonal route under a wide patrol.
 - **Crosscurrent:** switches in opposite corners and a faster midline patrol.
-- **Static Bloom:** a long route and wide sentinel sweep.
+- **Static Bloom:** a long route, wide sentinel sweep, and required Relay Beacon that the recorded route must cross before finishing on Switch A.
 
-These six rooms still share the same core two-switch echo mechanic; they vary route geometry and sentinel patterns rather than introducing six separate mechanics.
+The first five rooms use the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces the first additional puzzle rule: the recording must pass through a gold Relay Beacon and still end on Switch A. The test checks line segments between samples, so a crossing between samples is valid.
 
 The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon is the main external art asset. Procedural visuals keep the project importable without an asset pack but are placeholder art, not final art. Each chamber also has one optional Memory Shard that reveals a short courier-network lore fragment.
 
@@ -159,6 +159,19 @@ This hardening pass addresses a real frame-step boundary issue and makes the min
 
 This is a basic accessibility foundation, not a full settings suite. Audio, haptics, reduced motion, safe-area tuning and broad localization remain future work.
 
+### Relay Beacon: first required route-checkpoint mechanic
+**Changed:** `scripts/data/level_catalog.gd`, `scripts/game.gd`, `tests/headless_smoke.gd`, `tests/game_flow_smoke.gd`, README and design/roadmap/build notes.
+
+- `scripts/data/level_catalog.gd:L86–L95` gives Static Bloom a required `echo_waypoint` at `Vector2(380, 260)` and changes the room hint to tell players to pass the relay, then finish on A. The other five rooms do not have this field and retain their existing rules.
+- `scripts/data/level_catalog.gd:L149–L152` validates a waypoint's type and includes it in room-bound checks. `L177–L185` makes the waypoint spatially separate from spawn, switches and the optional Memory Shard.
+- `scripts/game.gd:L608–L643` checks the required waypoint after the normal “finish on Switch A” validation and before releasing an echo. A miss rejects the route and gives explicit **RELAY BEACON** feedback.
+- `scripts/game.gd:L650–L671` implements `_track_passes_waypoint()`. For each adjacent pair of recorded points it projects the waypoint onto the segment, clamps the projection to that segment, and measures distance to the closest point. This correctly accepts walking through the beacon between sampled positions.
+- `scripts/game.gd:L917–L971` draws the room's special objects; `L975–L988` draws the gold Relay Beacon marker labelled **RELAY**. The Relay is distinct from the optional violet Memory Shard.
+- `tests/headless_smoke.gd:L50–L76` requires at least one relay room and a Vector2 waypoint. `L79–L95` deliberately gives a draft a waypoint outside the room and expects the validator to reject it.
+- `tests/game_flow_smoke.gd:L339–L375` tests two cases: a direct spawn-to-A route that skips the beacon must be rejected, while a route whose segment crosses within 40 units of the relay between samples must be accepted.
+- [Godot CI run 95](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40394410577) passed on Godot 4.4.0 and 4.7.2, including the validator and route-segment tests.
+- This is the first required route checkpoint only in Static Bloom; it does not replace the two-switch gate, and the first five rooms remain unchanged.
+
 ### Mobile lifecycle pause hardening
 **Changed:** `scripts/game.gd` and `tests/game_flow_smoke.gd`.
 
@@ -178,13 +191,13 @@ This change is covered by an automated headless integration test. It is **not ye
 |---|---|
 | `project.godot` | Application name, icon, landscape 1280×720 viewport, canvas-item stretch, compatibility renderer and WASD/arrow input map. |
 | `scenes/main.tscn` | Very small main scene: full-rect `Control` attached to `scripts/game.gd`. |
-| `scripts/game.gd` | Main controller, menu/HUD construction, player movement, echo recording/playback, puzzle loop, sentinel, Memory Shard collection/archive, control preferences, save flow and procedural rendering. **1021 lines in the snapshot documented here; refactor incrementally after tests protect behavior.** |
+| `scripts/game.gd` | Main controller, menu/HUD construction, movement, echo recording/playback, route checkpoint validation, puzzle loop, sentinel, Memory Shard collection/archive, control preferences, save flow and procedural rendering. **1073 lines in the snapshot documented here; refactor incrementally after tests protect behavior.** |
 | `scripts/core/echo_track.gd` | Data-only `RefCounted` script loaded through preloaded script resources; avoids global `class_name` lookup; stores points, clamps timestamps to nondecreasing order, copies tracks, returns duration, interpolates route positions, and holds endpoint outside the timestamp range. |
-| `scripts/data/level_catalog.gd` | Six authored room dictionaries with shard positions/lore, defensive-copy accessor, canonical/draft validator for schema, names, spacing, position bounds, shard placement and hazard tuning. |
+| `scripts/data/level_catalog.gd` | Six room dictionaries, optional shard positions/lore, one required Relay Beacon waypoint in Static Bloom, defensive-copy accessor and canonical/draft validator for schema, names, spacing, bounds and hazard tuning. |
 | `scripts/data/progress_store.gd` | Version-2 local save boundary (`user://echopost_save.cfg`) using `ConfigFile`; preserves v1 campaign progress and stores normalized Memory Shard room indices. |
 | `scripts/data/settings_store.gd` | Separate preference store (`user://echopost_settings.cfg`) for speed and joystick handedness, defaulting safely and normalizing unsupported movement values. |
-| `tests/headless_smoke.gd` | Data-layer tests for echo interpolation/copying, six-room/shard schema, malformed-draft validation, v2 shard persistence/sanitization, v1-save compatibility, campaign clamping, and isolated control-preference persistence/normalization. |
-| `tests/game_flow_smoke.gd` | Main-scene integration tests for chapter/archive/options UI, Memory Shard lore/persistence, speed presets, left-handed joystick region, lifecycle pause, recording cap/feedback, sentinel cancellation, reset cleanup, portal idempotency, route validation, echo creation and gate activation. |
+| `tests/headless_smoke.gd` | Data tests for echo interpolation/copying, six-room/shard/waypoint schema, malformed-draft validation, v2 shard persistence/sanitization, v1-save compatibility, campaign clamping and isolated control-preference persistence/normalization. |
+| `tests/game_flow_smoke.gd` | Main-scene integration tests for chapter/archive/options UI, Memory Shards, speed presets/handedness, lifecycle pause, record cap/feedback, sentinel cancellation, reset, portal idempotency, Relay Beacon pass/miss, and gate activation. |
 | `RUN_TESTS.bat` | Windows shortcut to run both headless smoke tests if Godot is on PATH. |
 | `.github/workflows/godot-checks.yml` | Imports/parses project then runs both tests on a Godot 4.4.0 / 4.7.2 matrix. |
 | `assets/echopost_icon.svg` | Original editable SVG project icon. |
@@ -203,79 +216,80 @@ This change is covered by an automated headless integration test. It is **not ye
 
 ## 4. Exact source line map — `scripts/game.gd`
 
-This function index is line-accurate for source blob SHA `4b567b8fbbbe31a7f2f6acfa8677f8ab78483fb7` (1021 lines). Regenerate it after future controller edits.
+This function index is line-accurate for source blob SHA `d8accd3fe98eb478c0720371b6f8e4f93f901421` (1073 lines). Regenerate it after any future edit.
 
-- **L1–L4:** Script header and procedural-art note.
+- **L1–L4:** Script header/procedural-art note.
 - **L6:** Screen-state enum.
-- **L8–L22:** Room bounds, movement/recording constants and preloaded echo/level/progress/settings resources.
-- **L24–L45:** Campaign/puzzle runtime state: player/echo positions, tracks, recording timers, gate/hazard, status and stars.
-- **L27:** Collected Memory Shard room indices.
-- **L29–L30:** Active movement speed and handedness preference.
+- **L8–L22:** Playfield bounds, movement/recording constants and preloaded scripts/data.
+- **L24–L45:** Campaign and runtime state, including collected Memory Shards.
+- **L29–L30:** Active movement-speed and handedness preferences.
 - **L47–L50:** Touch/mouse joystick state.
-- **L52–L77:** Dynamic UI references, including Archive and Options controls.
+- **L52–L77:** Dynamic UI references including Archive/Options.
 - **L83–L87 — `_notification()`:** Handle application suspension/focus loss and delegate to lifecycle pause.
 - **L90–L100 — `_pause_for_lifecycle()`:** Pause active play; clear joystick input, preserve recording state, and refresh HUD.
-- **L103–L111 — `_ready()`:** Initialize stars, load progress and control preferences, build UI, and show menu.
-- **L114–L137 — `_process()`:** Move player, cap and sample recording time, advance echoes/hazards, check collisions, collect shards, and evaluate puzzles.
+- **L103–L111 — `_ready()`:** Initialize stars, load progress and preferences, build the interface, and show the menu.
+- **L114–L137 — `_process()`:** Update movement, clamp/sample recording time, advance echoes/hazards, check collisions, collect shards, and evaluate puzzles.
 - **L140–L170 — `_input()`:** Translate touch/mouse events into joystick input.
 - **L173–L180 — `_is_joystick_area()`:** Choose left/right joystick hit region based on handedness while preserving bottom buttons.
 - **L183–L185 — `_update_joystick()`:** Convert pointer offset into a normalized joystick vector.
-- **L188–L192 — `_create_stars()`:** Generate deterministic background stars.
+- **L188–L192 — `_create_stars()`:** Generate deterministic decorative background stars.
 - **L195–L202 — `_build_interface()`:** Build menu, HUD, completion, help, chapter selector, Memory Archive and Options.
 - **L205–L229 — `_build_menu()`:** Create title, continue, chapter-select, help, Memory Archive and Options buttons.
-- **L232–L251 — `_build_game_hud()`:** Create room labels, pause, record, restart, main menu and controls UI.
+- **L232–L251 — `_build_game_hud()`:** Create room labels, pause, record, restart, main menu and control help.
 - **L254–L266 — `_build_complete_panel()`:** Build completion text and next/replay buttons.
-- **L269–L276 — `_build_help_panel()`:** Build instructions including optional Memory Shards and sentinel recording loss.
+- **L269–L276 — `_build_help_panel()`:** Build instructions including optional Memory Shards, Relay Beacon requirement and sentinel recording loss.
 - **L279–L307 — `_build_level_select_panel()`:** Build scrollable chapter list with fixed Back button.
-- **L310–L369 — `_build_memory_archive_panel()`:** Build scrollable archive with recovered/unfound entries for each room.
-- **L372–L375 — `_open_memory_archive()`:** Refresh archive text, hide the menu and show the archive panel.
+- **L310–L369 — `_build_memory_archive_panel()`:** Build scrollable archive with recovered/unfound entries per room.
+- **L372–L375 — `_open_memory_archive()`:** Refresh archive text, hide main menu and show the archive panel.
 - **L378–L401 — `_build_options_panel()`:** Build movement-speed presets, left-handed joystick toggle and Back button.
-- **L404–L407 — `_open_options()`:** Refresh option labels and show the Options panel.
-- **L410–L417 — `_set_move_speed()`:** Apply a supported speed preset, persist it and update selection text.
-- **L420–L425 — `_normalize_move_speed()`:** Normalize a requested speed to 200, 255 or 310.
+- **L404–L407 — `_open_options()`:** Refresh option labels and show Options.
+- **L410–L417 — `_set_move_speed()`:** Apply supported speed preset, persist it and update labels.
+- **L420–L425 — `_normalize_move_speed()`:** Normalize speed to 200, 255 or 310.
 - **L428–L429 — `_toggle_left_handed_controls()`:** Invert handedness.
 - **L432–L439 — `_set_left_handed_controls()`:** Apply handedness, clear held joystick input, persist and redraw.
-- **L442–L448 — `_update_options_panel()`:** Mark selected speed and display the handedness choice.
-- **L451–L465 — `_update_memory_archive()`:** Display recovered lore or a hint for undiscovered memories.
+- **L442–L448 — `_update_options_panel()`:** Mark selected movement speed and show handedness.
+- **L451–L465 — `_update_memory_archive()`:** Display recovered lore or hint for undiscovered memories.
 - **L468–L482 — `_make_panel()`:** Shared panel style.
 - **L485–L497 — `_make_label()`:** Shared label placement/typography.
 - **L500–L528 — `_make_button()`:** Shared button styling.
-- **L531–L547 — `_show_menu()`:** Return to menu, hide overlays and reset transient recording/input state.
+- **L531–L547 — `_show_menu()`:** Return to menu, hide overlays, clear transient recording and input state.
 - **L550–L551 — `_on_start_pressed()`:** Continue at the unlocked room.
-- **L554–L586 — `_start_level()`:** Initialize a room, close overlays and show gameplay HUD.
-- **L589–L605 — `_on_record_pressed()`:** Begin route recording or stop/send a route.
-- **L608–L633 — `_finish_recording()`:** Enforce the minimum duration and Switch A endpoint before releasing the echo.
-- **L636–L637 — `_add_record_sample()`:** Append timestamp and player position.
-- **L640–L650 — `_update_player()`:** Apply movement at selected speed, clamp bounds and block a closed gate.
-- **L653–L665 — `_update_echo()`:** Advance echo route, linger at endpoint, then fade.
-- **L668–L686 — `_check_sentinel_collision()`:** Reset the player to spawn; cancel and clear interrupted recording.
-- **L689–L702 — `_check_memory_shard_collection()`:** Collect an optional shard, reveal lore, persist its index and refresh labels/archive.
-- **L705–L724 — `_check_puzzle_state()`:** Evaluate switches, open gate and trigger portal completion.
-- **L727–L747 — `_complete_level()`:** Increment completion, unlock progress, save and show result panel.
-- **L750–L754 — `_on_next_level_pressed()`:** Advance to next room or restart campaign.
-- **L757–L758 — `_on_replay_pressed()`:** Restart current room.
-- **L761–L762 — `_on_reset_pressed()`:** Restart current room.
-- **L765–L778 — `_on_pause_pressed()`:** Toggle pause/resume and clear stale joystick state.
-- **L781–L782 — `_open_help()`:** Open instructions.
-- **L785–L787 — `_open_level_select()`:** Refresh labels and show chapter select.
-- **L790–L792 — `_on_chapter_selected()`:** Start only an unlocked room.
-- **L795–L800 — `_update_chapter_buttons()`:** Apply locked/unlocked room state.
-- **L803–L810 — `_update_menu_progress()`:** Refresh discovered-room/memory counts and archive.
-- **L813–L834 — `_update_hud()`:** Refresh room title, status, echo timer and record control.
-- **L837–L841 — `_load_progress()`:** Load campaign progress and collected shards.
-- **L844–L847 — `_load_settings()`:** Load control preferences independently from campaign progress.
-- **L850–L853 — `_save_settings()`:** Persist speed and handedness separately.
-- **L856–L859 — `_save_progress()`:** Persist campaign progress and collected shards.
-- **L862–L871 — `_draw()`:** Draw background and choose menu/room/paused render.
-- **L874–L880 — `_draw_menu_art()`:** Draw menu decoration and procedural robots.
-- **L883–L935 — `_draw_room()`:** Draw room, switches, gate, portal, hazards, optional shard, route preview, echo trail, actors and joystick hint.
-- **L939–L955 — `_draw_memory_shard()`:** Draw violet crystal collectible.
-- **L958–L966 — `_draw_switch()`:** Draw pressure switch and state.
-- **L969–L979 — `_draw_gate()`:** Draw open/closed gate.
-- **L982–L988 — `_draw_portal()`:** Draw powered/unpowered portal.
-- **L991–L1001 — `_draw_robot()`:** Draw procedural player/echo robot.
-- **L1004–L1010 — `_draw_joystick()`:** Draw active joystick.
-- **L1013–L1019 — `_draw_track_path()`:** Draw a sampled route with tint and line width.
+- **L554–L586 — `_start_level()`:** Initialize room state, close overlays and show gameplay HUD.
+- **L589–L605 — `_on_record_pressed()`:** Start route recording or attempt to stop/send it.
+- **L608–L643 — `_finish_recording()`:** Enforce minimum duration, Switch A endpoint, and any room-specific required route checkpoint before releasing the echo.
+- **L646–L647 — `_add_record_sample()`:** Append a timestamp/position pair to the current route.
+- **L650–L671 — `_track_passes_waypoint()`:** Check the nearest point on each recorded line segment so a checkpoint crossing between samples counts.
+- **L674–L684 — `_update_player()`:** Apply movement at selected speed, clamp to room bounds and block a closed gate.
+- **L687–L699 — `_update_echo()`:** Advance echo playback, hold its endpoint temporarily, then fade.
+- **L702–L720 — `_check_sentinel_collision()`:** Reset the player to spawn; cancel and clear an interrupted recording to avoid a false teleport.
+- **L723–L736 — `_check_memory_shard_collection()`:** Collect an optional shard, reveal lore, persist its room index and refresh progress/archive.
+- **L739–L758 — `_check_puzzle_state()`:** Evaluate switches, open gate and detect portal completion.
+- **L761–L781 — `_complete_level()`:** Increment completion, unlock progress, save and show completion panel.
+- **L784–L788 — `_on_next_level_pressed()`:** Advance to next room or restart campaign.
+- **L791–L792 — `_on_replay_pressed()`:** Restart current room.
+- **L795–L796 — `_on_reset_pressed()`:** Restart current room.
+- **L799–L812 — `_on_pause_pressed()`:** Toggle pause/resume and clear stale joystick state.
+- **L815–L816 — `_open_help()`:** Open instructions.
+- **L819–L821 — `_open_level_select()`:** Refresh chapter labels and show chapter select.
+- **L824–L826 — `_on_chapter_selected()`:** Start only an unlocked room.
+- **L829–L834 — `_update_chapter_buttons()`:** Update chapter labels and locked/unlocked state.
+- **L837–L844 — `_update_menu_progress()`:** Refresh discovered-room and memory counts and archive.
+- **L847–L868 — `_update_hud()`:** Refresh room title, status, echo timer and recording button.
+- **L871–L875 — `_load_progress()`:** Load campaign progress and collected shard indices.
+- **L878–L881 — `_load_settings()`:** Load speed/handedness preferences separately from campaign progress.
+- **L884–L887 — `_save_settings()`:** Persist control preferences separately from the campaign.
+- **L890–L893 — `_save_progress()`:** Persist campaign progress and collected shards.
+- **L896–L905 — `_draw()`:** Draw background and select menu/room/paused render path.
+- **L908–L914 — `_draw_menu_art()`:** Draw menu decoration and procedural robots.
+- **L917–L971 — `_draw_room()`:** Draw room, switches, gate, portal, hazards, Relay Beacon, optional Memory Shard, route preview, echo trail, actors and joystick hint.
+- **L975–L988 — `_draw_echo_waypoint()`:** Draw the required gold Relay Beacon marker.
+- **L991–L1007 — `_draw_memory_shard()`:** Draw the optional violet crystal collectible.
+- **L1010–L1018 — `_draw_switch()`:** Draw a pressure switch and its state.
+- **L1021–L1031 — `_draw_gate()`:** Draw open/closed gate.
+- **L1034–L1040 — `_draw_portal()`:** Draw powered/unpowered exit portal.
+- **L1043–L1053 — `_draw_robot()`:** Draw procedural player or echo robot.
+- **L1056–L1062 — `_draw_joystick()`:** Draw active touch joystick.
+- **L1065–L1071 — `_draw_track_path()`:** Draw sampled route in a tint/width shared by live route preview and echo trail.
 ## 5. Exact line map — supporting scripts and tests
 
 ### `scripts/core/echo_track.gd` (60 lines, blob SHA `9a433129a0cb8b04d9ab55c0964aeb4683ddab3a`)
@@ -286,19 +300,18 @@ This function index is line-accurate for source blob SHA `4b567b8fbbbe31a7f2f6ac
 - **L28–L31:** Route duration from the final timestamp; empty route is zero seconds.
 - **L34–L59:** Position lookup: handles empty/before-first/after-last times, walks consecutive samples, linearly interpolates between points and handles tiny/duplicate timestamp spans.
 
-### `scripts/data/level_catalog.gd` (188 lines, blob SHA `c98f0dc765b13c5cfc5fe1930afd4638a6665032`)
-- **L1–L3:** RefCounted script and catalog purpose.
-- **L4–L101:** Six room dictionaries. Each now includes spawn/A/B, `memory_shard`, `shard_lore`, linger, hazard tuning and accent color.
-- **L103–L104:** Clamped defensive-copy getter.
-- **L106–L107:** Campaign count helper.
-- **L111–L112:** Validate the canonical `LEVELS` array using the same draft validator.
-- **L116–L132:** Arbitrary draft-list validation, empty-campaign rejection, and nonempty/unique names.
-- **L133–L145:** Required fields, Memory Shard Vector2 and nonempty lore validation.
-- **L146–L152:** Positive linger and room-bounds validation for spawn, switches and shard.
-- **L154–L158:** Enforce minimum meaningful spawn-to-Switch-A route.
-- **L160–L164:** Enforce Switch A/B separation.
-- **L166–L172:** Keep Memory Shards away from spawn and pressure switches.
-- **L174–L186:** Require hazard fields and bound patrol height, width and speed.
+### `scripts/data/level_catalog.gd` (199 lines, blob SHA `96b8808cf6944d1b66a703930e3972a59b837139`)
+- **L1–L3:** RefCounted campaign catalog.
+- **L4–L101:** Six room dictionaries. Static Bloom has `echo_waypoint` at L92; the other rooms don't require a relay.
+- **L104–L111:** Clamped defensive-copy getter and campaign count.
+- **L112–L116:** Canonical validation delegates to the reusable draft validator.
+- **L117–L132:** Reject empty draft lists and blank/duplicate room names.
+- **L133–L148:** Required schema, waypoint type, required shard/lore fields, Vector2 point checks and playfield bounds.
+- **L150–L164:** Minimum spawn-to-A route and switch separation checks.
+- **L166–L172:** Keep optional Memory Shards away from spawn and core switches.
+- **L174–L186:** Validate sentinel tuning.
+- **L177–L185:** Validate Relay Beacon separation from spawn, switches and shard when present.
+
 
 ### `scripts/data/progress_store.gd` (58 lines, blob SHA `c74c684bab3ca4e40b8ea49b995633b795c4974a`)
 - **L1–L5:** `RefCounted` save boundary, `user://echopost_save.cfg`, schema version 2.
@@ -308,32 +321,33 @@ This function index is line-accurate for source blob SHA `4b567b8fbbbe31a7f2f6ac
 - **L40–L50:** Accept packed arrays or ordinary arrays, filter invalid values, deduplicate and sort.
 - **L53–L58:** Append one shard index only if it is nonnegative, within the supplied level count, and not already present.
 
-### `tests/headless_smoke.gd` (160 lines, blob SHA `c163735cc5c40a18f16256513ca9ca0818bcfab3`)
-- **L1–L10:** Test harness, preloaded echo/level/progress/settings scripts and temporary paths.
-- **L15–L25:** Run data tests and return nonzero on failure.
-- **L28–L47:** Echo timestamps, interpolation, endpoint hold, script identity and copy independence.
-- **L50–L71:** Six unique/valid rooms, required fields, shard/lore data and defensive-copy behavior.
-- **L74–L88:** Invalid draft tests for duplicate names, too-short routes, close switches and negative sentinel speed.
-- **L91–L95:** Error-fragment helper.
-- **L99–L129:** Campaign save/load, unlock clamping, Memory Shard normalization and v1 save compatibility.
-- **L133–L153:** Settings defaults, separate persistence for speed/handedness, and movement-speed normalization.
-- **L156–L159:** Assertion helper.
+### `tests/headless_smoke.gd` (167 lines, blob SHA `06ca403b64d9873a7fa37a31f9eaac5be1a69a38`)
+- **L1–L10:** Test harness and preloaded data scripts/temp paths.
+- **L15–L25:** Run tests and exit nonzero on assertion failure.
+- **L28–L47:** Echo track timestamp order, interpolation, endpoint hold, script identity and copy independence.
+- **L50–L76:** Verify six uniquely named/valid rooms, Memory Shard data and at least one relay room with a Vector2 waypoint.
+- **L79–L95:** Invalid draft checks for duplicate names, route/switch spacing, sentinel speed and a relay waypoint outside the room.
+- **L98–L102:** Error-fragment helper.
+- **L106–L136:** Campaign save/load, shard normalization and v1 save compatibility.
+- **L140–L160:** Control-preference defaults, persistence and speed normalization.
+- **L163–L166:** Assertion helper.
 
-### `tests/game_flow_smoke.gd` (341 lines, blob SHA `d4f96331d9ab95e8319a5aeeb4f2221db96e793d`)
-- **L1–L10:** Test harness and preloaded scene/echo/level/progress scripts.
-- **L13–L14:** Defer integration runner.
-- **L17–L78:** Test chapter list, shard pickup, Memory Archive, Options, lifecycle pause, record cap/feedback, sentinel interruption, reset cleanup, portal idempotency, valid/invalid routes and gate state.
-- **L82–L97:** Lifecycle pause preserving recording time and requiring explicit resume.
-- **L100–L115:** Exact eight-second recording cap.
-- **L118–L129:** Too-short recording feedback.
-- **L132–L158:** Sentinel reset and unfinished-recording cancellation.
-- **L161–L198:** Restart cleanup including recording/echo active and pause state.
-- **L201–L224:** Portal completion idempotency and saved-progress restoration.
-- **L227–L242:** Scrollable chapter selector and row count.
-- **L246–L275:** Memory Shard lore and persistence.
-- **L279–L301:** Archive rows and recovered/not-found state.
-- **L305–L334:** Options button, live speed change, left-handed joystick hit-zone, and preference restoration.
-- **L337–L340:** Assertion helper.
+### `tests/game_flow_smoke.gd` (382 lines, blob SHA `9cf7b31e88dad3ffca0670090d122c9501dc8a20`)
+- **L1–L10:** Test harness/preloads.
+- **L13–L14:** Defer the integration runner.
+- **L17–L79:** Test chapter/archive/options UI, shards, lifecycle pause, recording cap/feedback, sentinel cancellation, reset cleanup, portal idempotency, relay pass/miss, route acceptance/rejection and gate activation.
+- **L83–L98:** Lifecycle pause behavior.
+- **L101–L116:** Eight-second recording cap.
+- **L119–L130:** Too-short recording.
+- **L133–L159:** Sentinel contact cancels the unfinished recording.
+- **L162–L199:** Restart clears active tracks/timers/gate/input and works from pause.
+- **L202–L225:** Portal completion idempotency and saved-progress restore.
+- **L228–L243:** Scrollable chapter selector.
+- **L247–L276:** Shard collection, lore and save restoration.
+- **L280–L302:** Memory Archive UI and recovered/unfound rows.
+- **L306–L335:** Options/speed/left-handed joystick behavior.
+- **L339–L375:** Static Bloom Relay Beacon route acceptance/rejection; valid route crosses beacon between samples.
+- **L378–L381:** Assertion helper.
 
 ### `scenes/main.tscn` (13 lines)
 - **L1–L3:** Scene declaration and script external resource.
@@ -357,12 +371,12 @@ This function index is line-accurate for source blob SHA `4b567b8fbbbe31a7f2f6ac
 
 ## 6. Current verification status — be precise
 
-- **Latest full gameplay/UI verification:** [Godot checks run 82](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40392916662) passed on Godot 4.4.0 and 4.7.2. It includes archive variable declarations, Memory Archive and Options UI tests, movement preset changes, left-handed joystick hit-testing, and the full data/gameplay smoke suite.
-- **Settings-store test:** [run 81](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40392848307) passed defaults, persistence and speed normalization.
-- **Memory Shard save migration:** [run 65](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40390957517) passed collection, save-v2 persistence and version-1 save compatibility.
-- **Local visual/device test:** not performed by this assistant. Menu layout, route preview, Memory Archive readability, speed feel and left-handed touch reach need manual inspection in the editor/physical phone.
-- **Android APK/export:** no APK has been built or attached; export templates, package ID, signing and device QA remain.
-- **Runtime quality:** CI smoke tests are not a substitute for manually playing all six rooms and tuning their difficulty/fairness.
+- **Latest verified source:** [Godot CI run 95](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40394410577) passed both Godot 4.4.0 and 4.7.2 on commit `2cb03959726094c526140b3e63282f0440453e74`. It includes the Static Bloom Relay Beacon, malformed-waypoint validator test, direct-route rejection, and route-segment crossing acceptance test.
+- **Options and Memory Archive:** run 82 passed the options/handedness UI and archive tests on both Godot versions.
+- **Settings and Memory Shard persistence:** runs 81 and 65 passed settings persistence and version-1 campaign save compatibility respectively.
+- **Device QA:** not performed; visual readability of Relay Beacon, route preview, memory collectibles, Archive and Options still needs manual testing in Godot/Android.
+- **Android APK/export:** no APK built or attached; export templates, package ID, signing and device tests remain.
+- **Campaign quality:** six rooms exist; only Static Bloom currently uses the new required waypoint mechanic.
 
 ### Commands to run in the repository root on Windows
 ```powershell
@@ -385,7 +399,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 4. **Procedural placeholder visuals:** no authored robot animations, environmental tilesets, VFX or transition animations.
 5. **No sound:** recording, rejected route, sentinel hits, gate opening and portal have text/visual feedback only. No SFX, music, mixer, or audio options exist.
 6. **Pause behavior needs real device QA:** the lifecycle logic is headlessly tested but actual Android app-switch lifecycle and focus behavior are unverified. The player must tap RESUME after returning.
-7. **Mechanic coverage:** one recording slot, one hold-style Switch A/Switch B puzzle pattern, a single gate and hardcoded portal position. Timed/toggle/sequence switches, moving platforms and checkpoints are ideas only.
+7. **Mechanic coverage:** one recording slot and the two-switch gate remain core; Static Bloom now also requires a route through one Relay Beacon. Timed/toggle/sequence switches, multiple relays, moving platforms, checkpoints and multi-echo puzzles remain future work.
 8. **Recording edge cases:** the minimum is now `MIN_RECORD_SECONDS = 0.7` at `scripts/game.gd:L16`; a too-short stop deliberately keeps recording active and tells the player to continue. Verify that this interaction is understandable on touch.
 9. **Hazard edge cases:** collision now cancels an unfinished recording so it cannot include a fake teleport to spawn. Already-released echoes are separate; their behavior on sentinel contact still needs deliberate playtesting.
 10. **Save migration/preferences:** schema version 2 persists Memory Shard indices and version-1 campaign progress remains loadable; speed/handedness use a separate v1 settings file. Future-version behavior and cloud saves are not designed.
@@ -399,7 +413,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Add a regression assertion for preloaded script identity at `tests/headless_smoke.gd:L39–L44`.
 - [x] Verify the code fix and regression test in [run 21](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385871675): Godot 4.4.0 and 4.7.2 both passed.
 - [x] Verify restart/portal flows (run 33), route preview (run 34), six-room chapter UI (run 42), room validation (run 49), sentinel interruption (run 54), and Memory Shards plus v1 save compatibility (run 65) on both Godot versions.
-- [ ] Confirm the Memory Archive integration-test workflow passes before marking it verified.
+- [x] Verify the Relay Beacon requirement, invalid-waypoint validator, and between-sample route-crossing test in run 95 on both Godot versions.
 - [ ] Ask for / perform a local pull and open the project in the user's Godot 4.4 editor to inspect the live route preview and confirm visuals on the actual machine.
 - [x] Verify Memory Archive and Options UI, speed presets, and left-handed joystick region on both Godot versions in run 82.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
@@ -424,7 +438,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 ### P3 — Build a real campaign / refactor safely
 - [ ] Create a reusable room scene/controller separation and richer authored-room schema.
-- [ ] Expand from six layouts to 12–20 authored chambers with new puzzle mechanics rather than only changing positions and patrol timing.
+- [ ] Expand from six layouts to 12–20 authored chambers with new puzzle mechanics beyond route geometry, patrol timing and the first Relay Beacon checkpoint.
 - [ ] Add checkpoint/lore fragments and a cohesive Act I ending.
 - [ ] Replace procedural placeholder art with original coherent art/audio, while keeping clarity and low-cost rendering on mobile.
 
@@ -440,7 +454,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 2. Check the most recent CI run before modifying code. A workflow run for a commit older than the code currently on `main` does not verify the current code.
 3. Choose **one focused improvement** at a time. Make changes in `main` only as permitted by the user/project workflow, and don't claim the project is finished.
 4. Test changes with Godot CI or available local Godot. Distinguish passed tests, tests not run, and manual device checks.
-5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `4b567b8fbbbe31a7f2f6acfa8677f8ab78483fb7`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
+5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `d8accd3fe98eb478c0720371b6f8e4f93f901421`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
 6. Update `PROJECT_PROGRESS.md` in the same development pass as source changes. Record the new commit(s), source hashes/line references, CI URL/result and what the next session should do.
 7. Keep this game offline-capable and dependency-light. Never add network accounts, telemetry, uploads, payment or ads as an incidental code change.
 8. Don't produce an APK/release claim unless an actual export and install verification were completed.
