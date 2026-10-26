@@ -23,6 +23,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Add schema validation and diagnostics for level catalog data, including arbitrary draft lists, unique names, route/switch spacing, room bounds, and sentinel tuning.
 - [x] Add clear feedback for invalid recording endpoints and a live route preview while recording.
 - [x] Auto-pause active gameplay when the app loses focus or Android/iOS suspends it; clear held joystick input and require explicit player resume.
+- [x] Add movement-speed presets and left-handed joystick placement, persisted separately from campaign progress.
 - [ ] Support multiple aspect ratios and device safe areas.
 - [ ] Add an in-game level-state debug view for development builds.
 
