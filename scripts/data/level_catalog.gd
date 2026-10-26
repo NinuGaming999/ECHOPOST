@@ -85,10 +85,11 @@ const LEVELS: Array[Dictionary] = [
 	{
 		"name": "Static Bloom",
 		"subtitle": "THE LAST SIGNAL IS WIDE AWAKE",
-		"hint": "A wide sentinel patrols the middle lane. Record a clean route to A, then cross to B and race for the portal.",
+		"hint": "The relay beacon must appear in your recorded route. Visit the glowing relay, then finish on A before crossing to B.",
 		"spawn": Vector2(155, 500),
 		"plate_a": Vector2(620, 350),
 		"plate_b": Vector2(960, 195),
+		"echo_waypoint": Vector2(380, 260),
 		"memory_shard": Vector2(780, 300),
 		"shard_lore": "The last courier left a message: if the echo reaches you, the signal survived.",
 		"linger": 9.5,
@@ -145,7 +146,9 @@ static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 			errors.append("%s shard_lore must not be empty." % prefix)
 		if not level.has("linger") or float(level.get("linger", 0.0)) <= 0.0:
 			errors.append("%s must use a positive echo linger duration." % prefix)
-		for point_key in ["spawn", "plate_a", "plate_b", "memory_shard"]:
+		if level.has("echo_waypoint") and not (level["echo_waypoint"] is Vector2):
+			errors.append("%s echo_waypoint must be a Vector2." % prefix)
+		for point_key in ["spawn", "plate_a", "plate_b", "memory_shard", "echo_waypoint"]:
 			if level.has(point_key) and level[point_key] is Vector2:
 				var point: Vector2 = level[point_key]
 				if point.x < 63.0 or point.x > 1217.0 or point.y < 140.0 or point.y > 597.0:
@@ -170,6 +173,14 @@ static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 					var anchor_position: Vector2 = level[anchor_key]
 					if shard_position.distance_to(anchor_position) < 60.0:
 						errors.append("%s memory shard must be separated from %s." % [prefix, anchor_key])
+
+		if level.has("echo_waypoint") and level["echo_waypoint"] is Vector2:
+			var waypoint_position: Vector2 = level["echo_waypoint"]
+			for anchor_key in ["spawn", "plate_a", "plate_b", "memory_shard"]:
+				if level.has(anchor_key) and level[anchor_key] is Vector2:
+					var anchor_position: Vector2 = level[anchor_key]
+					if waypoint_position.distance_to(anchor_position) < 70.0:
+						errors.append("%s echo waypoint must be separated from %s." % [prefix, anchor_key])
 
 		if bool(level.get("hazard", false)):
 			for hazard_key in ["hazard_y", "hazard_amplitude", "hazard_speed"]:
