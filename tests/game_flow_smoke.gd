@@ -25,6 +25,7 @@ func _run_tests() -> void:
 	_test_options_panel(game)
 	_test_echo_waypoint_requirement(game)
 	_test_ordered_echo_waypoints(game)
+	_test_timed_gate_requires_crossing(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
@@ -431,6 +432,56 @@ func _test_ordered_echo_waypoints(game: Control) -> void:
 	_check(bool(game.get("echo_playing")), "An accepted ordered-relay route should start echo playback.")
 	_check(bool(game.call("_is_relay_waypoint_linked", 0)), "Relay 1 should remain marked linked after a valid route is sent.")
 	_check(bool(game.call("_is_relay_waypoint_linked", 1)), "Relay 2 should be marked linked only after Relay 1 in a valid route.")
+	game.call("_start_level", 0)
+
+
+
+func _test_timed_gate_requires_crossing(game: Control) -> void:
+	game.call("_start_level", 7)
+	var room: Dictionary = game.get("level_data")
+	_check(room.has("gate_open_seconds"), "Pulse Lock should define a timed gate.")
+	if not room.has("gate_open_seconds"):
+		game.call("_start_level", 0)
+		return
+
+	var gate_duration := float(room["gate_open_seconds"])
+	var plate_a: Vector2 = room["plate_a"]
+	var plate_b: Vector2 = room["plate_b"]
+	game.set("echo_visible", true)
+	game.set("echo_playing", false)
+	game.set("echo_position", plate_a)
+	game.set("player_position", plate_b)
+	game.call("_check_puzzle_state")
+	_check(bool(game.get("door_open")), "Holding both switches should open the Pulse Lock gate.")
+	_check(is_equal_approx(float(game.get("gate_open_timer")), gate_duration), "Opening Pulse Lock should start its authored countdown.")
+
+	# Let the timer expire while the player still stands on Switch B. The gate
+	# should close and must not immediately reopen while the same hold persists.
+	game.set("gate_open_timer", 0.02)
+	game.call("_update_timed_gate", 0.03)
+	_check(not bool(game.get("door_open")), "The timed gate should close if the player does not cross before timeout.")
+	_check(bool(game.get("timed_gate_failed")), "A missed window should require the player to leave a switch before retrying.")
+	game.call("_check_puzzle_state")
+	_check(not bool(game.get("door_open")), "The timed gate must not immediately reopen while both switches remain held.")
+	_check(str(game.get("status_message")).contains("PULSE GATE MISSED"), "A missed crossing window should explain how to retry.")
+
+	# Releasing Switch B and returning to it rearms the crossing window.
+	game.set("player_position", plate_b + Vector2(0, 100))
+	game.call("_check_puzzle_state")
+	_check(not bool(game.get("timed_gate_failed")), "Leaving Switch B should rearm a fresh timed-gate attempt.")
+	game.set("player_position", plate_b)
+	game.call("_check_puzzle_state")
+	_check(bool(game.get("door_open")), "Returning to Switch B while the echo holds A should reopen Pulse Lock.")
+	_check(is_equal_approx(float(game.get("gate_open_timer")), gate_duration), "Retrying should reset the timer to its authored duration.")
+
+	# Once the player has crossed the blocking line, the gate window may expire
+	# but must not trap the player on the exit side of the barrier.
+	game.set("player_position", Vector2(1070, 420))
+	game.set("gate_open_timer", 0.02)
+	game.call("_update_timed_gate", 0.03)
+	_check(bool(game.get("door_open")), "Crossing the gate before timeout should keep the portal route powered.")
+	_check(is_zero_approx(float(game.get("gate_open_timer"))), "The crossing window should stop counting once it expires.")
+	_check(str(game.get("status_message")).contains("GATE CROSSED"), "A successful crossing should confirm that the portal remains powered.")
 	game.call("_start_level", 0)
 
 
