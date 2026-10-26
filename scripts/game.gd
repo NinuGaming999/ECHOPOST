@@ -1039,6 +1039,13 @@ func _draw_menu_art() -> void:
 	_draw_robot(Vector2(960, 360), Color(0.70, 0.47, 1.0, 0.25), 0.75)
 
 
+func _get_gate_timer_ratio() -> float:
+	var gate_duration := float(level_data.get("gate_open_seconds", 0.0))
+	if gate_duration <= 0.0:
+		return 0.0
+	return clampf(gate_open_timer / gate_duration, 0.0, 1.0)
+
+
 func _draw_room() -> void:
 	var room_rect := Rect2(ROOM_LEFT, ROOM_TOP, ROOM_RIGHT - ROOM_LEFT, ROOM_BOTTOM - ROOM_TOP)
 	draw_rect(room_rect, Color(0.055, 0.085, 0.13), true)
@@ -1104,6 +1111,11 @@ func _draw_room() -> void:
 
 	if door_open and gate_open_timer > 0.0:
 		draw_string(ThemeDB.fallback_font, Vector2(900, 145), "PULSE WINDOW  %.1fs" % gate_open_timer, HORIZONTAL_ALIGNMENT_CENTER, 190, 13, Color(1.0, 0.78, 0.39))
+		# The bar gives a second, glanceable cue for the remaining crossing time.
+		var timer_bar := Rect2(900, 154, 160, 6)
+		draw_rect(timer_bar, Color(0.12, 0.17, 0.22, 0.96), true)
+		draw_rect(Rect2(timer_bar.position, Vector2(timer_bar.size.x * _get_gate_timer_ratio(), timer_bar.size.y)), Color(1.0, 0.66, 0.27, 0.98), true)
+		draw_rect(timer_bar, Color(1.0, 0.81, 0.52, 0.75), false, 1.0)
 	elif door_open:
 		draw_string(ThemeDB.fallback_font, Vector2(915, 145), "GATE POWERED", HORIZONTAL_ALIGNMENT_CENTER, 160, 13, Color(0.35, 1.0, 0.77))
 	else:
