@@ -52,7 +52,7 @@ The chapter selector scrolls so future rooms do not collide with the navigation 
 
 - Use generous touch targets and avoid requiring precise timing on a small touchscreen.
 - Add a color-blindness-friendly indicator and text/icon cues, not color alone.
-- Offer reduced motion, adjustable movement speed, haptics/audio toggles, and left-handed controls before release.
+- Basic control preferences are implemented: slow/normal/fast movement presets and left-handed joystick placement, saved separately from campaign progress. Reduced motion, color-independent feedback, audio/haptics toggles, localization, and safe-area tuning remain release accessibility work.
 - Keep challenge based on planning and route choice.
 
 ## Full-game direction
