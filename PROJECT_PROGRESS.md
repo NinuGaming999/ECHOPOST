@@ -1,6 +1,6 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
-> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current three-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
+> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current six-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
 
 **Repository:** https://github.com/NinuGaming999/ECHOPOST  
 **Working branch:** `main`  
@@ -78,9 +78,9 @@ This hardening pass addresses a real frame-step boundary issue and makes the min
 ### Live recording-route preview
 **Changed:** `scripts/game.gd`.
 
-- `scripts/game.gd:L653–L659`: while `is_recording`, the route draws in amber with a ring and START marker at the first sample. This makes the recorded path visible before the echo is sent.
-- `scripts/game.gd:L661–L662`: the echo playback trail uses the same helper but remains cyan, distinguishing a saved/replaying echo from the live recording.
-- `scripts/game.gd:L737–L743`: new `_draw_track_path(track, tint, line_width)` helper draws the samples; rendering only reads route data and does not change gameplay.
+- `scripts/game.gd:L672–L678`: while `is_recording`, the route draws in amber with a ring and START marker at the first sample. This makes the recorded path visible before the echo is sent.
+- `scripts/game.gd:L680–L681`: the echo playback trail uses the same helper but remains cyan, distinguishing a saved/replaying echo from the live recording.
+- `scripts/game.gd:L756–L762`: `_draw_track_path(track, tint, line_width)` draws the samples; rendering only reads route data and does not change gameplay.
 - [Godot CI run 34](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40388600546) passed on Godot 4.4.0 and 4.7.2 after adding the shared renderer helper. Visual quality still needs a manual editor/device check.
 ### Six-room campaign and scrollable chapter selector
 **Changed:** `scripts/data/level_catalog.gd`, `scripts/game.gd`, `tests/headless_smoke.gd`, and `tests/game_flow_smoke.gd`.
@@ -92,6 +92,18 @@ This hardening pass addresses a real frame-step boundary issue and makes the min
 - `tests/game_flow_smoke.gd:L205–L220` verifies the scroll container, automatic vertical scroll mode and one list button per authored chamber.
 - [Godot CI run 39](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389126011) passed the expanded level catalog; [run 42](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389230677) passed the scrollable UI and regression tests on Godot 4.4.0 and 4.7.2.
 - This is a longer early-game slice, not a finished campaign: new switch types, checkpoints, moving platforms, narrative fragments and physical-device layout testing remain.
+### Room-schema validator hardening
+**Changed:** `scripts/data/level_catalog.gd` and `tests/headless_smoke.gd`.
+
+- `scripts/data/level_catalog.gd:L99–L100`: `validate_levels()` now delegates to the reusable `validate_level_list(levels)` function so both canonical campaign data and proposed drafts can be checked.
+- `scripts/data/level_catalog.gd:L103–L120`: reject an empty list and blank/duplicate chamber names.
+- `scripts/data/level_catalog.gd:L121–L136`: check required fields, Vector2 types, positive linger, and all playfield positions.
+- `scripts/data/level_catalog.gd:L138–L148`: reject a spawn less than 180 units from Switch A (too short for the intended route) and reject overlapping/near-overlapping A/B switches closer than 86 units.
+- `scripts/data/level_catalog.gd:L150–L163`: validate sentinel height, sweep amplitude (0–500) and speed (greater than 0, no more than 4).
+- `tests/headless_smoke.gd:L69–L83`: provide a deliberately malformed two-room draft and assert the validator reports duplicate names, too-short route, overlapping switches and negative patrol speed. `L86–L90` is the shared message-fragment helper.
+- [Godot CI run 49](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389764965) passed on Godot 4.4.0 and 4.7.2 with the invalid-draft regression tests.
+- The validator is a static data check, not a pathfinding solver: it does not yet prove each room is solvable against the moving sentinel timing.
+
 ### Mobile lifecycle pause hardening
 **Changed:** `scripts/game.gd` and `tests/game_flow_smoke.gd`.
 
@@ -113,7 +125,7 @@ This change is covered by an automated headless integration test. It is **not ye
 | `scenes/main.tscn` | Very small main scene: full-rect `Control` attached to `scripts/game.gd`. |
 | `scripts/game.gd` | Main controller, menu/HUD construction, player movement, echo recording/playback, puzzle loop, sentinel, save flow, and all procedural rendering. **730 lines in the snapshot documented here; it is the largest refactor target later, but refactor only after tests protect behavior.** |
 | `scripts/core/echo_track.gd` | Data-only `RefCounted` script loaded through preloaded script resources; avoids global `class_name` lookup; stores points, clamps timestamps to nondecreasing order, copies tracks, returns duration, interpolates route positions, and holds endpoint outside the timestamp range. |
-| `scripts/data/level_catalog.gd` | Six authored room dictionaries plus defensive-copy accessor and campaign-data validator. |
+| `scripts/data/level_catalog.gd` | Six authored room dictionaries, defensive-copy accessor, canonical/draft validator for schema, names, spacing, position bounds and hazard tuning. |
 | `scripts/data/progress_store.gd` | Versioned local save boundary (`user://echopost_save.cfg`) using `ConfigFile`; defaults safely when save is absent/unreadable and clamps unlocked level to campaign size. |
 | `tests/headless_smoke.gd` | Data-layer smoke tests for track order/interpolation/copying, six-room catalog schema and unique names, defensive copying, save/load and unlock clamping. |
 | `tests/game_flow_smoke.gd` | Main-scene integration tests for scrollable chapter selection, lifecycle pause, recording cap/feedback, sentinel reset, reset cleanup, portal-completion idempotency, invalid endpoint rejection, echo creation and gate activation. |
@@ -202,7 +214,7 @@ This function index is line-accurate for source blob SHA `3f0ae4c4d61b09e26fd620
 - **L28–L31:** Route duration from the final timestamp; empty route is zero seconds.
 - **L34–L59:** Position lookup: handles empty/before-first/after-last times, walks consecutive samples, linearly interpolates between points and handles tiny/duplicate timestamp spans.
 
-### `scripts/data/level_catalog.gd` (129 lines, blob SHA `009f6f6cd1c8960672af145c28760fe5f58ca813`)
+### `scripts/data/level_catalog.gd` (164 lines, blob SHA `1ae64585cece1f4316716a5213ca8b9c2d174123`)
 - **L1–L3:** RefCounted data script and purpose.
 - **L4–L89:** Six room dictionaries; entries are The First Echo (L5–L18), Long Memory (L19–L32), Split Signal (L33–L46), Fractured Lane (L47–L60), Crosscurrent (L61–L74), and Static Bloom (L75–L89).
 - **L91–L92:** Clamped copy accessor.
@@ -214,12 +226,15 @@ This function index is line-accurate for source blob SHA `3f0ae4c4d61b09e26fd620
 - **L8–L16:** Load/default/clamp behavior; unknown future save versions are not read into current state.
 - **L19–L24:** Write save version and campaign unlock/completion count via ConfigFile.
 
-### `tests/headless_smoke.gd` (85 lines, blob SHA `2de94d5b08004530dc109faa3c970b1c8bd263c0`)
+### `tests/headless_smoke.gd` (111 lines, blob SHA `5d1bd092f50a22176eb173ae3dc6d6f265be7f86`)
 - **L1–L8:** Test harness, preloaded echo/level/save scripts, separate test save path.
 - **L13–L22:** Run data tests and return nonzero if any assertions fail.
 - **L25–L44:** Echo track creation, timestamp monotonicity, interpolation/endpoint hold, preloaded script identity and copy independence.
-- **L47–L65:** Require at least six uniquely named rooms, run campaign validator, check required fields/positions/positive linger, and verify level access returns an isolated copy.
-- **L68–L79:** Save/load, unlock clamping and test-file cleanup.
+- **L47–L66:** Require six uniquely named rooms, run the catalog validator, check required fields/positions/positive linger and verify level reads return isolated copies.
+- **L69–L83:** Pass malformed draft room data to the validator and check duplicate names, short spawn route, overlapping switches and negative sentinel speed are reported.
+- **L86–L90:** Shared validator-error fragment helper.
+- **L94–L104:** Save/load, unlock clamping and test-file cleanup.
+- **L107–L110:** Shared assertion helper.
 - **L82–L85:** Shared assertion helper.
 
 ### `tests/game_flow_smoke.gd` (227 lines, blob SHA `a6e17f2ab3daecded0e6b5d5c1dfa78d96f8232d`)
@@ -257,8 +272,8 @@ This function index is line-accurate for source blob SHA `3f0ae4c4d61b09e26fd620
 
 ## 6. Current verification status — be precise
 
-- **Latest completed code/UI verification:** [Godot checks run 42](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389230677) passed on both Godot 4.4.0 and 4.7.2. This includes the six-room catalog, scrollable selector, all data smoke tests and the full gameplay integration suite.
-- **Campaign content verification:** [run 39](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389126011) passed after the three additional room definitions were added. `tests/headless_smoke.gd:L47–L65` now checks that the catalog has at least six unique, valid rooms.
+- **Six-room content and scrollable chapter-selector verification:** [Godot checks run 42](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389230677) passed on both Godot 4.4.0 and 4.7.2. This includes the six-room catalog, scrollable selector, data tests, and gameplay integration suite.
+- **Room-validator hardening:** [run 49](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40389764965) passed on both versions with negative-draft tests for duplicate names, short spawn-to-A route, close switches and invalid sentinel speed. `tests/headless_smoke.gd:L47–L90` covers the catalog and malformed drafts.
 - **Chapter selector verification:** `scripts/game.gd:L252–L280` builds the `ScrollContainer`/`VBoxContainer`; `tests/game_flow_smoke.gd:L205–L220` verifies scrolling and row count.
 - **Live route preview:** [run 34](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40388600546) passed after the live amber recording trace and reusable draw helper were added. The visual layout still needs manual inspection in the editor/on a device.
 - **Recording/core regression coverage:** strict 8-second cap, too-short recording feedback, sentinel reset, reset cleanup, portal completion idempotency with save restoration, EchoTrack copy behavior, invalid endpoint rejection, accepted echo creation, gate activation and lifecycle pause.
@@ -284,7 +299,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 1. **Mobile sizing / safe areas:** most layout coordinates and drawing coordinates are hard-coded around 1280×720. Safe areas, short/tall screens, scaling and button reach are not validated.
 2. **Controller size:** `scripts/game.gd` owns UI construction, gameplay state, input, persistence coordination and drawing. Refactor only incrementally; add tests first so game behavior does not regress.
-3. **Small content set:** only three room dictionaries exist. There is no full campaign or final narrative ending.
+3. **Small content set:** six room dictionaries now exist, but the core two-switch pattern is reused and there is no full campaign or final narrative ending.
 4. **Procedural placeholder visuals:** no authored robot animations, environmental tilesets, VFX or transition animations.
 5. **No sound:** recording, rejected route, sentinel hits, gate opening and portal have text/visual feedback only. No SFX, music, mixer, or audio options exist.
 6. **Pause behavior needs real device QA:** the lifecycle logic is headlessly tested but actual Android app-switch lifecycle and focus behavior are unverified. The player must tap RESUME after returning.
@@ -292,7 +307,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 8. **Recording edge cases:** the minimum is now `MIN_RECORD_SECONDS = 0.7` at `scripts/game.gd:L16`; a too-short stop deliberately keeps recording active and tells the player to continue. Verify that this interaction is understandable on touch.
 9. **Hazard edge cases:** sentinel collision resets the real player's position. Verify whether the echo and an active recording should remain unchanged on collision; decide and add tests before redesigning behavior.
 10. **Save migration:** save schema is version 1 and locally stored only. No migration tests for future versions or cloud save exist.
-11. **Level validation:** checks core required fields and basic bounds, but does not yet enforce all hazard ranges, layout spacing, switch/gate collision assumptions, or portal reachability.
+11. **Level validation:** catches schema/name/position/spacing and sentinel tuning errors, but it is not a pathfinding solver and does not prove portal reachability or fairness against the sentinel's phase.
 12. **No online features or monetization:** no accounts, backend, community route uploads, cloud saves, ads, analytics or payments are implemented. Do not add these before offline puzzle quality, privacy and moderation are planned.
 
 ## 8. Prioritized next steps
@@ -313,7 +328,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Test restart while recording and echo playback are active, and verify restart from PAUSED clears state.
 - [x] Test powered portal completion and ensure the completion count increments exactly once while the test restores the original save values.
 - [ ] Test lifecycle focus-out as well as application-paused notification; physical mobile app switching still needs manual QA.
-- [ ] Expand level validator for hazard tuning, non-overlapping/usable positions and portal/gate assumptions.
+- [x] Expand the level validator for names, spawn-to-A distance, switch separation and sentinel tuning; keep adding solvability/fairness validation as room mechanics grow.
 
 ### P2 — Mobile usability before adding lots of content
 - [ ] Manually inspect scrollable chapter selection and the live route preview on the user's Godot editor/phone; then review narrow/tall aspect ratios, safe areas and landscape touch reach.
