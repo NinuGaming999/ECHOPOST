@@ -7,8 +7,9 @@
 **Project root:** repository root; main scene is `res://scenes/main.tscn`  
 **Engine:** Godot 4.x; CI tests Godot 4.4.0 and 4.7.2  
 **Target:** Android-first landscape game; desktop builds support development and testing  
-**Progress snapshot base commit:** `6cbfb8f61da84ab6b5c627ef7fc65207939964ad` (the progress file itself is added immediately after this snapshot)  
-**Main controller source blob for the exact line map below:** `5fa29fa19f67c542a601a51df39636ef86bab7cc` (728 lines)  
+**Recording-cap code commit:** `b5f36b6a4f764a595e5dd930e8d6b3cebd5ce3a8`  
+**Gameplay-test commit:** `11c3b30de34323c536b0b8302eb8604259248d52`  
+**Main controller source blob for the exact line map below:** `95bdc17a4a9250b44011ed4134a92808a59ccfa5` (730 lines)  
 **Status:** Early playable foundation / vertical slice — **not complete, not release-ready**.
 
 ---
@@ -41,21 +42,35 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 **Fix committed:**
 - `scripts/core/echo_track.gd:L1–L5`: removed `class_name EchoTrack`; the script remains a `RefCounted` resource and is instantiated through preloaded script references.
 - `scripts/core/echo_track.gd:L19–L25`: `copy_track()` no longer types its return as the global `EchoTrack` class and instantiates the same resource using `get_script().new()`, then copies all samples.
-- `scripts/game.gd:L17–L20` and `L34–L39`: already uses the `ECHO_TRACK_SCRIPT = preload(...)` resource and so required no modification. Its previous `Nil.clear()` errors were downstream symptoms, not separate root causes.
+- `scripts/game.gd:L18–L21` and `L35–L40`: already uses the `ECHO_TRACK_SCRIPT = preload(...)` resource and so required no modification. Its previous `Nil.clear()` errors were downstream symptoms, not separate root causes.
 - `tests/headless_smoke.gd:L39–L44`: added a regression check that a copied track's script is exactly the preloaded resource, as well as retaining copy independence/interpolation tests.
 - Code fix commit: `5179b423d0d00d4a2ee807bc9d621d376b04b49a`.
 - Regression-test commit: `3a02e78abafe8c5cd1bb923e2e00b644b5a9c3f7`.
 - [Godot CI run 21](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385871675) passed on Godot 4.4.0 and 4.7.2, including the new regression assertion.
 
+### Recording duration hardening and gameplay regression tests
+**Changed:** `scripts/game.gd` and `tests/game_flow_smoke.gd`.
+
+- `scripts/game.gd:L17–L18`: introduced one minimum-duration constant (`MIN_RECORD_SECONDS = 0.7`) alongside the 8-second maximum.
+- `scripts/game.gd:L100–L122`: recording elapsed time is clamped to `MAX_RECORD_SECONDS` before recording samples are written. This prevents a frame delta from producing a route whose final timestamp exceeds eight seconds.
+- `scripts/game.gd:L396–L421`: the too-short recording path uses the same `MIN_RECORD_SECONDS` constant and clearer feedback: keep recording until the 0.7-second minimum, then stop on Switch A. It intentionally keeps recording active so the player can continue rather than losing the attempted route.
+- `tests/game_flow_smoke.gd:L92–L107`: starts at 7.99 seconds, advances one capped frame, and asserts recording auto-stops, an echo is made when ending at Switch A, and its recorded duration is exactly 8.0 seconds.
+- `tests/game_flow_smoke.gd:L110–L121`: asserts a too-short stop does not create an echo, does not discard the ongoing recording, and clearly explains how to continue.
+- `tests/game_flow_smoke.gd:L124–L132`: verifies sentinel contact returns the player to the spawn and displays contact feedback.
+- The test commit is `11c3b30de34323c536b0b8302eb8604259248d52`; [Godot CI run 25](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40387225782) passed both Godot 4.4.0 and 4.7.2.
+- `docs/ROADMAP.md` and `docs/BUILD_STATUS.md` now record the new coverage.
+
+This hardening pass addresses a real frame-step boundary issue and makes the minimum-duration interaction clearer. It adds test coverage, but it does not replace manual play-testing on the user's PC or phone.
+
 ### Mobile lifecycle pause hardening
 **Changed:** `scripts/game.gd` and `tests/game_flow_smoke.gd`.
 
-- `scripts/game.gd:L69–L73`: new `_notification(what)` handler listens for `NOTIFICATION_APPLICATION_PAUSED` (Android/iOS backgrounding) and `NOTIFICATION_APPLICATION_FOCUS_OUT`.
-- `scripts/game.gd:L76–L86`: `_pause_for_lifecycle()` only pauses when the game was actively playing. It clears touch/mouse joystick state, sets the pause button to **RESUME**, explains the pause to the player, and refreshes rendering/HUD.
-- The existing frame loop at `scripts/game.gd:L99–L120` exits early unless the screen state is PLAYING, so recording time, echo time, hazard time, and player movement stop advancing while paused.
+- `scripts/game.gd:L70–L74`: new `_notification(what)` handler listens for `NOTIFICATION_APPLICATION_PAUSED` (Android/iOS backgrounding) and `NOTIFICATION_APPLICATION_FOCUS_OUT`.
+- `scripts/game.gd:L77–L87`: `_pause_for_lifecycle()` only pauses when the game was actively playing. It clears touch/mouse joystick state, sets the pause button to **RESUME**, explains the pause to the player, and refreshes rendering/HUD.
+- The existing frame loop at `scripts/game.gd:L100–L122` exits early unless the screen state is PLAYING, so recording time, echo time, hazard time, and player movement stop advancing while paused.
 - The handler does not erase `recording_track`, set `is_recording` to false, or auto-resume when the application returns. A paused recording can continue after the player explicitly resumes.
 - `tests/game_flow_smoke.gd:L23–L24` invokes the lifecycle test and starts a fresh chamber so later tests run from a clean state.
-- `tests/game_flow_smoke.gd:L68–L83` simulates application suspension and verifies: state changes to PAUSED; joystick vector is cleared; recording flag/time survive; paused frame processing does not advance recording time; application resume does not bypass the pause screen; manual RESUME restores PLAYING.
+- `tests/game_flow_smoke.gd:L74–L89` simulates application suspension and verifies: state changes to PAUSED; joystick vector is cleared; recording flag/time survive; paused frame processing does not advance recording time; application resume does not bypass the pause screen; manual RESUME restores PLAYING.
 - The roadmap and build status were updated in `docs/ROADMAP.md` and `docs/BUILD_STATUS.md`.
 
 This change is covered by an automated headless integration test. It is **not yet a substitute for checking behavior on a real Android device**, including actual app switching and returning from the background.
@@ -71,7 +86,7 @@ This change is covered by an automated headless integration test. It is **not ye
 | `scripts/data/level_catalog.gd` | Three authored level dictionaries plus defensive copy accessor and campaign-data validator. |
 | `scripts/data/progress_store.gd` | Versioned local save boundary (`user://echopost_save.cfg`) using `ConfigFile`; defaults safely when save is absent/unreadable and clamps unlocked level to campaign size. |
 | `tests/headless_smoke.gd` | Data-layer smoke tests for track order/interpolation/copying, level catalog validation/defensive copying, save/load and unlock clamping. |
-| `tests/game_flow_smoke.gd` | Main-scene integration smoke test for invalid route rejection, valid echo creation, gate activation and lifecycle pause/resume. |
+| `tests/game_flow_smoke.gd` | Main-scene integration smoke tests for lifecycle pause, exact recording cap, too-short recording feedback, sentinel reset, invalid endpoint rejection, valid echo creation, and gate activation. |
 | `RUN_TESTS.bat` | Windows shortcut to run both headless smoke tests if Godot is on PATH. |
 | `.github/workflows/godot-checks.yml` | Imports/parses project then runs both tests on a Godot 4.4.0 / 4.7.2 matrix. |
 | `assets/echopost_icon.svg` | Original editable SVG project icon. |
@@ -90,62 +105,62 @@ This change is covered by an automated headless integration test. It is **not ye
 
 ## 4. Exact source line map — `scripts/game.gd`
 
-The following is a **line-accurate index for the controller blob SHA shown at the top of this file**. Use these exact ranges when reading/modifying. Any edit to this file can move later line numbers; always refresh the index and update this handoff when code changes. The function ranges below cover every non-blank controller section; blank separators are intentionally omitted.
+This function index is line-accurate for source blob SHA `95bdc17a4a9250b44011ed4134a92808a59ccfa5` (730 lines). Any code edit can shift line numbers; regenerate the index after subsequent changes.
 
-- **L1–L4:** Script header, project identity and note about procedural art.
+- **L1–L4:** Script header, project identity, procedural-art note.
 - **L6:** `ScreenState` enum: MENU, PLAYING, PAUSED, COMPLETE.
-- **L8–L20:** Room bounds, gate/player/movement/record timing constants and preloads for EchoTrack, LevelCatalog and ProgressStore.
-- **L22–L43:** Campaign fields and puzzle runtime state: player/echo position, echo state, track objects, recording accumulators, gate/hazard state, status text, background stars.
-- **L45–L48:** Touch/mouse joystick state and direction.
-- **L50–L66:** References to dynamic UI roots, labels, buttons, and chapter buttons.
-- **L69–L73 — `_notification()`:** Handle application suspension and focus loss; delegate to lifecycle pause.
-- **L76–L86 — `_pause_for_lifecycle()`:** Pause only from PLAYING; clear input, keep recording data, update HUD.
-- **L89–L96 — `_ready()`:** Initialize drawing stars, saved progress, UI, and initial menu.
-- **L99–L120 — `_process()`:** Main frame update: movement, sampling, echo playback, hazards, puzzle state, HUD.
-- **L123–L153 — `_input()`:** Map touch and mouse events to virtual joystick interaction.
-- **L156–L157 — `_is_joystick_area()`:** Choose where touch can start a joystick.
-- **L160–L162 — `_update_joystick()`:** Convert pointer location into a normalized joystick vector.
-- **L165–L169 — `_create_stars()`:** Generate deterministic decorative background stars.
-- **L172–L177 — `_build_interface()`:** Construct menu, gameplay HUD, completion, help, and chapter panels.
-- **L180–L200 — `_build_menu()`:** Create title, continue, chapter-select, help, and progress UI.
-- **L203–L222 — `_build_game_hud()`:** Create level labels, pause, record, restart, menu, and control help.
-- **L225–L237 — `_build_complete_panel()`:** Create level-complete message and next/replay buttons.
-- **L240–L247 — `_build_help_panel()`:** Create instructions for recording and solving a room.
-- **L250–L259 — `_build_level_select_panel()`:** Create chapter buttons and navigation back to menu.
-- **L262–L276 — `_make_panel()`:** Shared panel styling helper.
-- **L279–L291 — `_make_label()`:** Shared label helper and typography defaults.
-- **L294–L322 — `_make_button()`:** Shared button styling helper.
-- **L325–L337 — `_show_menu()`:** Return to menu and reset transient input/recording state.
-- **L340–L341 — `_on_start_pressed()`:** Continue at the currently unlocked chamber.
-- **L344–L372 — `_start_level()`:** Initialize level state and show the gameplay HUD.
-- **L375–L391 — `_on_record_pressed()`:** Start or stop route recording.
-- **L394–L419 — `_finish_recording()`:** Enforce minimum duration and Switch A endpoint; release echo on valid route.
-- **L422–L423 — `_add_record_sample()`:** Append a time/position pair to the recording track.
-- **L426–L436 — `_update_player()`:** Keyboard + joystick movement, room bounds, and closed-gate blocking.
-- **L439–L451 — `_update_echo()`:** Advance echo samples, then let it linger on its endpoint before fading.
-- **L454–L461 — `_check_sentinel_collision()`:** Move the player back to spawn when a roaming sentinel hits.
-- **L464–L483 — `_check_puzzle_state()`:** Evaluate switch occupancy, open the gate, and trigger portal completion.
-- **L486–L506 — `_complete_level()`:** Persist progress and show campaign-completion UI.
-- **L509–L513 — `_on_next_level_pressed()`:** Advance to next chamber or replay campaign from chamber one.
-- **L516–L517 — `_on_replay_pressed()`:** Restart the current chamber after completion.
-- **L520–L521 — `_on_reset_pressed()`:** Restart the current chamber.
-- **L524–L537 — `_on_pause_pressed()`:** Toggle manual pause/resume and update input state.
-- **L540–L541 — `_open_help()`:** Show instructions panel.
-- **L544–L546 — `_open_level_select()`:** Refresh unlock labels and show chapter select.
-- **L549–L551 — `_on_chapter_selected()`:** Start only chambers that have been unlocked.
-- **L554–L559 — `_update_chapter_buttons()`:** Apply locked/unlocked button states.
-- **L562–L567 — `_update_menu_progress()`:** Refresh campaign progress and continue-button text.
-- **L570–L591 — `_update_hud()`:** Update level labels, status, echo state, and record button.
-- **L594–L597 — `_load_progress()`:** Read persisted campaign progress through ProgressStore.
-- **L600–L603 — `_save_progress()`:** Persist progress and warn if the write fails.
-- **L606–L615 — `_draw()`:** Draw background and choose menu/room/paused overlay render path.
-- **L618–L624 — `_draw_menu_art()`:** Draw menu decorations and robots.
-- **L627–L672 — `_draw_room()`:** Draw playfield, switches, gate, portal, hazards, echo path, echo, and player.
-- **L675–L683 — `_draw_switch()`:** Draw a pressure switch and its active state.
-- **L686–L696 — `_draw_gate()`:** Draw the open or closed gate.
-- **L699–L705 — `_draw_portal()`:** Draw the powered/unpowered exit portal.
-- **L708–L718 — `_draw_robot()`:** Draw the procedural robot/echo body.
-- **L721–L727 — `_draw_joystick()`:** Draw the active touchscreen joystick.
+- **L8–L21:** Room bounds, player/movement timing, `MIN_RECORD_SECONDS`, `MAX_RECORD_SECONDS`, and preloads for echo, levels, and save data.
+- **L23–L44:** Campaign and puzzle runtime state, including player/echo data, timestamp tracks, recording timer/accumulator, door/hazard state, message and decorative stars.
+- **L46–L49:** Touch/mouse virtual joystick tracking state.
+- **L51–L67:** Dynamic UI roots, labels, buttons and chapter-button list.
+- **L70–L74 — `_notification()`:** Handle application suspension and focus loss; delegate to lifecycle pause.
+- **L77–L87 — `_pause_for_lifecycle()`:** Pause only from PLAYING; clear joystick input, preserve recording state, and refresh the HUD.
+- **L90–L97 — `_ready()`:** Initialize decorative stars, load saved progress, create the interface, and show the menu.
+- **L100–L122 — `_process()`:** Main frame loop; clamp delta and recording elapsed time to the strict maximum, sample positions, advance echo/hazard state, check collisions/puzzles, and refresh rendering.
+- **L125–L155 — `_input()`:** Translate touch/mouse events into virtual joystick input.
+- **L158–L159 — `_is_joystick_area()`:** Choose where touch can start a joystick.
+- **L162–L164 — `_update_joystick()`:** Convert pointer offset into a normalized joystick vector.
+- **L167–L171 — `_create_stars()`:** Generate deterministic decorative background stars.
+- **L174–L179 — `_build_interface()`:** Construct the menu, gameplay HUD, completion, help, and chapter panels.
+- **L182–L202 — `_build_menu()`:** Create title, continue, chapter-select, help, and progress UI.
+- **L205–L224 — `_build_game_hud()`:** Create level labels, pause, record, restart, main-menu, and control-help UI.
+- **L227–L239 — `_build_complete_panel()`:** Create completion message and next/replay buttons.
+- **L242–L249 — `_build_help_panel()`:** Show instructions for recording an echo and solving a room.
+- **L252–L261 — `_build_level_select_panel()`:** Create unlocked/locked chapter buttons and navigation.
+- **L264–L278 — `_make_panel()`:** Shared panel styling helper.
+- **L281–L293 — `_make_label()`:** Shared label and typography helper.
+- **L296–L324 — `_make_button()`:** Shared button styling helper.
+- **L327–L339 — `_show_menu()`:** Return to menu and clear transient recording/input state.
+- **L342–L343 — `_on_start_pressed()`:** Continue at the currently unlocked chamber.
+- **L346–L374 — `_start_level()`:** Initialize room state and display the gameplay HUD.
+- **L377–L393 — `_on_record_pressed()`:** Start route recording or attempt to stop and send it.
+- **L396–L421 — `_finish_recording()`:** Enforce minimum duration and Switch A endpoint, then release the echo for a valid route.
+- **L424–L425 — `_add_record_sample()`:** Append a timestamp/position pair to the in-progress recording track.
+- **L428–L438 — `_update_player()`:** Apply keyboard/joystick movement, clamp to room bounds, and block crossing a closed gate.
+- **L441–L453 — `_update_echo()`:** Advance timed echo playback, then let it linger at its endpoint before fading.
+- **L456–L463 — `_check_sentinel_collision()`:** Reset the player to room spawn and display feedback on sentinel contact.
+- **L466–L485 — `_check_puzzle_state()`:** Evaluate both switches, open the gate, and trigger completion at the portal.
+- **L488–L508 — `_complete_level()`:** Update campaign unlocks, save progress, and show the completion panel.
+- **L511–L515 — `_on_next_level_pressed()`:** Advance to the next chamber or replay the campaign from the first chamber.
+- **L518–L519 — `_on_replay_pressed()`:** Restart the current chamber from the completion panel.
+- **L522–L523 — `_on_reset_pressed()`:** Restart the current chamber.
+- **L526–L539 — `_on_pause_pressed()`:** Toggle pause/resume and clear stale joystick input.
+- **L542–L543 — `_open_help()`:** Show the instructions panel.
+- **L546–L548 — `_open_level_select()`:** Refresh unlock labels and open chapter select.
+- **L551–L553 — `_on_chapter_selected()`:** Start only a chamber at or below the unlocked level.
+- **L556–L561 — `_update_chapter_buttons()`:** Refresh locked/unlocked chapter button text and disabled state.
+- **L564–L569 — `_update_menu_progress()`:** Refresh displayed campaign progress and continue-button text.
+- **L572–L593 — `_update_hud()`:** Update chamber labels, status text, echo state, and record button.
+- **L596–L599 — `_load_progress()`:** Load local campaign progress through ProgressStore.
+- **L602–L605 — `_save_progress()`:** Persist campaign progress and warn on a write error.
+- **L608–L617 — `_draw()`:** Draw background and select menu/room/paused rendering.
+- **L620–L626 — `_draw_menu_art()`:** Draw menu decorations and procedural robots.
+- **L629–L674 — `_draw_room()`:** Draw the playfield, switches, gate, portal, hazard, echo route, echo, player, and joystick.
+- **L677–L685 — `_draw_switch()`:** Draw a pressure switch and its active state.
+- **L688–L698 — `_draw_gate()`:** Draw the open or closed gate.
+- **L701–L707 — `_draw_portal()`:** Draw the powered or unpowered exit.
+- **L710–L720 — `_draw_robot()`:** Draw the procedural player or echo robot.
+- **L723–L729 — `_draw_joystick()`:** Draw the current touchscreen joystick.
 
 ## 5. Exact line map — supporting scripts and tests
 
@@ -178,12 +193,15 @@ The following is a **line-accurate index for the controller blob SHA shown at th
 - **L63–L73:** Save/load values, clamping to a smaller campaign and removal of temp save.
 - **L76–L80:** Shared assertion helper.
 
-### `tests/game_flow_smoke.gd` (89 lines, blob SHA `ca0fb60d0cf8e261170ea60d00f22f60cbe79a57`)
-- **L1–L8:** Test harness, main scene and EchoTrack preload.
-- **L11–L64:** Instantiate main scene, start a room, run the lifecycle test, reset clean state, test rejection of route ending away from A, test a valid route ending on A, then test gate activation when echo/player occupy A/B.
-- **L68–L83:** Lifecycle pause assertions (see section 2).
-- **L85–L89:** Shared assertion helper.
-- **Known coverage gap:** No automated full-portal completion test yet; recording limit, sentinel collision/reset and repeated pause/restart edge cases still need dedicated assertions.
+### `tests/game_flow_smoke.gd` (138 lines, blob SHA `9fa3b3ebd6d840dc411f8291c91df613fd0069a4`)
+- **L1–L8:** Test harness, main scene and preloaded echo-track script.
+- **L11–L70:** Instantiate main scene; run lifecycle, max-duration, too-short, and sentinel tests; then exercise invalid route rejection, valid route creation, and two-switch gate activation.
+- **L74–L89:** Application-pause behavior, preserving current recording time, clearing joystick input, and requiring explicit resume.
+- **L92–L107:** Regression test for automatic stop at eight seconds and an exactly eight-second echo track.
+- **L110–L121:** Too-short recording feedback and preservation of active recording.
+- **L124–L132:** Sentinel spawn reset and user-facing status.
+- **L134–L138:** Shared assertion helper.
+- **Known coverage gap:** No automated full-portal completion test yet; restart-during-recording/echo and lifecycle focus-out edge cases still need dedicated assertions.
 
 ### `scenes/main.tscn` (13 lines)
 - **L1–L3:** Scene declaration and script external resource.
@@ -207,9 +225,9 @@ The following is a **line-accurate index for the controller blob SHA shown at th
 
 ## 6. Current verification status — be precise
 
-- **Latest completed code + regression-test workflow:** [Godot checks run 21](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385871675) passed on commit `3a02e78abafe8c5cd1bb923e2e00b644b5a9c3f7`. Both jobs completed successfully: Godot 4.4.0 and Godot 4.7.2. Each job imports/parses the project and runs data-layer and gameplay smoke tests; the new EchoTrack self-reference regression test passed.
-- **Previously completed code-fix workflow:** [run 20](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385850496) also passed on both versions after the EchoTrack implementation was changed and before the extra regression assertion was committed.
-- **Lifecycle-pause source/test validation:** still covered by run 21, including `scripts/game.gd:L69–L86` and `tests/game_flow_smoke.gd:L68–L83`.
+- **Latest workflow verifying the recording-cap and game-flow test changes:** [Godot checks run 25](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40387225782) passed on commit `11c3b30de34323c536b0b8302eb8604259248d52`. Both Godot 4.4.0 and 4.7.2 jobs passed project import/parse and the data/gameplay smoke tests.
+- **Recording cap verification:** `scripts/game.gd:L100–L122` clamps elapsed recording time before sampling; `tests/game_flow_smoke.gd:L92–L107` verifies the emitted echo duration equals 8.0 seconds.
+- **Regression coverage:** the too-short recording behavior and sentinel reset assertions also passed in run 25, along with the existing EchoTrack self-reference and lifecycle pause tests.
 - **Local device test:** not performed by this assistant. Do not imply the game was launched in the user's Godot editor or on a physical phone.
 - **Android APK/export:** no APK has been built or attached. Android export preset, signing, package identity, export templates/SDK/JDK and real-device checks remain.
 - **Runtime quality:** automated smoke tests are not a substitute for manually playing all three rooms at actual mobile resolution.
@@ -285,7 +303,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 2. Check the most recent CI run before modifying code. A workflow run for a commit older than the code currently on `main` does not verify the current code.
 3. Choose **one focused improvement** at a time. Make changes in `main` only as permitted by the user/project workflow, and don't claim the project is finished.
 4. Test changes with Godot CI or available local Godot. Distinguish passed tests, tests not run, and manual device checks.
-5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `5fa29fa19f67c542a601a51df39636ef86bab7cc`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
+5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `95bdc17a4a9250b44011ed4134a92808a59ccfa5`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
 6. Update `PROJECT_PROGRESS.md` in the same development pass as source changes. Record the new commit(s), source hashes/line references, CI URL/result and what the next session should do.
 7. Keep this game offline-capable and dependency-light. Never add network accounts, telemetry, uploads, payment or ads as an incidental code change.
 8. Don't produce an APK/release claim unless an actual export and install verification were completed.
