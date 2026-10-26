@@ -10,6 +10,7 @@
 - Main menu, chapter select, instructions, pause, completion, retry, and continue flows.
 - Keyboard movement and an on-screen joystick that also supports mouse testing.
 - Timestamped route recording, an 8-second recording limit, echo playback, final-position linger, and rejection feedback when a route does not end on Switch A.
+- Echo track copies instantiate from their preloaded script resource instead of relying on a global `EchoTrack` class registration; this fixes the Godot 4.4 compile failure reported during local testing.
 - Two-switch gate and portal completion flow.
 - Three authored room configurations; later rooms add moving sentinels.
 - Local versioned campaign save data and progress clamping.
@@ -20,7 +21,7 @@
 
 ## Verification status
 
-GitHub Actions run 14 passed on both Godot 4.4.0 and 4.7.2 after the lifecycle-pause code and integration test were added ([run details](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40384700347)). The checks import/parse the project and run data-layer plus gameplay smoke tests, covering invalid echo-route rejection, accepted echo creation, gate activation, and automatic pause while preserving an active recording. No Android APK has been built or tested on a physical device. The source is an early game foundation, not a release-ready claim.
+GitHub Actions run 21 passed on both Godot 4.4.0 and 4.7.2 after the EchoTrack self-reference compile fix and regression assertion were added ([run details](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40385871675)). The checks import/parse the project and run data-layer plus gameplay smoke tests, covering echo interpolation/copying, invalid-route rejection, valid echo creation, gate activation, and automatic pause while preserving an active recording. No Android APK has been built or tested on a physical device. The source is an early game foundation, not a release-ready claim.
 
 ## Next work items
 
