@@ -5,7 +5,9 @@ extends SceneTree
 const EchoTrackScript = preload("res://scripts/core/echo_track.gd")
 const LevelCatalog = preload("res://scripts/data/level_catalog.gd")
 const ProgressStore = preload("res://scripts/data/progress_store.gd")
+const SettingsStore = preload("res://scripts/data/settings_store.gd")
 const TEST_SAVE_PATH := "user://echopost_smoke_test_save.cfg"
+const TEST_SETTINGS_PATH := "user://echopost_settings_smoke_test.cfg"
 
 var failures: int = 0
 
@@ -14,6 +16,7 @@ func _initialize() -> void:
 	_test_echo_track()
 	_test_level_catalog()
 	_test_progress_store()
+	_test_settings_store()
 	if failures == 0:
 		print("ECHOPOST smoke tests passed.")
 		quit(0)
@@ -124,6 +127,30 @@ func _test_progress_store() -> void:
 	var user_directory := DirAccess.open("user://")
 	if user_directory != null:
 		user_directory.remove("echopost_smoke_test_save.cfg")
+
+
+
+func _test_settings_store() -> void:
+	var defaults: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
+	_check(is_equal_approx(float(defaults["move_speed"]), 255.0), "Missing settings should default to normal movement speed.")
+	_check(not bool(defaults["left_handed_controls"]), "Missing settings should default to the standard left-side joystick.")
+
+	var save_error := SettingsStore.save_settings(200.0, true, TEST_SETTINGS_PATH)
+	_check(save_error == OK, "Control settings should save to their own preferences file.")
+	var saved: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
+	_check(is_equal_approx(float(saved["move_speed"]), 200.0), "Settings should preserve the selected slow movement preset.")
+	_check(bool(saved["left_handed_controls"]), "Settings should preserve left-handed joystick preference.")
+
+	# Unsupported values are normalized to the nearest supported preset rather than saved as arbitrary speeds.
+	save_error = SettingsStore.save_settings(999.0, false, TEST_SETTINGS_PATH)
+	_check(save_error == OK, "Settings normalization should still produce a writable preferences file.")
+	var normalized: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
+	_check(is_equal_approx(float(normalized["move_speed"]), 310.0), "Out-of-range movement speeds should normalize to the fast preset.")
+	_check(not bool(normalized["left_handed_controls"]), "Left-handed preference should be independently changeable.")
+
+	var user_directory := DirAccess.open("user://")
+	if user_directory != null:
+		user_directory.remove("echopost_settings_smoke_test.cfg")
 
 
 func _check(condition: bool, message: String) -> void:
