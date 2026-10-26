@@ -41,7 +41,10 @@
 **Latch playback-prerequisite test commit:** `3218a6beeef7506ad56b3d8f5e04ac9f8db7f68e`  
 **Dead Air Protocol level commit:** `a2ceca756626f94898a78e1258c452c33096f603`  
 **Dead Air Protocol schema-test commit:** `b841ebfd189911ea7454236816ffe7d83b35b00f`  
-**Dead Air Protocol gameplay-test commit:** `918fe8ce829d7b922afeae60a439253c027ec7ff`
+**Dead Air Protocol gameplay-test commit:** `918fe8ce829d7b922afeae60a439253c027ec7ff`  
+**Dead Air Protocol harder gate/layout commit:** `9cb45fa8df21110acb69decec24300216d4c6b6c`  
+**Dead Air gate-distance schema assertion:** `8c4827d628f3d1f936f187dd16b3998677007b17`  
+**Dead Air timer expectation regression fix:** `25c10df85b2ae529ec0b8ef47c0249983d17e482`
 **Status:** Early playable foundation / vertical slice — **not complete, not release-ready**.
 
 ---
@@ -69,7 +72,7 @@ The current source includes twelve authored chamber layouts:
 - **Latch Protocol:** Switch B is a toggle; after activating it, the player can leave the switch and cross the gate.
 - **Triune Relay:** three Relay Beacons must be crossed in order before Switch A.
 - **Fracture Clock:** combines three ordered relays with a 4.5-second timed gate crossing.
-- **Dead Air Protocol:** four ordered relays, a fast sentinel that can erase the recording, 6.5 seconds of echo linger, and a 2.2-second gate window.
+- **Dead Air Protocol:** four ordered relays, a fast sentinel that can erase the recording, 6.5 seconds of echo linger, Switch B farther back at x=850, and a 1.8-second gate window.
 
 The first five rooms teach the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces a single required gold Relay Beacon; Chorus Route requires two beacons in order; Pulse Lock adds a timed crossing and retry rule; Latch Protocol adds a toggle switch; Triune Relay extends ordered route planning to three checkpoints; Fracture Clock combines the three-relay sequence with a timed crossing; Dead Air Protocol combines four relays, active sentinel evasion and a short timed gate. Relay tests check line segments between samples, so a crossing between samples is valid. Twelve rooms are still a prototype, not a finished campaign.
 
@@ -80,12 +83,12 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 ### Dead Air Protocol: a high-difficulty four-relay sentinel gauntlet
 **Changed:** `scripts/data/level_catalog.gd`, `tests/headless_smoke.gd`, `tests/game_flow_smoke.gd`, README, design, roadmap and build-status docs.
 
-- `scripts/data/level_catalog.gd:L188–L205`: adds the twelfth room with four required ordered relays, a moving sentinel, a 6.5-second echo linger, and a 2.2-second timed gate. The level validator also checks relay type, bounds, and spacing from objectives and other checkpoints.
-- `tests/headless_smoke.gd:L50–L125`: requires a 12-room campaign; asserts Dead Air Protocol has exactly four waypoints, an active sentinel, the 2.2-second timer and 6.5-second linger. The general schema assertion now permits more than one room combining relays and a timed gate.
-- `tests/game_flow_smoke.gd:L674–L760`: proves an out-of-order route is rejected with the full four-relay hint; the correctly ordered route fits under the 8-second record cap and is accepted; the gate opens for exactly 2.2 seconds and closes if the player misses it; sentinel contact sends the player to spawn and erases an unfinished recording.
+- `scripts/data/level_catalog.gd:L188–L205`: adds the twelfth room with four required ordered relays, a moving sentinel, a 6.5-second echo linger, Switch B at x=850, and a 1.8-second timed gate. The level validator also checks relay type, bounds, and spacing from objectives and other checkpoints.
+- `tests/headless_smoke.gd:L50–L125`: requires a 12-room campaign; asserts Dead Air Protocol has exactly four waypoints, an active sentinel, Switch B at x=850, the 1.8-second timer and 6.5-second linger. The general schema assertion now permits more than one room combining relays and a timed gate.
+- `tests/game_flow_smoke.gd:L674–L760`: proves an out-of-order route is rejected with the full four-relay hint; the correctly ordered route fits under the 8-second record cap and is accepted; the gate opens for exactly 1.8 seconds and closes if the player misses it; sentinel contact sends the player to spawn and erases an unfinished recording.
 - Level-data commit: `a2ceca756626f94898a78e1258c452c33096f603`; schema test commit: `b841ebfd189911ea7454236816ffe7d83b35b00f`; gameplay test commit: `918fe8ce829d7b922afeae60a439253c027ec7ff`.
-- The first data-only commit exposed an old schema assertion that assumed Fracture Clock was the only room with three relays and a timer. The schema assertion was generalized and then the combined suite passed.
-- [Godot CI run 192](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40412180460) passed on Godot 4.4.0 and 4.7.2, including both new data and gameplay tests.
+- The first data-only commit exposed an old schema assertion that assumed Fracture Clock was the only room with three relays and a timer. The schema assertion was generalized and then the combined suite passed. A subsequent difficulty review found Switch B was too close to the gate; it was moved back to x=850, making the crossing run 212 units, and the timer was reduced from 2.2 to 1.8 seconds. The final timer assertion was corrected after CI caught one stale expected value.
+- [Godot CI run 206](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40412947281) passed on Godot 4.4.0 and 4.7.2 with the final 1.8-second window, farther Switch B placement, four-relay route and sentinel-interruption tests.
 
 **Difficulty intent:** this is deliberately a late-campaign gauntlet. The sentinel can interrupt the real player's recording, so the route must be planned around its moving patrol; four beacons must be crossed in order; then the player must reach B and cross a short gate window. This is logic-tested, not yet manually playtested for fairness or touch-control comfort.
 
@@ -453,12 +456,12 @@ This function index matches source blob SHA `30343671f2d673b8a19de6fb3bc15e784fc
 - **L28–L31:** Return route duration.
 - **L34–L59:** Resolve position before/after route, interpolate between ordered points, and tolerate near-duplicate timestamps.
 
-### `scripts/data/level_catalog.gd` (342 lines, blob SHA `edc2baa845373366575a44a654227b1201008c8c`)
+### `scripts/data/level_catalog.gd` (342 lines, blob SHA `d1c16361a74e957eb16abcba392403e450e8ba02`)
 - **L1–L3:** RefCounted catalog and purpose.
 - **L4–L152:** First nine room definitions, ending with Latch Protocol's toggle-style Switch B.
 - **L153–L169:** Triune Relay's tenth-room definition, including three ordered relay coordinates and optional Memory Shard lore.
 - **L170–L187:** Fracture Clock's eleventh-room definition, combining three ordered relays and a 4.5-second timed gate.
-- **L188–L205:** Dead Air Protocol's twelfth-room definition, including four ordered relays, a fast sentinel, 6.5-second echo linger and 2.2-second timed gate.
+- **L188–L205:** Dead Air Protocol's twelfth-room definition, including four ordered relays, a fast sentinel, 6.5-second echo linger, Switch B at x=850, and 1.8-second timed gate.
 - **L208–L219:** Defensive-copy level getter, room-count helper and canonical validation entry points.
 - **L221–L250:** Validate nonempty campaigns, unique/nonblank names, required keys, core Vector2 positions, lore text and echo linger.
 - **L251–L287:** Validate toggle-mode values, timed-gate duration type/range, optional waypoint types/bounds, and spawn/Switch A/Switch B separation.
@@ -479,18 +482,18 @@ This function index matches source blob SHA `30343671f2d673b8a19de6fb3bc15e784fc
 - **L23–L28:** Persist control settings independently from campaign progress.
 - **L31–L39:** Normalize the requested speed to a supported preset.
 
-### `tests/headless_smoke.gd` (221 lines, blob SHA `2e1a065a40b821da35ec3704c11e9a1dbc06dcc9`)
+### `tests/headless_smoke.gd` (222 lines, blob SHA `f7e7a273bec2e7d079f544b1ed6f2f2f80b3ac0f`)
 - **L1–L12:** Test runner/preloads and isolated temporary save/settings paths.
 - **L15–L25:** Run grouped tests and exit nonzero on assertion failure.
 - **L28–L47:** Timestamp order, interpolation, endpoint hold, preloaded-script identity and copy independence.
-- **L50–L125:** Validate twelve unique rooms, all single-/multi-relay data, named Triune Relay and Fracture Clock, Dead Air Protocol's four relays/active sentinel/6.5-second linger/2.2-second gate, and malformed-draft validator entry point.
+- **L50–L125:** Validate twelve unique rooms, all single-/multi-relay data, named Triune Relay and Fracture Clock, Dead Air Protocol's four relays/active sentinel/6.5-second linger/farther Switch B/1.8-second gate, and malformed-draft validator entry point.
 - **L128–L150:** Submit intentionally invalid room drafts and assert errors for duplicate names, route geometry, sentinel parameters, out-of-bounds/mistyped relays and invalid timed-gate durations.
 - **L152–L156:** Search validator messages by fragment.
 - **L160–L191:** Save/load campaign progress, sanitize shard indices and verify v1 save compatibility.
 - **L194–L215:** Verify settings defaults, preference persistence, handedness and speed normalization.
 - **L217–L220:** Assertion helper.
 
-### `tests/game_flow_smoke.gd` (824 lines, blob SHA `7a54b1828c5aabd44c8717555ff5cb6a5f5a4859`)
+### `tests/game_flow_smoke.gd` (824 lines, blob SHA `e8f0f7a705ef144a235fe10ddacbb661973f472a`)
 - **L1–L10:** Integration harness, main scene, relay/level/progress preloads.
 - **L13–L14:** Defer integration test entry point.
 - **L17–L86:** Run UI/shards/options, Latch Protocol, single/two-/three-/four-relay, Fracture Clock, Dead Air Protocol, lifecycle pause, recording limit/feedback, sentinel/reset/portal and timed-gate suites.
@@ -510,7 +513,7 @@ This function index matches source blob SHA `30343671f2d673b8a19de6fb3bc15e784fc
 - **L494–L545:** Chorus Route rejects reverse order, accepts correct order, and verifies linked visual state.
 - **L549–L603:** Triune Relay rejects an out-of-order three-relay route, accepts Relay 1 → Relay 2 → Relay 3 → Switch A, and verifies all three linked states.
 - **L607–L670:** Fracture Clock rejects an out-of-order route with a complete hint, accepts the valid route, opens its 4.5-second gate, and preserves portal power after crossing.
-- **L674–L760:** Dead Air Protocol checks four-relay rejection/acceptance, full sequence feedback, the 2.2-second gate/timeout, and sentinel interruption cancelling the take.
+- **L674–L760:** Dead Air Protocol checks four-relay rejection/acceptance, full sequence feedback, the 1.8-second gate/timeout, and sentinel interruption cancelling the take.
 - **L762–L818:** Pulse Lock timer start, full/partial/empty timer-bar ratio, real-frame countdown, pause freeze, timeout, retry re-arm and powered exit after crossing.
 - **L820–L823:** Shared assertion helper.
 
@@ -536,18 +539,18 @@ This function index matches source blob SHA `30343671f2d673b8a19de6fb3bc15e784fc
 
 ## 6. Current verification status — be precise
 
-- **Latest passing code/test run:** [Godot CI run 192](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40412180460) passed on both Godot 4.4.0 and 4.7.2. It includes the twelve-room schema and the full Dead Air Protocol acceptance/rejection, timer-timeout and sentinel-interruption checks, as well as prior Latch Protocol and timed-gate regressions.
+- **Latest passing code/test run:** [Godot CI run 206](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40412947281) passed on both Godot 4.4.0 and 4.7.2. It includes the twelve-room schema and the final Dead Air Protocol four-relay acceptance/rejection, 1.8-second timeout, farther-switch-distance assertion and sentinel-interruption checks, alongside prior Latch Protocol and timed-gate regressions.
 - **Triune Relay:** wrong order Relay 1 → Relay 3 → Relay 2 → Switch A is rejected; the correct route is accepted and all three markers become linked. Run 157 passed these assertions.
 - **Fracture Clock:** combines the same ordered route mechanic with the timed-gate rule; run 157 passed the integration test and catalog validation. The initial over-specific schema assertion was corrected so a campaign can contain more than one three-relay room.
 - **Timed-gate bar:** run 165 passed checks that the bar ratio starts at 1.0, tracks the timer proportionally after a frame, and reaches zero after timeout.
 - **Relay feedback:** run 173 passed both the two-relay and three-relay rejection-message assertions, including Fracture Clock's invalid-order attempt.
 - **Latch Protocol:** run 179 passed button visibility, echo prerequisite, latch persistence after leaving B, keyboard E, and reset cleanup assertions. Run 185 additionally verifies the echo must finish playback before latching.
 - **Previous verification:** run 140 passed the all-memory restored-signal reward; run 122 passed Pulse Lock countdown, pause freeze, timeout closure, retry latch/re-arm, and portal power after crossing.
-- **Source hashes:** current `scripts/game.gd` blob SHA is `30343671f2d673b8a19de6fb3bc15e784fc01905` (1289 lines); current `scripts/data/level_catalog.gd` blob SHA is `edc2baa845373366575a44a654227b1201008c8c` (342 lines); current `tests/headless_smoke.gd` blob SHA is `2e1a065a40b821da35ec3704c11e9a1dbc06dcc9` (221 lines); current gameplay-test blob SHA is `7a54b1828c5aabd44c8717555ff5cb6a5f5a4859` (824 lines). Sections 4 and 5 are keyed to these current files.
+- **Source hashes:** current `scripts/game.gd` blob SHA is `30343671f2d673b8a19de6fb3bc15e784fc01905` (1289 lines); current `scripts/data/level_catalog.gd` blob SHA is `d1c16361a74e957eb16abcba392403e450e8ba02` (342 lines); current `tests/headless_smoke.gd` blob SHA is `f7e7a273bec2e7d079f544b1ed6f2f2f80b3ac0f` (222 lines); current gameplay-test blob SHA is `e8f0f7a705ef144a235fe10ddacbb661973f472a` (824 lines). Sections 4 and 5 are keyed to these current files.
 - **Device QA:** not performed by this assistant. The game has not been manually run in the user's Godot editor or on a physical Android device during this pass.
 - **Android export:** no APK built or attached. Android export preset, package identity, export templates, SDK/JDK, signing and real-device testing remain.
 - **Source hashes:** current `scripts/game.gd` blob SHA is `30343671f2d673b8a19de6fb3bc15e784fc01905` (1289 lines); current `scripts/data/level_catalog.gd` blob SHA is `edc2baa845373366575a44a654227b1201008c8c` (342 lines); current `tests/headless_smoke.gd` blob SHA is `2e1a065a40b821da35ec3704c11e9a1dbc06dcc9` (221 lines); current gameplay-test blob SHA is `7a54b1828c5aabd44c8717555ff5cb6a5f5a4859` (824 lines). Sections 4 and 5 are keyed to these current files.
-- **Quality caveat:** automated tests verify logic, not visual clarity or whether the 2.2-second Dead Air Protocol or 3.5-second Pulse Lock crossing feels fair on touch controls. Both need playtesting at slow/normal/fast speeds.
+- **Quality caveat:** automated tests verify logic, not visual clarity or whether the 1.8-second Dead Air Protocol or 3.5-second Pulse Lock crossing feels fair on touch controls. Both need playtesting at slow/normal/fast speeds.
 
 ### Commands to run in the repository root on Windows
 ```powershell
@@ -594,7 +597,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Make ordered-route rejection hints list every relay in sequence and verify two-/three-relay feedback plus Fracture Clock's invalid route in [run 173](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40401469061).
 - [x] Implement Latch Protocol's actual toggle state, button and E shortcut; verify the echo prerequisite, persistent gate opening, button visibility and restart reset in [run 179](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40401941921).
 - [x] Tighten Latch Protocol so the echo must be finished playing and settled on A before B can latch; verify on both Godot versions in [run 185](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40402444543).
-- [x] Add Dead Air Protocol: four ordered relays, active sentinel, 6.5-second linger, 2.2-second gate; [run 192](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40412180460) passed on both Godot versions with valid/invalid route and sentinel-interruption coverage.
+- [x] Add Dead Air Protocol: four ordered relays, active sentinel, 6.5-second linger, Switch B farther from the gate and a 1.8-second timer; [run 206](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40412947281) passed on both Godot versions with valid/invalid route, gate-timeout and sentinel-interruption coverage.
 - [ ] Ask for / perform a local pull and open the project in the user's Godot 4.4 editor to inspect the live route preview and confirm visuals on the actual machine.
 - [x] Verify Memory Archive and Options UI, speed presets, and left-handed joystick region on both Godot versions in run 82.
 - [x] Update this progress file, current source/test blob hashes, and exact line maps for Triune Relay, Fracture Clock and Dead Air Protocol.
