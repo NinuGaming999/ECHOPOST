@@ -252,11 +252,30 @@ func _build_help_panel() -> void:
 func _build_level_select_panel() -> void:
 	level_select_panel = _make_panel("LevelSelectPanel", Vector2(345, 155), Vector2(590, 410))
 	_make_label(level_select_panel, "SelectTitle", Vector2(25, 18), Vector2(540, 46), "CHAMBER SELECT", 27, Color(0.88, 0.97, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+
+	# Keep the chapter list scrollable so a growing campaign never overlaps the Back button.
+	var chapter_scroll := ScrollContainer.new()
+	chapter_scroll.name = "ChapterScroll"
+	chapter_scroll.position = Vector2(30, 72)
+	chapter_scroll.size = Vector2(530, 232)
+	chapter_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	chapter_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	level_select_panel.add_child(chapter_scroll)
+
+	var chapter_list := VBoxContainer.new()
+	chapter_list.name = "ChapterList"
+	chapter_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chapter_list.add_theme_constant_override("separation", 10)
+	chapter_scroll.add_child(chapter_list)
+
 	for i in range(LEVELS.size()):
-		var button := _make_button(level_select_panel, "Chapter_%02d" % (i + 1), Vector2(72, 82 + i * 72), Vector2(446, 56), "", Color(0.12, 0.25, 0.36), Color(0.08, 0.50, 0.65), 17)
+		var button := _make_button(chapter_list, "Chapter_%02d" % (i + 1), Vector2.ZERO, Vector2(500, 56), "", Color(0.12, 0.25, 0.36), Color(0.08, 0.50, 0.65), 17)
+		button.custom_minimum_size = Vector2(500, 56)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.pressed.connect(_on_chapter_selected.bind(i))
 		chapter_buttons.append(button)
-	var back := _make_button(level_select_panel, "SelectBack", Vector2(175, 315), Vector2(240, 46), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 15)
+
+	var back := _make_button(level_select_panel, "SelectBack", Vector2(175, 320), Vector2(240, 46), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 15)
 	back.pressed.connect(func(): level_select_panel.hide())
 	level_select_panel.hide()
 
