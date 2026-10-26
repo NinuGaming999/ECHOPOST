@@ -37,6 +37,7 @@ func _test_echo_track() -> void:
 	_check(track.position_at(2.0).is_equal_approx(Vector2(120, 0)), "Playback after the end should hold the final point.")
 
 	var copy = track.copy_track()
+	_check(copy.get_script() == EchoTrackScript, "Copied tracks must use their preloaded script resource without global class-name lookup.")
 	copy.add_sample(2.0, Vector2(200, 0))
 	_check(copy.samples.size() == 4, "The copy should accept new samples.")
 	_check(track.samples.size() == 3, "Copying a track must not mutate the source track.")
