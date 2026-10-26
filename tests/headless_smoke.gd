@@ -63,6 +63,32 @@ func _test_level_catalog() -> void:
 	var isolated_copy: Dictionary = LevelCatalog.get_level(0)
 	isolated_copy["name"] = "Changed only in this test copy"
 	_check(str(LevelCatalog.LEVELS[0]["name"]) == original_name, "Level reads must not mutate canonical campaign data.")
+	_test_level_validator_rejects_bad_drafts()
+
+
+func _test_level_validator_rejects_bad_drafts() -> void:
+	var original_level := LevelCatalog.get_level(0)
+	var malformed_level := LevelCatalog.get_level(1)
+	malformed_level["name"] = original_level["name"]
+	malformed_level["spawn"] = Vector2(210, 210)
+	malformed_level["plate_a"] = Vector2(210, 210)
+	malformed_level["plate_b"] = Vector2(220, 210)
+	malformed_level["hazard_speed"] = -1.0
+	var draft_levels: Array[Dictionary] = [original_level, malformed_level]
+	var errors: PackedStringArray = LevelCatalog.validate_level_list(draft_levels)
+
+	_check(_has_error(errors, "duplicate chamber name"), "Validator should reject duplicate chamber names.")
+	_check(_has_error(errors, "too close for a meaningful"), "Validator should reject a spawn too close to Switch A.")
+	_check(_has_error(errors, "must be separated by at least 86"), "Validator should reject overlapping switch positions.")
+	_check(_has_error(errors, "sentinel speed must be greater"), "Validator should reject non-positive sentinel speed.")
+
+
+func _has_error(errors: PackedStringArray, fragment: String) -> bool:
+	for error_text in errors:
+		if error_text.contains(fragment):
+			return true
+	return false
+
 
 
 func _test_progress_store() -> void:
