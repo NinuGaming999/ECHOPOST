@@ -1,6 +1,6 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
-> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current ten-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
+> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current eleven-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
 
 **Repository:** https://github.com/NinuGaming999/ECHOPOST  
 **Working branch:** `main`  
@@ -27,6 +27,10 @@
 **Triune Relay level-data commit:** `48aa2ccd090f7cda6b74c8d8a9a0bbdd016d9e3d`  
 **Ten-room data-schema test commit:** `76cc6722aea77edc5bba938aa36318271645afc2`  
 **Three-relay gameplay test commit:** `9f08fae5aa9a7a8588a01cae3dcad86cad03ca55`  
+**Fracture Clock level-data commit:** `ad810770fb2119048497d7b147aa3732a78215c9`  
+**Fracture Clock schema-test commit:** `f5eb3f6b847ff2370f54993e77608a68185cb351`  
+**Fracture Clock gameplay-test commit:** `4413bcf1a8bdadc3ec14de6ca8fac5433500a849`  
+**Relay catalog-test correction:** `9c31dd95c97f1e01b1647fe79a0d02c61bd56066`
 **Status:** Early playable foundation / vertical slice — **not complete, not release-ready**.
 
 ---
@@ -42,7 +46,7 @@ ECHOPOST is a mobile-first 2D puzzle adventure about recording a route and letti
 5. The two switches open the gate; reaching the portal completes the chamber.
 6. Campaign progress is saved locally and the next chamber unlocks.
 
-The current source includes ten authored chamber layouts:
+The current source includes eleven authored chamber layouts:
 - **The First Echo:** basic teach-the-mechanic chamber.
 - **Long Memory:** roaming sentinel and a more distant Switch B.
 - **Split Signal:** faster/larger sentinel movement and opposite-side switches.
@@ -53,12 +57,27 @@ The current source includes ten authored chamber layouts:
 - **Pulse Lock:** a 3.5-second gate-crossing window, with retry/re-arm behavior if the player misses it.
 - **Latch Protocol:** Switch B is a toggle; after activating it, the player can leave the switch and cross the gate.
 - **Triune Relay:** three Relay Beacons must be crossed in order before Switch A.
+- **Fracture Clock:** combines three ordered relays with a 4.5-second timed gate crossing.
 
-The first five rooms teach the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces a single required gold Relay Beacon; Chorus Route requires two beacons in order; Pulse Lock adds a timed crossing and retry rule; Latch Protocol adds a toggle switch; Triune Relay extends ordered route planning to three checkpoints. Relay tests check line segments between samples, so a crossing between samples is valid. Ten rooms are still a prototype, not a finished campaign.
+The first five rooms teach the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces a single required gold Relay Beacon; Chorus Route requires two beacons in order; Pulse Lock adds a timed crossing and retry rule; Latch Protocol adds a toggle switch; Triune Relay extends ordered route planning to three checkpoints; Fracture Clock combines the three-relay sequence with a timed crossing. Relay tests check line segments between samples, so a crossing between samples is valid. Eleven rooms are still a prototype, not a finished campaign.
 
 The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon is the main external art asset. Procedural visuals keep the project importable without an asset pack but are placeholder art, not final art. Each chamber also has one optional Memory Shard that reveals a short courier-network lore fragment.
 
 ## 2. Latest work in this development pass
+
+### Fracture Clock: combine three ordered relays with a timed gate
+**Changed:** `scripts/data/level_catalog.gd`, `tests/headless_smoke.gd`, `tests/game_flow_smoke.gd`, README, design, roadmap and build-status documentation.
+
+- `scripts/data/level_catalog.gd:L170–L187`: adds the eleventh room, **Fracture Clock**. Its route requires Relay 1 → Relay 2 → Relay 3 → Switch A, and holding both switches then opens a 4.5-second gate.
+- `scripts/data/level_catalog.gd:L203–L324`: the same shared validator checks the room's three ordered relay points, objective/shard spacing, room bounds, and timed-gate range. The authored 4.5-second duration is inside the accepted 1–15 second range.
+- `scripts/game.gd:L711–L725`: existing ordered-waypoint validation handles all three checkpoints; `L832–L872` handles the timed-gate countdown, crossing and retry behavior. No new special-case runtime branch was required.
+- `tests/headless_smoke.gd:L50–L107`: campaign data tests require at least eleven rooms, verify the named Triune Relay has three waypoints, and assert that a three-relay room combines those waypoints with a timed gate. The generic assertion allows multiple three-relay rooms.
+- `tests/game_flow_smoke.gd:L30`: registers the combined-puzzle test. `L542–L589`: verifies the Fracture Clock route is accepted, both switches open the gate for exactly 4.5 seconds, and crossing the barrier before timeout keeps the portal powered.
+- Level-data commit: `ad810770fb2119048497d7b147aa3732a78215c9`; schema test: `f5eb3f6b847ff2370f54993e77608a68185cb351`; gameplay test: `4413bcf1a8bdadc3ec14de6ca8fac5433500a849`.
+- A first schema assertion incorrectly assumed Triune Relay would remain the only three-relay room. The test was generalized in `9c31dd95c97f1e01b1647fe79a0d02c61bd56066`, keeping a separate assertion for the named Triune Relay and allowing Fracture Clock as another valid three-relay room.
+- [Godot CI run 157](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40400606810) passed on both Godot 4.4.0 and 4.7.2, including the full combined-route/timed-gate test.
+
+This is a combination challenge, not a new primitive mechanic. Its 4.5-second crossing window still needs human playtesting at slow, normal and fast movement speeds, especially with touch controls.
 
 ### Triune Relay: tenth chamber and three-checkpoint ordered route
 **Changed:** `scripts/data/level_catalog.gd`, `tests/headless_smoke.gd`, `tests/game_flow_smoke.gd`, README, design, roadmap and build-status documentation.
@@ -71,7 +90,7 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 - Level-data commit: `48aa2ccd090f7cda6b74c8d8a9a0bbdd016d9e3d`; data-test commit: `76cc6722aea77edc5bba938aa36318271645afc2`; gameplay-test commit: `9f08fae5aa9a7a8588a01cae3dcad86cad03ca55`.
 - [Godot CI run 147](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40400099108) passed on both Godot 4.4.0 and 4.7.2, including project import/parse, all data tests, existing gameplay tests, and the new three-relay acceptance/rejection test.
 
-The campaign now has ten rooms, but it is still an early prototype. The new room is logic-tested; its visual readability and actual touch-control difficulty still need manual playtesting.
+The campaign now has eleven rooms, but it is still an early prototype. Triune Relay is logic-tested; its visual readability and actual touch-control difficulty still need manual playtesting.
 
 ### All-memory restored-signal reward and dynamic Archive count
 **Changed:** `scripts/game.gd`, `tests/game_flow_smoke.gd`, README and design/build/roadmap documentation.
@@ -84,12 +103,12 @@ The campaign now has ten rooms, but it is still an early prototype. The new room
 - The reward source commit is `dd11471aea0f87399f7a816304daaba3ac68df4b`; the dynamic archive placeholder is `f900f967fa83f618e3615f423a9ef613f85bd71a`; the regression coverage is in `04be8ef22ca631b000d14b541bbce2ca0426b5b8` and `7531407e22c8a8068b4d62df90c190272713668d`.
 - [Godot CI run 140](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40398632047) passed on both Godot 4.4.0 and 4.7.2, including the full final-shard pickup path and Archive status checks.
 
-This is an optional exploration reward, not a paid gate. All ten rooms remain completable without collecting any Memory Shard.
+This is an optional exploration reward, not a paid gate. All eleven rooms remain completable without collecting any Memory Shard.
 
 ### Ordered Relay feedback and Pulse Lock timed gate
 **Changed:** `scripts/data/level_catalog.gd`, `scripts/game.gd`, `tests/headless_smoke.gd`, and `tests/game_flow_smoke.gd`, plus README/design/roadmap/build-status documentation.
 
-- `scripts/data/level_catalog.gd:L4–L166`: ten authored room definitions; Chorus Route contains two ordered `echo_waypoints`, Triune Relay contains three ordered `echo_waypoints`, Latch Protocol sets `plate_b_mode: "toggle"`, and Pulse Lock defines `gate_open_seconds: 3.5`.
+- `scripts/data/level_catalog.gd:L4–L188`: eleven authored room definitions; Chorus Route has two ordered `echo_waypoints`, Triune Relay has three, Fracture Clock combines three with `gate_open_seconds: 4.5`, Latch Protocol sets `plate_b_mode: "toggle"`, and Pulse Lock defines `gate_open_seconds: 3.5`.
 - `scripts/data/level_catalog.gd:L151–L265`: reusable validator checks waypoint-array/type/bounds/separation and requires numeric `gate_open_seconds` within 1–15 seconds.
 - `scripts/game.gd:L669–L705`: `_is_relay_waypoint_linked()` computes the first crossing for every beacon and refuses to mark a checkpoint linked if the route encountered a later beacon first.
 - `scripts/game.gd:L708–L757`: path validators enforce Relay 1 → Relay 2 order and count crossings along sample-to-sample segments.
@@ -100,9 +119,9 @@ This is an optional exploration reward, not a paid gate. All ten rooms remain co
 - `scripts/game.gd:L842–L874`: both switches arm the timed crossing; failed attempts stay latched until one switch is left.
 - `scripts/game.gd:L963–L986`: HUD reports the active timed-gate countdown.
 - `scripts/game.gd:L1035–L1103` and `L1157–L1168`: linked relay visuals and amber timed-gate rendering; the playfield displays pulse seconds.
-- `tests/headless_smoke.gd:L50–L96` and `L99–L120`: verify ten rooms, single/two-/three-relay data, toggle/timed-gate schema, malformed waypoint lists and timer bounds.
+- `tests/headless_smoke.gd:L50–L107` and `L110–L134`: verify eleven rooms, single/two-/three-relay data, Fracture Clock's relay/timed-gate combination, toggle/timed-gate schema, malformed waypoint lists and timer bounds.
 - `tests/game_flow_smoke.gd:L387–L438`: test wrong/valid ordered-relay routes and linked-state visual logic.
-- `tests/game_flow_smoke.gd:L427–L478`: Chorus Route rejects reversed order and accepts the correct two-relay route. `L483–L539` tests Triune Relay's three-checkpoint route rejection/acceptance and linked state. `L543–L595` exercises Pulse Lock timer start, real-frame countdown, timeout, retry latch, rearm and persistent power after crossing.
+- `tests/game_flow_smoke.gd:L427–L478`: Chorus Route rejects reversed order and accepts the correct two-relay route. `L483–L539` tests Triune Relay's three-checkpoint route rejection/acceptance and linked state. `L542–L589` tests Fracture Clock's three-relay route, 4.5-second gate activation, and crossing. `L592–L644` exercises Pulse Lock timer start, real-frame countdown, timeout, retry latch, rearm and persistent power after crossing.
 - `tests/game_flow_smoke.gd:L85–L103`: verify the gate countdown does not advance while paused.
 - A failed visual-state expectation on a reversed route was corrected: Relay 1 must not be marked linked if Relay 2 was encountered first. [CI run 119](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40396769674) passed both Godot 4.4.0 and 4.7.2.
 - The complete Pulse Lock code and timer-test path passed [CI run 122](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40397091984) on both supported Godot versions.
@@ -258,11 +277,11 @@ This change is covered by an automated headless integration test. It is **not ye
 | `scenes/main.tscn` | Very small main scene: full-rect `Control` attached to `scripts/game.gd`. |
 | `scripts/game.gd` | Main controller, menu/HUD construction, movement, echo recording/playback, route checkpoint validation, Pulse Lock timer/retry, toggle-switch puzzle loop, sentinel, Memory Shard collection/archive, control preferences, save flow and procedural rendering. **1217 lines in the current source snapshot; refactor incrementally after tests protect behavior.** |
 | `scripts/core/echo_track.gd` | Data-only `RefCounted` script loaded through preloaded script resources; avoids global `class_name` lookup; stores points, clamps timestamps to nondecreasing order, copies tracks, returns duration, interpolates route positions, and holds endpoint outside the timestamp range. |
-| `scripts/data/level_catalog.gd` | Ten room dictionaries, optional shard positions/lore, single/two-/three-relay requirements, toggle-switch and Pulse Lock settings, defensive-copy accessor and canonical/draft validator for schema, names, spacing, bounds and hazard/timer tuning. |
+| `scripts/data/level_catalog.gd` | Eleven room dictionaries, optional shard positions/lore, single/two-/three-relay requirements, toggle-switch and combined relay/timed-gate settings, defensive-copy accessor and canonical/draft validator for schema, names, spacing, bounds and hazard/timer tuning. |
 | `scripts/data/progress_store.gd` | Version-2 local save boundary (`user://echopost_save.cfg`) using `ConfigFile`; preserves v1 campaign progress and stores normalized Memory Shard room indices. |
 | `scripts/data/settings_store.gd` | Separate preference store (`user://echopost_settings.cfg`) for speed and joystick handedness, defaulting safely and normalizing unsupported movement values. |
-| `tests/headless_smoke.gd` | Data tests for echo interpolation/copying, ten-room/shard/waypoint/toggle schema, three-relay room presence, malformed-draft validation, v2 shard persistence/sanitization, v1-save compatibility, campaign clamping and isolated control-preference persistence/normalization. |
-| `tests/game_flow_smoke.gd` | Main-scene integration tests for chapter/archive/options UI, Memory Shards, speed presets/handedness, lifecycle pause, record cap/feedback, sentinel cancellation, reset, portal idempotency, single/two-/three-relay pass/miss/order/linked state, and timed-gate behavior. |
+| `tests/headless_smoke.gd` | Data tests for echo interpolation/copying, eleven-room/shard/waypoint/toggle schema, named Triune Relay, Fracture Clock's three-relay/timed-gate combination, malformed-draft validation, v2 shard persistence/sanitization, v1-save compatibility, campaign clamping and isolated control-preference persistence/normalization. |
+| `tests/game_flow_smoke.gd` | Main-scene integration tests for chapter/archive/options UI, Memory Shards, speed presets/handedness, lifecycle pause, record cap/feedback, sentinel cancellation, reset, portal idempotency, single/two-/three-relay pass/miss/order/linked state, Fracture Clock's combined relay/timed gate, and timed-gate behavior. |
 | `RUN_TESTS.bat` | Windows shortcut to run both headless smoke tests if Godot is on PATH. |
 | `.github/workflows/godot-checks.yml` | Imports/parses project then runs both tests on a Godot 4.4.0 / 4.7.2 matrix. |
 | `assets/echopost_icon.svg` | Original editable SVG project icon. |
@@ -370,16 +389,17 @@ This function index matches source blob SHA `81b5c3c8703fdad0d92cf7c66d91ff96b3c
 - **L28–L31:** Return route duration.
 - **L34–L59:** Resolve position before/after route, interpolate between ordered points, and tolerate near-duplicate timestamps.
 
-### `scripts/data/level_catalog.gd` (306 lines, blob SHA `2cdbd4de93b00be9da42385207756b51ddc70cc6`)
+### `scripts/data/level_catalog.gd` (324 lines, blob SHA `f19c6cbce0cbeb70e20615b759bdc54b4549ed2c`)
 - **L1–L3:** RefCounted catalog and purpose.
 - **L4–L152:** First nine room definitions, ending with Latch Protocol's toggle-style Switch B.
 - **L153–L169:** Triune Relay's tenth-room definition, including three ordered relay coordinates and optional Memory Shard lore.
-- **L171–L179:** Defensive-copy level getter, count helper and validation entry points.
-- **L180–L196:** Validate nonempty campaigns, unique/nonblank names, required schema keys, core Vector2 positions, lore text and positive echo linger.
-- **L197–L214:** Validate single relay type, toggle-mode values, timed-gate duration type/range, and ordered-waypoint container type.
-- **L215–L247:** Validate room bounds, spawn-to-A and A-to-B separation, and Memory Shard/single-relay spacing from objectives.
-- **L248–L274:** Validate ordered relay arrays, each waypoint's type/bounds/objective separation, and separation between relay markers.
-- **L275–L305:** Validate sentinel patrol keys, height, sweep amplitude and speed.
+- **L170–L187:** Fracture Clock's eleventh-room definition, combining three ordered relays and a 4.5-second timed gate.
+- **L190–L199:** Defensive-copy level getter, room-count helper, and canonical validation entry point.
+- **L203–L218:** Validate nonempty campaigns, unique/nonblank names, required schema keys, core Vector2 positions, lore text and positive echo linger.
+- **L219–L236:** Validate single relay type, toggle-mode values, timed-gate duration type/range, and ordered-waypoint container type.
+- **L237–L269:** Validate room bounds, spawn-to-A and A-to-B separation, and Memory Shard/single-relay spacing from objectives.
+- **L270–L296:** Validate ordered relay arrays, each waypoint's type/bounds/objective separation, and separation between relay markers.
+- **L297–L323:** Validate sentinel patrol keys, height, sweep amplitude and speed.
 
 ### `scripts/data/progress_store.gd` (58 lines, blob SHA `c74c684bab3ca4e40b8ea49b995633b795c4974a`)
 - **L1–L5:** Local campaign save boundary and schema version 2.
@@ -394,21 +414,21 @@ This function index matches source blob SHA `81b5c3c8703fdad0d92cf7c66d91ff96b3c
 - **L23–L28:** Persist control settings independently from campaign progress.
 - **L31–L39:** Normalize the requested speed to a supported preset.
 
-### `tests/headless_smoke.gd` (194 lines, blob SHA `4b929b787d5e50d511e8b9c00daaaeca1f11acf1`)
+### `tests/headless_smoke.gd` (203 lines, blob SHA `22ff362e952961c674b0fa40302236f184b13e24`)
 - **L1–L12:** Test runner/preloads and isolated temporary save/settings paths.
 - **L15–L25:** Run grouped tests and exit nonzero on assertion failure.
 - **L28–L47:** Timestamp order, interpolation, endpoint hold, preloaded-script identity and copy independence.
-- **L50–L96:** Check ten unique rooms, shard/lore fields, single/two-/three-relay rooms, and timed-gate configuration.
-- **L99–L120:** Submit intentionally invalid room drafts and assert validation errors for duplicate names, route geometry, sentinel parameters, out-of-bounds/mistyped relays and invalid timed-gate durations.
-- **L123–L127:** Search error strings by fragment.
-- **L131–L161:** Save/load campaign progress, sanitize shard indices and verify v1 save compatibility.
-- **L165–L185:** Verify settings defaults, preference persistence, handedness and speed normalization.
-- **L188–L191:** Assertion helper.
+- **L50–L107:** Check eleven unique rooms, shard/lore fields, single/two-/three-relay rooms, named Triune Relay, and the Fracture Clock three-relay/timed-gate combination.
+- **L110–L134:** Submit intentionally invalid room drafts and assert validation errors for duplicate names, route geometry, sentinel parameters, out-of-bounds/mistyped relays and invalid timed-gate durations.
+- **L137–L141:** Search error strings by fragment.
+- **L145–L175:** Save/load campaign progress, sanitize shard indices and verify v1 save compatibility.
+- **L179–L199:** Verify settings defaults, preference persistence, handedness and speed normalization.
+- **L200–L203:** Assertion helper.
 
-### `tests/game_flow_smoke.gd` (600 lines, blob SHA `c1143cab363248fd37762563af2f70cc8282a89c`)
+### `tests/game_flow_smoke.gd` (651 lines, blob SHA `6d0e109efffbf18ddbda91fa6caf582305c5c9a9`)
 - **L1–L10:** Integration harness, main scene, relay/level/progress preloads.
 - **L13–L14:** Defer integration test entry point.
-- **L17–L82:** Run UI/shards/options, single/two-/three-relay, lifecycle pause, recording limit/feedback, sentinel/reset/portal, and timed gate suite.
+- **L17–L83:** Run UI/shards/options, single/two-/three-relay, Fracture Clock, lifecycle pause, recording limit/feedback, sentinel/reset/portal, and timed gate suite.
 - **L86–L104:** Verify pause preserves recording and freezes recording/timed-gate timer.
 - **L107–L122:** Exercise real frame loop at the exact eight-second recording boundary.
 - **L125–L136:** Too-short stop keeps recording active, creates no echo and explains the remedy.
@@ -423,8 +443,9 @@ This function index matches source blob SHA `81b5c3c8703fdad0d92cf7c66d91ff96b3c
 - **L384–L423:** Static Bloom single Relay Beacon requirement and segment-crossing acceptance.
 - **L427–L478:** Chorus Route rejects reverse order, accepts correct order, and verifies linked visual state.
 - **L483–L539:** Triune Relay rejects an out-of-order three-relay route, accepts Relay 1 → Relay 2 → Relay 3 → Switch A, and verifies all three linked states.
-- **L543–L595:** Pulse Lock timer start, real-frame countdown, pause freeze, timeout, retry re-arm and powered exit after crossing.
-- **L598–L601:** Shared assertion helper.
+- **L542–L589:** Fracture Clock accepts the ordered route, opens its 4.5-second gate, and preserves portal power after crossing.
+- **L592–L644:** Pulse Lock timer start, real-frame countdown, pause freeze, timeout, retry re-arm and powered exit after crossing.
+- **L647–L651:** Shared assertion helper.
 
 ### `scenes/main.tscn` (13 lines)
 - **L1–L3:** Scene resource/script declaration.
@@ -448,10 +469,11 @@ This function index matches source blob SHA `81b5c3c8703fdad0d92cf7c66d91ff96b3c
 
 ## 6. Current verification status — be precise
 
-- **Latest passing code/test run:** [Godot CI run 147](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40400099108) passed on both Godot 4.4.0 and 4.7.2. It includes the tenth room, three-relay catalog assertion, and gameplay acceptance/rejection test for Triune Relay, along with all previous data/game-flow tests.
-- **Triune Relay:** the wrong order Relay 1 → Relay 3 → Relay 2 → Switch A is rejected; the correct Relay 1 → Relay 2 → Relay 3 → Switch A route is accepted and each marker becomes linked. CI run 147 passed these assertions.
+- **Latest passing code/test run:** [Godot CI run 157](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40400606810) passed on both Godot 4.4.0 and 4.7.2. It includes the eleventh room, Fracture Clock's three-relay/timed-gate schema, and gameplay coverage for the valid route, gate opening, 4.5-second timer and successful crossing.
+- **Triune Relay:** wrong order Relay 1 → Relay 3 → Relay 2 → Switch A is rejected; the correct route is accepted and all three markers become linked. Run 157 passed these assertions.
+- **Fracture Clock:** combines the same ordered route mechanic with the timed-gate rule; run 157 passed the integration test and catalog validation. The initial over-specific schema assertion was corrected so a campaign can contain more than one three-relay room.
 - **Previous verification:** run 140 passed the all-memory restored-signal reward; run 122 passed Pulse Lock countdown, pause freeze, timeout closure, retry latch/re-arm, and portal power after crossing.
-- **Source hashes:** current `scripts/game.gd` blob SHA is `81b5c3c8703fdad0d92cf7c66d91ff96b3c94053` (1217 lines); current `scripts/data/level_catalog.gd` blob SHA is `2cdbd4de93b00be9da42385207756b51ddc70cc6` (306 lines); current `tests/headless_smoke.gd` blob SHA is `4b929b787d5e50d511e8b9c00daaaeca1f11acf1` (194 lines); current gameplay-test blob SHA is `c1143cab363248fd37762563af2f70cc8282a89c` (600 lines). Sections 4 and 5 are keyed to these current files.
+- **Source hashes:** current `scripts/game.gd` blob SHA is `81b5c3c8703fdad0d92cf7c66d91ff96b3c94053` (1217 lines); current `scripts/data/level_catalog.gd` blob SHA is `f19c6cbce0cbeb70e20615b759bdc54b4549ed2c` (324 lines); current `tests/headless_smoke.gd` blob SHA is `22ff362e952961c674b0fa40302236f184b13e24` (203 lines); current gameplay-test blob SHA is `6d0e109efffbf18ddbda91fa6caf582305c5c9a9` (651 lines). Sections 4 and 5 are keyed to these current files.
 - **Device QA:** not performed by this assistant. The game has not been manually run in the user's Godot editor or on a physical Android device during this pass.
 - **Android export:** no APK built or attached. Android export preset, package identity, export templates, SDK/JDK, signing and real-device testing remain.
 - **Quality caveat:** automated tests verify logic, not visual clarity or whether the 3.5-second timed crossing feels fair on touch controls. Playtesting Pulse Lock at slow/normal/fast speeds remains next.
@@ -473,11 +495,11 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 1. **Mobile sizing / safe areas:** most layout coordinates and drawing coordinates are hard-coded around 1280×720. Safe areas, short/tall screens, scaling and button reach are not validated.
 2. **Controller size:** `scripts/game.gd` owns UI construction, gameplay state, input, persistence coordination and drawing. Refactor only incrementally; add tests first so game behavior does not regress.
-3. **Small content set:** ten room dictionaries and ten optional Memory Shards now exist, but the core two-switch pattern is still the foundation and there is no full campaign or final narrative ending.
+3. **Small content set:** eleven room dictionaries and eleven optional Memory Shards now exist, but the core two-switch pattern is still the foundation and there is no full campaign or final narrative ending.
 4. **Procedural placeholder visuals:** no authored robot animations, environmental tilesets, VFX or transition animations.
 5. **No sound:** recording, rejected route, sentinel hits, gate opening and portal have text/visual feedback only. No SFX, music, mixer, or audio options exist.
 6. **Pause behavior needs real device QA:** lifecycle logic and timer freeze are headlessly tested, but actual Android app-switch lifecycle/focus behavior are unverified. The player must tap RESUME after returning.
-7. **Mechanic coverage:** one recording slot and the two-switch gate remain core; Static Bloom requires one relay, Chorus Route two ordered relays, Triune Relay three ordered relays, Pulse Lock a timed gate, and Latch Protocol a toggle Switch B. Moving platforms, checkpoints and multi-echo puzzles remain future work.
+7. **Mechanic coverage:** one recording slot and the two-switch gate remain core; Static Bloom requires one relay, Chorus Route two ordered relays, Triune Relay three ordered relays, Pulse Lock a timed gate, Latch Protocol a toggle Switch B, and Fracture Clock combines three relays with a timed gate. Moving platforms, checkpoints and multi-echo puzzles remain future work.
 8. **Recording edge cases:** the minimum is now `MIN_RECORD_SECONDS = 0.7` at `scripts/game.gd:L16`; a too-short stop deliberately keeps recording active and tells the player to continue. Verify that this interaction is understandable on touch.
 9. **Hazard edge cases:** collision now cancels an unfinished recording so it cannot include a fake teleport to spawn. Already-released echoes are separate; their behavior on sentinel contact still needs deliberate playtesting.
 10. **Save migration/preferences:** schema version 2 persists Memory Shard indices and version-1 campaign progress remains loadable; speed/handedness use a separate v1 settings file. Future-version behavior and cloud saves are not designed.
@@ -496,9 +518,10 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Verify Pulse Lock countdown visuals/frame ticking, timer freeze during pause, timeout, retry latch and successful crossing in [run 122](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40397091984) on both Godot versions.
 - [x] Verify the all-shards restored-signal reward and dynamic Memory Archive count in [run 140](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40398632047) on both Godot versions.
 - [x] Add the tenth chamber Triune Relay and verify a three-relay route is rejected out of order and accepted in order in [run 147](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40400099108) on both Godot versions.
+- [x] Add the eleventh chamber Fracture Clock, combining three ordered relays with a 4.5-second timed gate; [run 157](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40400606810) passed on both Godot versions.
 - [ ] Ask for / perform a local pull and open the project in the user's Godot 4.4 editor to inspect the live route preview and confirm visuals on the actual machine.
 - [x] Verify Memory Archive and Options UI, speed presets, and left-handed joystick region on both Godot versions in run 82.
-- [x] Update this progress file, current source/test blob hashes, and exact line maps for Triune Relay.
+- [x] Update this progress file, current source/test blob hashes, and exact line maps for Triune Relay and Fracture Clock.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
 
 ### P1 — Core mechanic test coverage
