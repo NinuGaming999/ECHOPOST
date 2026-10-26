@@ -23,6 +23,12 @@ func _run_tests() -> void:
 	_test_lifecycle_pause(game)
 	game.call("_start_level", 0)
 
+	_test_recording_duration_limit(game)
+	game.call("_start_level", 0)
+	_test_too_short_recording(game)
+	_test_sentinel_reset(game)
+	game.call("_start_level", 0)
+
 	var invalid_track = EchoTrackScript.new()
 	invalid_track.add_sample(0.0, Vector2(160, 365))
 	invalid_track.add_sample(1.0, Vector2(845, 365))
@@ -81,6 +87,49 @@ func _test_lifecycle_pause(game: Control) -> void:
 	game.call("_on_pause_pressed")
 	_check(int(game.get("screen_state")) == 1, "The player should be able to resume gameplay explicitly.")
 	_check(not bool(game.get("joystick_mouse_active")), "Resume must not reactivate a stale joystick press.")
+
+
+func _test_recording_duration_limit(game: Control) -> void:
+	var track = EchoTrackScript.new()
+	track.add_sample(0.0, Vector2(160, 365))
+	game.set("recording_track", track)
+	game.set("recording_elapsed", 7.99)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", Vector2(430, 365))
+
+	# _process clamps delta to 0.05 seconds; deliberately start close to the cap
+	# to catch any frame-step overshoot beyond the configured maximum.
+	game.call("_process", 1.0)
+	_check(not bool(game.get("is_recording")), "Recording should auto-stop at the maximum duration.")
+	_check(bool(game.get("echo_visible")), "A max-duration route ending on Switch A should still create an echo.")
+	var finished_track = game.get("echo_track")
+	_check(is_equal_approx(float(finished_track.duration()), 8.0), "The saved echo route must never exceed eight seconds.")
+
+
+func _test_too_short_recording(game: Control) -> void:
+	var track = EchoTrackScript.new()
+	track.add_sample(0.0, Vector2(160, 365))
+	game.set("recording_track", track)
+	game.set("recording_elapsed", 0.2)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", Vector2(430, 365))
+	game.call("_finish_recording")
+	_check(bool(game.get("is_recording")), "A too-short stop should let the player continue recording rather than silently discard the route.")
+	_check(not bool(game.get("echo_visible")), "A too-short recording must not create an echo.")
+	_check(str(game.get("status_message")).begins_with("TOO SHORT"), "A too-short recording should clearly explain how to continue.")
+
+
+func _test_sentinel_reset(game: Control) -> void:
+	game.call("_start_level", 1)
+	game.set("hazard_time", 0.0)
+	game.set("player_position", Vector2(640, 380))
+	var level: Dictionary = game.get("level_data")
+	var expected_spawn: Vector2 = level["spawn"]
+	game.call("_check_sentinel_collision")
+	_check(game.get("player_position") == expected_spawn, "Sentinel contact should return the player to the room spawn.")
+	_check(str(game.get("status_message")).begins_with("SENTINEL CONTACT"), "Sentinel contact should explain why the player was reset.")
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:
