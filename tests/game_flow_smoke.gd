@@ -452,6 +452,7 @@ func _test_timed_gate_requires_crossing(game: Control) -> void:
 	var plate_b: Vector2 = room["plate_b"]
 	game.set("echo_visible", true)
 	game.set("echo_playing", false)
+	game.set("echo_linger_left", 8.0)
 	game.set("echo_position", plate_a)
 	game.set("player_position", plate_b)
 	game.call("_check_puzzle_state")
