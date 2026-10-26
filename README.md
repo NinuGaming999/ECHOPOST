@@ -32,7 +32,7 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 3. Move the real robot onto **Switch B**.
 4. When both switches are active, cross the gate and reach the exit.
 
-Later rooms introduce roaming sentinels and longer diagonal routes. While recording, an amber trace shows the route being captured and the starting point; after sending, the echo trail appears in cyan. The six rooms still use the same two-switch core mechanic, so new switch mechanics and a longer authored campaign remain future work.
+Later rooms introduce roaming sentinels and longer diagonal routes. If a sentinel catches the player during recording, the unfinished take is discarded so it cannot record a fake teleport back to spawn. While recording, an amber trace shows the route being captured and the starting point; after sending, the echo trail appears in cyan. The six rooms still use the same two-switch core mechanic, so new switch mechanics and a longer authored campaign remain future work.
 
 ## Project layout
 
