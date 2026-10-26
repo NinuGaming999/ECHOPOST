@@ -34,7 +34,7 @@ The current six chambers deliberately vary route length, switch placement, and s
 - **Crosscurrent:** places switches in opposite corners and tests route planning before moving toward B.
 - **Static Bloom:** uses a long route and wide sentinel sweep to create a busier timing puzzle.
 
-The chapter selector scrolls so future rooms do not collide with the navigation controls. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; version-1 saves migrate without losing unlocked rooms or completion count. New switch types, checkpoints, moving platforms, and truly different puzzle rules remain future work; do not describe the six current rooms as six distinct mechanics.
+The chapter selector scrolls so future rooms do not collide with the navigation controls. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. New switch types, checkpoints, moving platforms, and truly different puzzle rules remain future work; do not describe the six current rooms as six distinct mechanics.
 
 ## Echo rules
 
@@ -44,7 +44,7 @@ The chapter selector scrolls so future rooms do not collide with the navigation 
 - When playback ends, the echo holds its final recorded position temporarily.
 - Echoes press switches by occupying their active area; they do not push the real player or change the recording.
 - Sentinel contact returns the player to the chamber entrance. If the player is still recording, that unfinished take is cancelled and discarded rather than saving a fake teleport back to spawn. Already-released echo behavior is separate from the unfinished take.
-- Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
+- Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. The Memory Archive can revisit a recovered fragment later. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
 - Save schema version 2 stores the collected room indices. Version 1 saves remain loadable and begin with no Memory Shards collected; duplicate, negative, and out-of-campaign indices are filtered during loading.
 - A future online version must validate uploaded recordings and isolate them from executable code. A recording should be data only, never a script.
 
