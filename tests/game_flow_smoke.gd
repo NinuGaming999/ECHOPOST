@@ -356,6 +356,7 @@ func _test_echo_waypoint_requirement(game: Control) -> void:
 	game.set("player_position", plate_a)
 	game.call("_finish_recording")
 	_check(not bool(game.get("echo_visible")), "A route that misses the required relay beacon must not create an echo.")
+	_check(not bool(game.call("_is_relay_waypoint_linked", 0)), "A route that misses the beacon must leave its marker unlinked.")
 	_check(str(game.get("status_message")).contains("RELAY BEACON"), "A rejected relay route should explain the missing beacon.")
 
 	# The beacon should count even when the player only passes near it between sampled points.
@@ -370,9 +371,11 @@ func _test_echo_waypoint_requirement(game: Control) -> void:
 	game.set("record_sample_accumulator", 0.0)
 	game.set("is_recording", true)
 	game.set("player_position", plate_a)
+	_check(bool(game.call("_is_relay_waypoint_linked", 0)), "Crossing the relay during recording should show its linked state immediately.")
 	game.call("_finish_recording")
 	_check(bool(game.get("echo_visible")), "A route passing through the relay and ending on A should create an echo.")
 	_check(bool(game.get("echo_playing")), "An accepted relay route should begin echo playback.")
+	_check(bool(game.call("_is_relay_waypoint_linked", 0)), "The accepted echo should retain the linked marker state.")
 	game.call("_start_level", 0)
 
 
@@ -408,6 +411,8 @@ func _test_ordered_echo_waypoints(game: Control) -> void:
 	game.set("player_position", plate_a)
 	game.call("_finish_recording")
 	_check(not bool(game.get("echo_visible")), "A route that visits the relay checkpoints in reverse order must be rejected.")
+	_check(bool(game.call("_is_relay_waypoint_linked", 0)), "Relay 1 should show linked once the route reaches it.")
+	_check(not bool(game.call("_is_relay_waypoint_linked", 1)), "Relay 2 must not show linked when it was visited before Relay 1.")
 	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2 in order"), "An out-of-order route should explain the required relay sequence.")
 
 	# Visiting Relay 1 then Relay 2 before ending on A creates a valid echo.
@@ -424,6 +429,8 @@ func _test_ordered_echo_waypoints(game: Control) -> void:
 	game.call("_finish_recording")
 	_check(bool(game.get("echo_visible")), "A route passing Relay 1, then Relay 2, and ending on A should create an echo.")
 	_check(bool(game.get("echo_playing")), "An accepted ordered-relay route should start echo playback.")
+	_check(bool(game.call("_is_relay_waypoint_linked", 0)), "Relay 1 should remain marked linked after a valid route is sent.")
+	_check(bool(game.call("_is_relay_waypoint_linked", 1)), "Relay 2 should be marked linked only after Relay 1 in a valid route.")
 	game.call("_start_level", 0)
 
 
