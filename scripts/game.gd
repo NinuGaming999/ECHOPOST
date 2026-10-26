@@ -479,7 +479,18 @@ func _check_sentinel_collision() -> void:
 	var sentinel := Vector2(hazard_x, float(level_data["hazard_y"]))
 	if player_position.distance_to(sentinel) < 27.0:
 		player_position = level_data["spawn"]
-		status_message = "SENTINEL CONTACT — returned to the chamber entrance."
+		if is_recording:
+			# A collision interrupts the current take. Keeping it would create a
+			# misleading recorded "teleport" from the contact point back to spawn.
+			is_recording = false
+			recording_elapsed = 0.0
+			record_sample_accumulator = 0.0
+			recording_track.clear()
+			status_message = "SENTINEL CONTACT — recording lost; returned to the chamber entrance."
+		else:
+			status_message = "SENTINEL CONTACT — returned to the chamber entrance."
+		_update_hud()
+		queue_redraw()
 
 
 func _check_puzzle_state() -> void:
