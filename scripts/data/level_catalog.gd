@@ -184,6 +184,24 @@ const LEVELS: Array[Dictionary] = [
 		"hazard_amplitude": 0.0,
 		"hazard_speed": 0.0,
 		"accent": Color(1.0, 0.55, 0.35)
+	},
+	{
+		"name": "Dead Air Protocol",
+		"subtitle": "FOUR RELAYS. ONE HUNT. NO TIME TO WASTE.",
+		"hint": "Record RELAY 1 → RELAY 2 → RELAY 3 → RELAY 4 → SWITCH A in order. The sentinel patrols while you record and contact erases your take. Once the echo settles on A and you reach B, cross the gate within 2.2 seconds.",
+		"spawn": Vector2(150, 525),
+		"plate_a": Vector2(820, 205),
+		"plate_b": Vector2(930, 500),
+		"echo_waypoints": [Vector2(270, 290), Vector2(430, 500), Vector2(580, 250), Vector2(690, 470)],
+		"memory_shard": Vector2(750, 560),
+		"shard_lore": "The final courier sent four relays while a sentinel hunted the signal. The station kept the route, but lost the name of the one who ran it.",
+		"linger": 6.5,
+		"gate_open_seconds": 2.2,
+		"hazard": true,
+		"hazard_y": 365.0,
+		"hazard_amplitude": 350.0,
+		"hazard_speed": 2.05,
+		"accent": Color(1.0, 0.32, 0.42)
 	}
 ]
 
