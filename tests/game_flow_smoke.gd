@@ -24,6 +24,7 @@ func _run_tests() -> void:
 	_test_memory_archive_ui(game)
 	_test_options_panel(game)
 	_test_echo_waypoint_requirement(game)
+	_test_ordered_echo_waypoints(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
@@ -372,6 +373,57 @@ func _test_echo_waypoint_requirement(game: Control) -> void:
 	game.call("_finish_recording")
 	_check(bool(game.get("echo_visible")), "A route passing through the relay and ending on A should create an echo.")
 	_check(bool(game.get("echo_playing")), "An accepted relay route should begin echo playback.")
+	game.call("_start_level", 0)
+
+
+
+func _test_ordered_echo_waypoints(game: Control) -> void:
+	game.call("_start_level", 6)
+	var room: Dictionary = game.get("level_data")
+	_check(room.has("echo_waypoints"), "Chorus Route should define an ordered list of required relay checkpoints.")
+	if not room.has("echo_waypoints"):
+		game.call("_start_level", 0)
+		return
+
+	var spawn: Vector2 = room["spawn"]
+	var plate_a: Vector2 = room["plate_a"]
+	var waypoints: Array = room["echo_waypoints"]
+	_check(waypoints.size() == 2, "Chorus Route should require exactly two relay checkpoints.")
+	if waypoints.size() != 2:
+		game.call("_start_level", 0)
+		return
+	var first_relay: Vector2 = waypoints[0]
+	var second_relay: Vector2 = waypoints[1]
+
+	# Crossing both relays is not enough when the route reaches Relay 2 first.
+	var out_of_order_track = EchoTrackScript.new()
+	out_of_order_track.add_sample(0.0, spawn)
+	out_of_order_track.add_sample(1.0, second_relay)
+	out_of_order_track.add_sample(2.0, first_relay)
+	out_of_order_track.add_sample(3.0, plate_a)
+	game.set("recording_track", out_of_order_track)
+	game.set("recording_elapsed", 3.0)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(not bool(game.get("echo_visible")), "A route that visits the relay checkpoints in reverse order must be rejected.")
+	_check(str(game.get("status_message")).contains("RELAY 1, then RELAY 2 in order"), "An out-of-order route should explain the required relay sequence.")
+
+	# Visiting Relay 1 then Relay 2 before ending on A creates a valid echo.
+	var ordered_track = EchoTrackScript.new()
+	ordered_track.add_sample(0.0, spawn)
+	ordered_track.add_sample(1.0, first_relay)
+	ordered_track.add_sample(2.0, second_relay)
+	ordered_track.add_sample(3.0, plate_a)
+	game.set("recording_track", ordered_track)
+	game.set("recording_elapsed", 3.0)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(bool(game.get("echo_visible")), "A route passing Relay 1, then Relay 2, and ending on A should create an echo.")
+	_check(bool(game.get("echo_playing")), "An accepted ordered-relay route should start echo playback.")
 	game.call("_start_level", 0)
 
 
