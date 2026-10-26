@@ -25,7 +25,7 @@
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
 **Main controller source blob for the exact line map below:** `252037cc9c13f240eab4a24187d8c1ee7896b29f` (1229 lines)  
 **Triune Relay level-data commit:** `48aa2ccd090f7cda6b74c8d8a9a0bbdd016d9e3d`  
-**Ten-room data-schema test commit:** `76cc6722aea77edc5bba938aa36318271645afc2`  
+**Initial ten-room schema-test commit (before Fracture Clock):** `76cc6722aea77edc5bba938aa36318271645afc2`  
 **Three-relay gameplay test commit:** `9f08fae5aa9a7a8588a01cae3dcad86cad03ca55`  
 **Fracture Clock level-data commit:** `ad810770fb2119048497d7b147aa3732a78215c9`  
 **Fracture Clock schema-test commit:** `f5eb3f6b847ff2370f54993e77608a68185cb351`  
@@ -72,7 +72,7 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 
 - `scripts/game.gd:L1042–L1046`: new `_get_gate_timer_ratio()` returns the clamped remaining-time fraction based on the current room's authored `gate_open_seconds`; rooms without a timed gate return zero.
 - `scripts/game.gd:L1112–L1118`: while a timed gate is open, the playfield now draws a dark track, amber fill and light outline beneath the numeric countdown. The bar starts full, shrinks with the timer, and is absent once the window expires or a permanent gate is powered.
-- `tests/game_flow_smoke.gd:L592–L644`: the Pulse Lock test checks a full bar at gate opening, proportional shrinkage after a frame advances the timer, and an empty bar after timeout.
+- `tests/game_flow_smoke.gd:L592–L647`: the Pulse Lock test checks a full bar at gate opening, proportional shrinkage after a frame advances the timer, and an empty bar after timeout.
 - Code commit: `2a41dc62625519760775331a72dbdb2c9a0dd4f7`; test-expression correction: `2eca67fde3ab69e52b17ae6151652bc4eea9c2eb`.
 - [Godot CI run 165](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40401020392) passed on both Godot 4.4.0 and 4.7.2. The tests cover the timer ratio helper's full, partial and empty states, plus the existing eleven-room and gameplay checks.
 
@@ -458,7 +458,7 @@ This function index matches source blob SHA `252037cc9c13f240eab4a24187d8c1ee789
 - **L427–L478:** Chorus Route rejects reverse order, accepts correct order, and verifies linked visual state.
 - **L483–L539:** Triune Relay rejects an out-of-order three-relay route, accepts Relay 1 → Relay 2 → Relay 3 → Switch A, and verifies all three linked states.
 - **L542–L589:** Fracture Clock accepts the ordered route, opens its 4.5-second gate, and preserves portal power after crossing.
-- **L592–L644:** Pulse Lock timer start, full/partial/empty timer-bar ratio, real-frame countdown, pause freeze, timeout, retry re-arm and powered exit after crossing.
+- **L592–L647:** Pulse Lock timer start, full/partial/empty timer-bar ratio, real-frame countdown, pause freeze, timeout, retry re-arm and powered exit after crossing.
 - **L650–L654:** Shared assertion helper.
 
 ### `scenes/main.tscn` (13 lines)
