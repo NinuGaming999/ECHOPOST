@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## Integration smoke test for the main scene's echo puzzle flow.
-## This deliberately stops after gate activation, before completion writes campaign saves.
+## Tests the full puzzle flow and restores the saved campaign values after portal completion.
 const MainScene = preload("res://scenes/main.tscn")
 const EchoTrackScript = preload("res://scripts/core/echo_track.gd")
 
