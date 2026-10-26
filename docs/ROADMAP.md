@@ -9,7 +9,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Desktop movement and touchscreen virtual joystick.
 - [x] Record, stop, replay, and linger behavior for one echo.
 - [x] Two-switch gate and exit loop.
-- [x] Ten authored room layouts with varied switch positions, sentinel patrol patterns, single/two/three-relay ordered-route challenges, a timed-gate crossing, and a toggle-style Switch B.
+- [x] Eleven authored room layouts with varied switch positions, sentinel patrol patterns, single/two/three-relay ordered-route challenges, a timed-gate crossing, a toggle-style Switch B, and a three-relay/timed-gate combination.
 - [x] Moving sentinel in later rooms.
 - [x] Chapter unlocks, local save data, and a scrollable chapter selector.
 - [x] Separate echo-track, level-catalog, and progress-store code from the main scene.
@@ -33,11 +33,11 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [ ] Build 12–20 authored puzzles that teach one new idea at a time.
 - [x] Add a required Relay Beacon route checkpoint to Static Bloom and an ordered two-relay route to Chorus Route, including segment-distance validation and clear rejection feedback.
 - [x] Add Pulse Lock, a timed gate with a 3.5-second crossing window, timeout/retry handling, and a portal that stays powered after a successful crossing.
-- [ ] Add more switch types and carefully constrain puzzle complexity beyond the first toggle switch, ordered three-relay route and timed-gate mechanics.
+- [ ] Add more switch types and carefully constrain puzzle complexity beyond the first toggle switch, ordered three-relay route, and combined relay/timed-gate challenge.
 - [ ] Add checkpoints, better reset messaging, and a campaign map.
-- [x] Add one optional Memory Shard per authored chamber (currently ten) with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
+- [x] Add one optional Memory Shard per authored chamber (currently eleven) with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
 - [x] Add a non-blocking restored-signal reward when all currently authored memories are recovered, both in the play status and Memory Archive.
-- [ ] Expand narrative fragments and authored world storytelling beyond the ten current introductory memories.
+- [ ] Expand narrative fragments and authored world storytelling beyond the eleven current introductory memories.
 
 ## Milestone 3 — Art, animation, and audio
 
