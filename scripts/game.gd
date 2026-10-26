@@ -43,6 +43,8 @@ var recording_elapsed: float = 0.0
 var record_sample_accumulator: float = 0.0
 var recording_track: Variant = ECHO_TRACK_SCRIPT.new()
 var door_open: bool = false
+var gate_open_timer: float = 0.0
+var timed_gate_failed: bool = false
 var hazard_time: float = 0.0
 var status_message: String = "Your route can become someone else's solution."
 var stars: Array[Vector3] = []
@@ -132,6 +134,7 @@ func _process(delta: float) -> void:
 	hazard_time += safe_delta
 	_check_sentinel_collision()
 	_check_memory_shard_collection()
+	_update_timed_gate(safe_delta)
 	_check_puzzle_state()
 	_update_hud()
 	queue_redraw()
@@ -569,6 +572,8 @@ func _start_level(level_index: int) -> void:
 	record_sample_accumulator = 0.0
 	recording_track.clear()
 	door_open = false
+	gate_open_timer = 0.0
+	timed_gate_failed = false
 	hazard_time = 0.0
 	status_message = str(level_data["hint"])
 	screen_state = ScreenState.PLAYING
@@ -809,6 +814,23 @@ func _check_memory_shard_collection() -> void:
 	queue_redraw()
 
 
+func _update_timed_gate(delta: float) -> void:
+	if not door_open or gate_open_timer <= 0.0:
+		return
+	gate_open_timer = maxf(0.0, gate_open_timer - delta)
+	if gate_open_timer > 0.0:
+		return
+
+	var gate_block_x := GATE_X - PLAYER_RADIUS - 3.0
+	if player_position.x <= gate_block_x:
+		door_open = false
+		timed_gate_failed = true
+		status_message = "PULSE GATE CLOSED — leave SWITCH B and return to re-arm the crossing window."
+	else:
+		# Once the player clears the barrier, the route is committed and the portal stays powered.
+		status_message = "GATE CROSSED — the portal remains powered. Reach the exit."
+
+
 func _check_puzzle_state() -> void:
 	if door_open:
 		if player_position.distance_to(Vector2(1170, 365)) < 39.0:
@@ -816,9 +838,22 @@ func _check_puzzle_state() -> void:
 		return
 	var echo_on_a := echo_visible and echo_position.distance_to(level_data["plate_a"]) < 43.0
 	var player_on_b := player_position.distance_to(level_data["plate_b"]) < 43.0
+
+	# A missed timed-gate window cannot instantly re-open while the player is still
+	# holding Switch B. Leave either switch and return to re-arm another attempt.
+	if timed_gate_failed and (not echo_on_a or not player_on_b):
+		timed_gate_failed = false
+
 	if echo_on_a and player_on_b:
+		if timed_gate_failed:
+			status_message = "PULSE GATE MISSED — leave SWITCH B and return to try again."
+			return
 		door_open = true
-		status_message = "BOTH SWITCHES HELD — GATE OPEN! Reach the portal."
+		gate_open_timer = maxf(0.0, float(level_data.get("gate_open_seconds", 0.0)))
+		if gate_open_timer > 0.0:
+			status_message = "PULSE GATE OPEN — cross the barrier within %.1f seconds, then reach the portal." % gate_open_timer
+		else:
+			status_message = "BOTH SWITCHES HELD — GATE OPEN! Reach the portal."
 		return
 	if is_recording and player_position.distance_to(level_data["plate_a"]) < 42.0:
 		status_message = "Good! Stop recording here so your echo holds SWITCH A."
@@ -930,7 +965,9 @@ func _update_hud() -> void:
 		echo_status_label.text = "ECHO: RECORDING"
 	else:
 		record_button.text = "RECORD ECHO"
-		if echo_playing:
+		if door_open and gate_open_timer > 0.0:
+			echo_status_label.text = "GATE: %.1fs TO CROSS" % gate_open_timer
+		elif echo_playing:
 			echo_status_label.text = "ECHO: REPLAYING ROUTE"
 		elif echo_visible:
 			echo_status_label.text = "ECHO: %.1fs LEFT" % maxf(0.0, echo_linger_left)
@@ -1109,8 +1146,9 @@ func _draw_switch(position: Vector2, letter: String, tint: Color, active: bool) 
 
 func _draw_gate() -> void:
 	if door_open:
-		draw_line(Vector2(GATE_X, ROOM_TOP + 18), Vector2(GATE_X, ROOM_BOTTOM - 18), Color(0.25, 1.0, 0.75, 0.30), 4.0, true)
-		draw_arc(Vector2(GATE_X, 365), 49, -PI / 2, PI / 2, 48, Color(0.25, 1.0, 0.75, 0.85), 3.0, true)
+		var gate_tint := Color(1.0, 0.75, 0.34) if gate_open_timer > 0.0 else Color(0.25, 1.0, 0.75)
+		draw_line(Vector2(GATE_X, ROOM_TOP + 18), Vector2(GATE_X, ROOM_BOTTOM - 18), Color(gate_tint.r, gate_tint.g, gate_tint.b, 0.30), 4.0, true)
+		draw_arc(Vector2(GATE_X, 365), 49, -PI / 2, PI / 2, 48, Color(gate_tint.r, gate_tint.g, gate_tint.b, 0.85), 3.0, true)
 	else:
 		draw_line(Vector2(GATE_X, ROOM_TOP + 18), Vector2(GATE_X, ROOM_BOTTOM - 18), Color(0.36, 0.52, 0.64, 0.75), 5.0, true)
 		for y in range(170, 590, 28):
