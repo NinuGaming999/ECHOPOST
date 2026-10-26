@@ -4,7 +4,7 @@
 
 **Every player leaves a ghost.** ECHOPOST is a mobile-first 2D puzzle adventure about recording your movement and using its echo to solve rooms you cannot solve alone.
 
-This repository is the long-term home of the full game. The current source implements an early playable slice: keyboard/touch movement, recording/playback echoes with endpoint validation, an amber live route preview, pressure switches, gates/exits, six chamber layouts, roaming sentinels, scrollable chapter selection, chapter unlocks, local save data, and procedural graphics so it runs without external art assets.
+This repository is the long-term home of the full game. The current source implements an early playable slice: keyboard/touch movement, recording/playback echoes with endpoint validation, an amber live route preview, pressure switches, gates/exits, six chamber layouts, roaming sentinels, optional Memory Shards with lore fragments, scrollable chapter selection, chapter unlocks, versioned local save data, and procedural graphics so it runs without external art assets.
 
 > **Development status:** Early development. Automated Godot CI parses the project and runs smoke tests on every push and pull request. Production art/audio, accessibility options, online echo sharing, and Android release packaging remain future work.
 
@@ -32,7 +32,7 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 3. Move the real robot onto **Switch B**.
 4. When both switches are active, cross the gate and reach the exit.
 
-Later rooms introduce roaming sentinels and longer diagonal routes. If a sentinel catches the player during recording, the unfinished take is discarded so it cannot record a fake teleport back to spawn. While recording, an amber trace shows the route being captured and the starting point; after sending, the echo trail appears in cyan. The six rooms still use the same two-switch core mechanic, so new switch mechanics and a longer authored campaign remain future work.
+Later rooms introduce roaming sentinels and longer diagonal routes. If a sentinel catches the player during recording, the unfinished take is discarded so it cannot record a fake teleport back to spawn. While recording, an amber trace shows the route being captured and the starting point; after sending, the echo trail appears in cyan. The six rooms still use the same two-switch core mechanic, so new switch mechanics and a longer authored campaign remain future work. Each room also has one optional violet Memory Shard. Touch it to reveal a short courier-network lore fragment; collecting it is saved locally and is never required to open the gate or exit. Older version-1 campaign saves still load, with Memory Shards starting uncollected.
 
 ## Project layout
 
