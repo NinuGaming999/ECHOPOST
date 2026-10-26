@@ -10,7 +10,7 @@
 - Main menu, scrollable chapter select, scrollable Memory Archive, instructions, pause, completion, retry, and continue flows.
 - Keyboard movement and an on-screen joystick that also supports mouse testing.
 - Options panel with slow/normal/fast movement presets and a left-handed joystick option; these preferences persist in a separate settings file, independent from campaign saves.
-- Latch Protocol's toggle Switch B is functional: a dedicated on-screen button and keyboard E activate it only when the player is near B and the echo holds A; the latched state remains active after leaving the switch and resets on room restart.
+- Latch Protocol's toggle Switch B is functional: a dedicated on-screen button and keyboard E activate it only when the player is near B and the echo has finished playback and settled on A; the latched state remains active after leaving the switch and resets on room restart.
 - Timestamped route recording with a strict 8-second cap (elapsed time is clamped before the final sample), echo playback, final-position linger, live amber route preview while recording, and rejection feedback when a route does not end on Switch A.
 - Too-short recording feedback now tells the player to keep recording; the minimum-duration check and displayed 0.7-second requirement share one constant.
 - Echo track copies instantiate from their preloaded script resource instead of relying on a global `EchoTrack` class registration; this fixes the Godot 4.4 compile failure reported during local testing.
