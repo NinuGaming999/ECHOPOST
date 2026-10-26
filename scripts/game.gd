@@ -15,6 +15,7 @@ const MOVE_SPEED := 255.0
 const RECORD_SAMPLE_STEP := 0.05
 const MIN_RECORD_SECONDS := 0.7
 const MAX_RECORD_SECONDS := 8.0
+const FAILURE_RESET_DURATION := 0.85
 const ECHO_TRACK_SCRIPT = preload("res://scripts/core/echo_track.gd")
 const LEVEL_CATALOG = preload("res://scripts/data/level_catalog.gd")
 const LEVELS: Array[Dictionary] = LEVEL_CATALOG.LEVELS
@@ -47,6 +48,8 @@ var switch_b_latched: bool = false
 var gate_open_timer: float = 0.0
 var timed_gate_failed: bool = false
 var hazard_time: float = 0.0
+var failure_reset_timer: float = 0.0
+var failure_reset_reason: String = ""
 var status_message: String = "Your route can become someone else's solution."
 var stars: Array[Vector3] = []
 
@@ -62,6 +65,10 @@ var help_panel: Panel
 var level_select_panel: Panel
 var memory_archive_panel: Panel
 var options_panel: Panel
+var failure_panel: Panel
+var failure_title_label: Label
+var failure_detail_label: Label
+var failure_progress_bar: ProgressBar
 var memory_archive_status_label: Label
 var memory_archive_title_labels: Array[Label] = []
 var memory_archive_lore_labels: Array[Label] = []
@@ -85,13 +92,18 @@ var chapter_buttons: Array[Button] = []
 
 
 func _notification(what: int) -> void:
+	# Modal cards stay centered as a phone rotates or the desktop viewport is resized.
+	if what == NOTIFICATION_RESIZED:
+		call_deferred("_layout_centered_panels")
 	# Stop gameplay time when Android/iOS suspends the app, or when the app loses focus.
 	# We intentionally do not auto-resume: the player must explicitly tap RESUME.
-	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+	elif what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		_pause_for_lifecycle()
 
 
 func _pause_for_lifecycle() -> void:
+	if failure_reset_timer > 0.0:
+		return
 	if screen_state != ScreenState.PLAYING:
 		return
 	screen_state = ScreenState.PAUSED
@@ -111,12 +123,31 @@ func _ready() -> void:
 	_load_progress()
 	_load_settings()
 	_build_interface()
+	_layout_centered_panels()
 	_show_menu()
 	queue_redraw()
 
 
 func _process(delta: float) -> void:
 	if screen_state != ScreenState.PLAYING:
+		return
+
+	# A failed run freezes briefly behind a polished reset card, then reboots the
+	# whole room. Keep this timer separate from puzzle time so retries are reliable.
+	if failure_reset_timer > 0.0:
+		failure_reset_timer = maxf(0.0, failure_reset_timer - minf(delta, 0.05))
+		if is_instance_valid(failure_progress_bar):
+			failure_progress_bar.value = failure_reset_timer / FAILURE_RESET_DURATION
+		if failure_reset_timer <= 0.0:
+			var failed_level_index := current_level_index
+			var failed_reason := failure_reset_reason
+			failure_reset_reason = ""
+			if is_instance_valid(failure_panel):
+				failure_panel.hide()
+			_start_level(failed_level_index)
+			status_message = "ROOM RESET — %s. Try a fresh route." % failed_reason
+			_update_hud()
+		queue_redraw()
 		return
 
 	var safe_delta := minf(delta, 0.05)
@@ -143,7 +174,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if screen_state != ScreenState.PLAYING:
+	if screen_state != ScreenState.PLAYING or failure_reset_timer > 0.0:
 		return
 
 	if event is InputEventKey:
@@ -182,13 +213,16 @@ func _input(event: InputEvent) -> void:
 
 
 func _is_joystick_area(point: Vector2) -> bool:
+	# Use viewport proportions instead of hard-coded pixels so touch input remains
+	# predictable on phones with different landscape aspect ratios.
 	if point.y <= size.y * 0.56:
 		return false
+	var bottom_action_band := point.y > size.y * 0.90
 	if left_handed_controls:
-		# Reserve the lower-right restart button area when the joystick is moved to the right.
-		return point.x > size.x - 285.0 and not (point.y > 650.0 and point.x > size.x - 300.0)
-	# Reserve the lower-left main-menu button area for the default left-side joystick.
-	return point.x < 285.0 and not (point.y > 650.0 and point.x < 180.0)
+		# Keep the right-side joystick clear of the bottom restart target.
+		return point.x > size.x * 0.77 and not (bottom_action_band and point.x > size.x * 0.85)
+	# Keep the left-side joystick clear of the bottom menu target.
+	return point.x < size.x * 0.23 and not (bottom_action_band and point.x < size.x * 0.15)
 
 
 func _update_joystick(point: Vector2) -> void:
@@ -211,6 +245,7 @@ func _build_interface() -> void:
 	_build_level_select_panel()
 	_build_memory_archive_panel()
 	_build_options_panel()
+	_build_failure_panel()
 
 
 func _build_menu() -> void:
@@ -249,18 +284,18 @@ func _build_game_hud() -> void:
 	level_title_label = _make_label(game_hud, "LevelTitle", Vector2(34, 15), Vector2(570, 36), "01  /  THE FIRST ECHO", 22, Color(0.88, 0.95, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
 	level_hint_label = _make_label(game_hud, "LevelHint", Vector2(35, 52), Vector2(900, 44), "Record a route that ends on Switch A.", 15, Color(0.55, 0.70, 0.82), HORIZONTAL_ALIGNMENT_LEFT)
 	echo_status_label = _make_label(game_hud, "EchoStatus", Vector2(805, 17), Vector2(300, 28), "ECHO: NOT RECORDED", 14, Color(0.42, 0.83, 1.0), HORIZONTAL_ALIGNMENT_RIGHT)
-	pause_button = _make_button(game_hud, "PauseButton", Vector2(1120, 17), Vector2(126, 40), "PAUSE", Color(0.12, 0.22, 0.34), Color(0.17, 0.34, 0.48), 14)
+	pause_button = _make_button(game_hud, "PauseButton", Vector2(1110, 12), Vector2(136, 48), "PAUSE", Color(0.12, 0.22, 0.34), Color(0.17, 0.34, 0.48), 14)
 	pause_button.pressed.connect(_on_pause_pressed)
 
-	status_label = _make_label(game_hud, "Status", Vector2(300, 626), Vector2(680, 34), "Find the switches.", 15, Color(0.74, 0.84, 0.93), HORIZONTAL_ALIGNMENT_CENTER)
-	record_button = _make_button(game_hud, "RecordButton", Vector2(380, 665), Vector2(270, 44), "RECORD ECHO", Color(0.03, 0.47, 0.62), Color(0.04, 0.65, 0.80), 17)
+	status_label = _make_label(game_hud, "Status", Vector2(270, 610), Vector2(740, 38), "Find the switches.", 15, Color(0.74, 0.84, 0.93), HORIZONTAL_ALIGNMENT_CENTER)
+	record_button = _make_button(game_hud, "RecordButton", Vector2(380, 654), Vector2(270, 54), "RECORD ECHO", Color(0.03, 0.47, 0.62), Color(0.04, 0.65, 0.80), 17)
 	record_button.pressed.connect(_on_record_pressed)
-	latch_switch_button = _make_button(game_hud, "LatchSwitchBButton", Vector2(680, 665), Vector2(270, 44), "LATCH SWITCH B", Color(0.34, 0.25, 0.10), Color(0.52, 0.37, 0.13), 15)
+	latch_switch_button = _make_button(game_hud, "LatchSwitchBButton", Vector2(680, 654), Vector2(270, 54), "LATCH SWITCH B", Color(0.34, 0.25, 0.10), Color(0.52, 0.37, 0.13), 15)
 	latch_switch_button.pressed.connect(_on_latch_switch_b_pressed)
 	latch_switch_button.hide()
-	var reset_button := _make_button(game_hud, "ResetButton", Vector2(1000, 665), Vector2(145, 44), "RESTART ROOM", Color(0.22, 0.18, 0.31), Color(0.32, 0.23, 0.44), 13)
+	var reset_button := _make_button(game_hud, "ResetButton", Vector2(1000, 654), Vector2(145, 54), "RESTART ROOM", Color(0.22, 0.18, 0.31), Color(0.32, 0.23, 0.44), 13)
 	reset_button.pressed.connect(_on_reset_pressed)
-	var menu_button := _make_button(game_hud, "MenuButton", Vector2(34, 665), Vector2(145, 44), "MAIN MENU", Color(0.12, 0.22, 0.34), Color(0.17, 0.34, 0.48), 13)
+	var menu_button := _make_button(game_hud, "MenuButton", Vector2(34, 654), Vector2(145, 54), "MAIN MENU", Color(0.12, 0.22, 0.34), Color(0.17, 0.34, 0.48), 13)
 	menu_button.pressed.connect(_show_menu)
 	_make_label(game_hud, "MoveTip", Vector2(34, 615), Vector2(230, 38), "MOVE  •  WASD / ARROWS\nTOUCH  •  LEFT JOYSTICK", 11, Color(0.43, 0.58, 0.70), HORIZONTAL_ALIGNMENT_LEFT)
 
@@ -482,18 +517,67 @@ func _update_memory_archive() -> void:
 		memory_archive_status_label.text = "MEMORIES RECOVERED: %d / %d" % [collected_shards.size(), LEVELS.size()]
 
 
+func _build_failure_panel() -> void:
+	failure_panel = _make_panel("FailureResetPanel", Vector2.ZERO, Vector2(520, 194))
+	failure_panel.z_index = 100
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.055, 0.045, 0.075, 0.99)
+	panel_style.border_color = Color(1.0, 0.34, 0.42, 0.96)
+	panel_style.set_border_width_all(1)
+	panel_style.set_corner_radius_all(22)
+	panel_style.shadow_color = Color(0.28, 0.02, 0.08, 0.42)
+	panel_style.shadow_size = 20
+	panel_style.content_margin_left = 10
+	panel_style.content_margin_right = 10
+	panel_style.content_margin_top = 8
+	panel_style.content_margin_bottom = 8
+	failure_panel.add_theme_stylebox_override("panel", panel_style)
+	failure_title_label = _make_label(failure_panel, "FailureTitle", Vector2(26, 17), Vector2(468, 42), "SIGNAL LOST", 28, Color(1.0, 0.46, 0.52), HORIZONTAL_ALIGNMENT_CENTER)
+	failure_detail_label = _make_label(failure_panel, "FailureDetail", Vector2(34, 62), Vector2(452, 48), "The chamber is restarting.", 15, Color(0.83, 0.85, 0.91), HORIZONTAL_ALIGNMENT_CENTER)
+	var reset_caption := _make_label(failure_panel, "ResetCaption", Vector2(34, 116), Vector2(452, 20), "REINITIALIZING CHAMBER", 11, Color(0.57, 0.67, 0.77), HORIZONTAL_ALIGNMENT_CENTER)
+	failure_progress_bar = ProgressBar.new()
+	failure_progress_bar.name = "ResetProgress"
+	failure_progress_bar.position = Vector2(34, 146)
+	failure_progress_bar.size = Vector2(452, 12)
+	failure_progress_bar.min_value = 0.0
+	failure_progress_bar.max_value = 1.0
+	failure_progress_bar.value = 1.0
+	failure_progress_bar.show_percentage = false
+	var progress_track := StyleBoxFlat.new()
+	progress_track.bg_color = Color(0.10, 0.12, 0.18)
+	progress_track.set_corner_radius_all(6)
+	var progress_fill := StyleBoxFlat.new()
+	progress_fill.bg_color = Color(1.0, 0.34, 0.42)
+	progress_fill.set_corner_radius_all(6)
+	failure_progress_bar.add_theme_stylebox_override("background", progress_track)
+	failure_progress_bar.add_theme_stylebox_override("fill", progress_fill)
+	failure_panel.add_child(failure_progress_bar)
+	failure_panel.hide()
+
+
+func _layout_centered_panels() -> void:
+	for panel in [complete_panel, help_panel, level_select_panel, memory_archive_panel, options_panel, failure_panel]:
+		if is_instance_valid(panel):
+			panel.position = (size - panel.size) * 0.5
+
+
 func _make_panel(panel_name: String, panel_position: Vector2, panel_size: Vector2) -> Panel:
 	var panel := Panel.new()
 	panel.name = panel_name
 	panel.position = panel_position
 	panel.size = panel_size
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.045, 0.075, 0.12, 0.98)
-	style.border_color = Color(0.20, 0.60, 0.76, 0.95)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(18)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.30)
-	style.shadow_size = 12
+	style.bg_color = Color(0.035, 0.055, 0.09, 0.985)
+	style.border_color = Color(0.22, 0.61, 0.78, 0.92)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(20)
+	style.shadow_color = Color(0.0, 0.015, 0.04, 0.48)
+	style.shadow_size = 18
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
 	panel.add_theme_stylebox_override("panel", style)
 	add_child(panel)
 	return panel
@@ -519,33 +603,64 @@ func _make_button(parent: Control, button_name: String, button_position: Vector2
 	button.name = button_name
 	button.position = button_position
 	button.size = button_size
+	button.custom_minimum_size = Vector2(0, 44)
+	button.pivot_offset = button_size * 0.5
 	button.text = button_text
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", font_size)
 	button.add_theme_color_override("font_color", Color(0.92, 0.97, 1.0))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	button.add_theme_color_override("font_disabled_color", Color(0.36, 0.43, 0.50))
+	button.add_theme_color_override("font_pressed_color", Color(0.83, 0.95, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.42, 0.50, 0.60))
 	var normal := StyleBoxFlat.new()
 	normal.bg_color = normal_color
-	normal.set_corner_radius_all(11)
+	normal.border_color = Color(0.40, 0.67, 0.79, 0.40)
+	normal.set_border_width_all(1)
+	normal.set_corner_radius_all(14)
+	normal.shadow_color = Color(0.0, 0.01, 0.03, 0.24)
+	normal.shadow_size = 5
 	var hover := StyleBoxFlat.new()
 	hover.bg_color = hover_color
-	hover.set_corner_radius_all(11)
+	hover.border_color = Color(0.43, 0.86, 1.0, 0.92)
+	hover.set_border_width_all(1)
+	hover.set_corner_radius_all(14)
+	hover.shadow_color = Color(0.04, 0.42, 0.65, 0.24)
+	hover.shadow_size = 7
 	var pressed := StyleBoxFlat.new()
-	pressed.bg_color = normal_color.darkened(0.25)
-	pressed.set_corner_radius_all(11)
+	pressed.bg_color = normal_color.darkened(0.20)
+	pressed.border_color = Color(0.35, 0.75, 0.91, 0.72)
+	pressed.set_border_width_all(1)
+	pressed.set_corner_radius_all(14)
 	var disabled := StyleBoxFlat.new()
-	disabled.bg_color = Color(0.10, 0.13, 0.19)
-	disabled.set_corner_radius_all(11)
+	disabled.bg_color = Color(0.075, 0.10, 0.15)
+	disabled.border_color = Color(0.18, 0.25, 0.33, 0.60)
+	disabled.set_border_width_all(1)
+	disabled.set_corner_radius_all(14)
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
 	button.add_theme_stylebox_override("disabled", disabled)
+	button.mouse_entered.connect(_animate_button.bind(button, 1.025))
+	button.mouse_exited.connect(_animate_button.bind(button, 1.0))
+	button.button_down.connect(_animate_button.bind(button, 0.975))
+	button.button_up.connect(_animate_button.bind(button, 1.0))
 	parent.add_child(button)
 	return button
 
 
+func _animate_button(button: Button, scale_target: float) -> void:
+	if not is_instance_valid(button):
+		return
+	var animation := create_tween()
+	animation.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	animation.tween_property(button, "scale", Vector2.ONE * scale_target, 0.12)
+
+
 func _show_menu() -> void:
+	failure_reset_timer = 0.0
+	failure_reset_reason = ""
+	if is_instance_valid(failure_panel):
+		failure_panel.hide()
 	screen_state = ScreenState.MENU
 	is_recording = false
 	joystick_touch_index = -1
@@ -569,6 +684,10 @@ func _on_start_pressed() -> void:
 
 
 func _start_level(level_index: int) -> void:
+	failure_reset_timer = 0.0
+	failure_reset_reason = ""
+	if is_instance_valid(failure_panel):
+		failure_panel.hide()
 	current_level_index = clampi(level_index, 0, LEVELS.size() - 1)
 	joystick_touch_index = -1
 	joystick_mouse_active = false
@@ -607,7 +726,7 @@ func _start_level(level_index: int) -> void:
 
 
 func _on_record_pressed() -> void:
-	if screen_state != ScreenState.PLAYING:
+	if screen_state != ScreenState.PLAYING or failure_reset_timer > 0.0:
 		return
 	if not is_recording:
 		is_recording = true
@@ -628,7 +747,7 @@ func _on_record_pressed() -> void:
 
 
 func _on_latch_switch_b_pressed() -> void:
-	if screen_state != ScreenState.PLAYING:
+	if screen_state != ScreenState.PLAYING or failure_reset_timer > 0.0:
 		return
 	if str(level_data.get("plate_b_mode", "hold")) != "toggle":
 		return
@@ -665,8 +784,12 @@ func _finish_recording() -> void:
 		echo_playing = false
 		echo_track.clear()
 		status_message = "ROUTE REJECTED — finish the recording on SWITCH A, then try again."
-		_update_hud()
-		queue_redraw()
+		if _room_requires_relay():
+			_schedule_room_reset("ROUTE REJECTED", status_message)
+		else:
+			_update_hud()
+			queue_redraw()
+		return
 		return
 	if level_data.has("echo_waypoints"):
 		var required_waypoints: Array = level_data["echo_waypoints"]
@@ -678,8 +801,7 @@ func _finish_recording() -> void:
 			for relay_index in range(required_waypoints.size()):
 				relay_sequence.append("RELAY %d" % (relay_index + 1))
 			status_message = "ROUTE REJECTED — pass through %s in order before finishing on SWITCH A." % ", then ".join(relay_sequence)
-			_update_hud()
-			queue_redraw()
+			_schedule_room_reset("RELAY SEQUENCE FAILED", status_message)
 			return
 	if level_data.has("echo_waypoint"):
 		var relay_position: Vector2 = level_data["echo_waypoint"]
@@ -688,8 +810,7 @@ func _finish_recording() -> void:
 			echo_playing = false
 			echo_track.clear()
 			status_message = "ROUTE REJECTED — pass through the RELAY BEACON before finishing on SWITCH A."
-			_update_hud()
-			queue_redraw()
+			_schedule_room_reset("RELAY BEACON MISSED", status_message)
 			return
 	echo_track = recording_track.copy_track()
 	echo_playing = echo_track.samples.size() > 1
@@ -830,25 +951,52 @@ func _update_echo(delta: float) -> void:
 			status_message = "Your echo faded. Record another route ending on SWITCH A."
 
 
+func _room_requires_relay() -> bool:
+	return level_data.has("echo_waypoint") or level_data.has("echo_waypoints")
+
+
+func _schedule_room_reset(reason: String, detail: String) -> void:
+	if failure_reset_timer > 0.0:
+		return
+	failure_reset_reason = reason
+	failure_reset_timer = FAILURE_RESET_DURATION
+	status_message = detail
+	joystick_touch_index = -1
+	joystick_mouse_active = false
+	joystick_direction = Vector2.ZERO
+	# Discard all run state immediately; the short overlay only gives the player
+	# time to read the reason before the complete chamber state is restarted.
+	is_recording = false
+	recording_elapsed = 0.0
+	record_sample_accumulator = 0.0
+	recording_track.clear()
+	player_position = level_data["spawn"]
+	if is_instance_valid(failure_title_label):
+		failure_title_label.text = reason.to_upper()
+	if is_instance_valid(failure_detail_label):
+		failure_detail_label.text = detail
+	if is_instance_valid(failure_progress_bar):
+		failure_progress_bar.value = 1.0
+	if is_instance_valid(failure_panel):
+		failure_panel.modulate.a = 0.0
+		failure_panel.show()
+		var fade := create_tween()
+		fade.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		fade.tween_property(failure_panel, "modulate:a", 1.0, 0.16)
+	game_hud.hide()
+	queue_redraw()
+
+
 func _check_sentinel_collision() -> void:
-	if not bool(level_data.get("hazard", false)):
+	if failure_reset_timer > 0.0 or not bool(level_data.get("hazard", false)):
 		return
 	var hazard_x := 640.0 + sin(hazard_time * float(level_data["hazard_speed"])) * float(level_data["hazard_amplitude"])
 	var sentinel := Vector2(hazard_x, float(level_data["hazard_y"]))
 	if player_position.distance_to(sentinel) < 27.0:
-		player_position = level_data["spawn"]
-		if is_recording:
-			# A collision interrupts the current take. Keeping it would create a
-			# misleading recorded "teleport" from the contact point back to spawn.
-			is_recording = false
-			recording_elapsed = 0.0
-			record_sample_accumulator = 0.0
-			recording_track.clear()
-			status_message = "SENTINEL CONTACT — recording lost; returned to the chamber entrance."
-		else:
-			status_message = "SENTINEL CONTACT — returned to the chamber entrance."
-		_update_hud()
-		queue_redraw()
+		var detail := "SENTINEL CONTACT — recording lost; the whole chamber is resetting."
+		if not is_recording:
+			detail = "SENTINEL CONTACT — you were caught. The whole chamber is resetting."
+		_schedule_room_reset("SENTINEL CONTACT", detail)
 
 
 func _check_memory_shard_collection() -> void:
@@ -965,10 +1113,14 @@ func _on_replay_pressed() -> void:
 
 
 func _on_reset_pressed() -> void:
+	if failure_reset_timer > 0.0:
+		return
 	_start_level(current_level_index)
 
 
 func _on_pause_pressed() -> void:
+	if failure_reset_timer > 0.0:
+		return
 	if screen_state == ScreenState.PLAYING:
 		screen_state = ScreenState.PAUSED
 		joystick_touch_index = -1
@@ -1039,7 +1191,7 @@ func _update_hud() -> void:
 			echo_status_label.text = "ECHO: GATE OPEN"
 		else:
 			echo_status_label.text = "ECHO: READY"
-	record_button.disabled = screen_state == ScreenState.PAUSED or screen_state == ScreenState.COMPLETE
+	record_button.disabled = screen_state == ScreenState.PAUSED or screen_state == ScreenState.COMPLETE or failure_reset_timer > 0.0
 	if is_instance_valid(latch_switch_button):
 		var toggle_mode := str(level_data.get("plate_b_mode", "hold")) == "toggle"
 		latch_switch_button.visible = toggle_mode
