@@ -866,11 +866,34 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	var failure_panel: Panel = game.get("failure_panel")
 	_check(options_panel.position.is_equal_approx((game.size - options_panel.size) * 0.5), "Options should remain centered when the viewport changes size.")
 	_check(failure_panel.position.is_equal_approx((game.size - failure_panel.size) * 0.5), "The failure/restart card should remain centered when the viewport changes size.")
-	_check(record.position.is_equal_approx(Vector2(game.size.x * 0.5 - 260.0, game.size.y - 66.0)), "The main touch action should follow the bottom edge on a wider viewport.")
-	_check(restart_button.position.is_equal_approx(Vector2(game.size.x - 280.0, game.size.y - 66.0)), "The restart touch target should stay near the lower-right safe margin.")
+	_check(is_equal_approx(record.position.y, game.size.y - 66.0), "The main touch action should follow the bottom edge on a wider viewport.")
+	_check(is_equal_approx(restart_button.position.y, game.size.y - 66.0), "The restart touch target should follow the bottom edge.")
+	_check(menu_button.position.x + menu_button.size.x < record.position.x, "The main-menu button should not overlap the primary action.")
+	_check(record.position.x + record.size.x < latch.position.x, "The record and latch actions should have independent touch targets.")
+	_check(latch.position.x + latch.size.x < restart_button.position.x, "The latch and restart actions should not overlap.")
+	_check(restart_button.position.x + restart_button.size.x <= game.size.x, "The restart action should remain inside the viewport.")
 	_check(bool(game.call("_is_joystick_area", Vector2(100, 700))), "The left joystick area should adapt to a wider/taller viewport.")
 	game.set("left_handed_controls", true)
 	_check(bool(game.call("_is_joystick_area", Vector2(1400, 700))), "The right joystick area should adapt in left-handed mode.")
+
+	# Compact landscape phones need reduced menu typography, a tighter menu stack,
+	# a non-overlapping bottom action row and touch-zone protection around buttons.
+	game.size = Vector2(960, 540)
+	game.call("_layout_responsive_ui")
+	var title := game.get("menu_root").get_node("Title") as Label
+	var progress := game.get("menu_root").get_node("Progress") as Label
+	var start := game.get("menu_root").get_node("StartButton") as Button
+	var options := game.get("menu_root").get_node("OptionsButton") as Button
+	_check(title.position.x >= 0.0 and title.size.x <= game.size.x, "Menu typography should fit a narrower landscape viewport.")
+	_check(options.position.y + options.size.y <= progress.position.y, "Compact menu controls should finish before the progress line.")
+	_check(is_equal_approx(record.position.y, game.size.y - 66.0), "Bottom gameplay controls should stay inside a compact-height viewport.")
+	_check(menu_button.position.x + menu_button.size.x < record.position.x, "Compact menu and record touch targets must not overlap.")
+	_check(record.position.x + record.size.x < latch.position.x, "Compact record and latch targets must not overlap.")
+	_check(latch.position.x + latch.size.x < restart_button.position.x, "Compact latch and restart targets must not overlap.")
+	_check(restart_button.position.x + restart_button.size.x <= game.size.x, "Compact restart control should remain inside the right edge.")
+	_check(bool(game.call("_is_joystick_area", Vector2(170, 480))), "The compact left joystick zone should avoid the menu button.")
+	game.set("left_handed_controls", true)
+	_check(bool(game.call("_is_joystick_area", Vector2(780, 480))), "The compact right joystick zone should avoid the restart button.")
 	game.size = Vector2(1280, 720)
 	game.call("_layout_responsive_ui")
 	game.call("_set_left_handed_controls", previous_handedness)
