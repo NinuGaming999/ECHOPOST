@@ -731,7 +731,7 @@ func _test_dead_air_protocol(game: Control) -> void:
 	game.set("player_position", plate_b)
 	game.call("_check_puzzle_state")
 	_check(bool(game.get("door_open")), "An accepted route plus Switch B should open Dead Air Protocol.")
-	_check(is_equal_approx(float(game.get("gate_open_timer")), 2.2), "Dead Air Protocol should start its authored 1.8-second timer.")
+	_check(is_equal_approx(float(game.get("gate_open_timer")), 1.8), "Dead Air Protocol should start its authored 1.8-second timer.")
 	game.set("gate_open_timer", 0.01)
 	game.call("_update_timed_gate", 0.02)
 	_check(not bool(game.get("door_open")), "Dead Air Protocol should close if its short window expires before the barrier.")
