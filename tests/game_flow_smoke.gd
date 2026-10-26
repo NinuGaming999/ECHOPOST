@@ -414,16 +414,24 @@ func _test_latch_protocol_switch(game: Control) -> void:
 	# The player cannot latch B before the echo is holding A.
 	game.call("_start_level", 8)
 	room = game.get("level_data")
+	plate_a = room["plate_a"]
 	plate_b = room["plate_b"]
 	game.set("player_position", plate_b)
 	game.set("echo_visible", false)
 	latch_button.emit_signal("pressed")
-	_check(not bool(game.get("switch_b_latched")), "Switch B must not latch before the echo holds A.")
+	_check(not bool(game.get("switch_b_latched")), "Switch B must not latch before an echo reaches A.")
 	_check(str(game.get("status_message")).begins_with("WAIT FOR ECHO"), "An early latch attempt should explain that the echo must hold A first.")
 
-	# Keyboard E is the desktop equivalent of tapping the dedicated button.
-	plate_a = room["plate_a"]
+	# Being at A while the echo is still travelling is not enough; it must settle.
 	game.set("echo_visible", true)
+	game.set("echo_playing", true)
+	game.set("echo_position", plate_a)
+	latch_button.emit_signal("pressed")
+	_check(not bool(game.get("switch_b_latched")), "Switch B must not latch while the echo is still playing its route.")
+	_check(str(game.get("status_message")).begins_with("WAIT FOR ECHO"), "The latch hint should ask the player to wait until the echo settles on A.")
+
+	# Keyboard E is the desktop equivalent of tapping the dedicated button.
+	game.set("echo_playing", false)
 	game.set("echo_position", plate_a)
 	var latch_key := InputEventKey.new()
 	latch_key.keycode = KEY_E
