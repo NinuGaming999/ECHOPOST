@@ -27,6 +27,7 @@ func _run_tests() -> void:
 	_test_echo_waypoint_requirement(game)
 	_test_ordered_echo_waypoints(game)
 	_test_three_ordered_echo_waypoints(game)
+	_test_relay_timer_combo(game)
 	_test_timed_gate_requires_crossing(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
@@ -534,6 +535,56 @@ func _test_three_ordered_echo_waypoints(game: Control) -> void:
 	_check(bool(game.get("echo_playing")), "A valid three-relay route should start echo playback.")
 	for waypoint_index in range(3):
 		_check(bool(game.call("_is_relay_waypoint_linked", waypoint_index)), "Each relay should show linked after the full ordered route is accepted.")
+	game.call("_start_level", 0)
+
+
+
+func _test_relay_timer_combo(game: Control) -> void:
+	game.call("_start_level", 10)
+	var room: Dictionary = game.get("level_data")
+	_check(str(room.get("name", "")) == "Fracture Clock", "The eleventh chamber should be Fracture Clock.")
+	_check(room.has("gate_open_seconds"), "Fracture Clock should define a timed gate.")
+	_check(room.has("echo_waypoints") and room["echo_waypoints"] is Array and room["echo_waypoints"].size() == 3, "Fracture Clock should combine a timed gate with three ordered relays.")
+	if not room.has("gate_open_seconds") or not room.has("echo_waypoints"):
+		game.call("_start_level", 0)
+		return
+
+	var spawn: Vector2 = room["spawn"]
+	var plate_a: Vector2 = room["plate_a"]
+	var waypoints: Array = room["echo_waypoints"]
+	var route = EchoTrackScript.new()
+	route.add_sample(0.0, spawn)
+	route.add_sample(1.0, waypoints[0])
+	route.add_sample(2.0, waypoints[1])
+	route.add_sample(3.0, waypoints[2])
+	route.add_sample(4.0, plate_a)
+	game.set("recording_track", route)
+	game.set("recording_elapsed", 4.0)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(bool(game.get("echo_visible")), "Fracture Clock should accept the three-relay route before starting its gate puzzle.")
+	if not bool(game.get("echo_visible")):
+		game.call("_start_level", 0)
+		return
+
+	# Simulate the echo settling on A while the player holds B. The combined
+	# puzzle should open the gate with its authored 4.5-second crossing window.
+	game.set("echo_playing", false)
+	game.set("echo_position", plate_a)
+	game.set("echo_linger_left", 5.0)
+	game.set("player_position", room["plate_b"])
+	game.call("_check_puzzle_state")
+	_check(bool(game.get("door_open")), "Holding both switches after the relay route should open Fracture Clock.")
+	_check(is_equal_approx(float(game.get("gate_open_timer")), 4.5), "Fracture Clock should start its authored 4.5-second gate window.")
+
+	# Crossing the barrier before the countdown expires must preserve portal power.
+	game.set("player_position", Vector2(1070, 420))
+	game.set("gate_open_timer", 0.02)
+	game.call("_update_timed_gate", 0.03)
+	_check(bool(game.get("door_open")), "Crossing Fracture Clock's barrier in time should keep the portal powered.")
+	_check(str(game.get("status_message")).contains("GATE CROSSED"), "The combined puzzle should explain that the portal remains powered after crossing.")
 	game.call("_start_level", 0)
 
 
