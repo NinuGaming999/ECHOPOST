@@ -135,6 +135,24 @@ func _test_sentinel_reset(game: Control) -> void:
 	_check(game.get("player_position") == expected_spawn, "Sentinel contact should return the player to the room spawn.")
 	_check(str(game.get("status_message")).begins_with("SENTINEL CONTACT"), "Sentinel contact should explain why the player was reset.")
 
+	# A recording interrupted by a sentinel must not contain a fake teleport to spawn.
+	var interrupted_track = EchoTrackScript.new()
+	interrupted_track.add_sample(0.0, Vector2(500, 380))
+	interrupted_track.add_sample(1.0, Vector2(640, 380))
+	game.set("recording_track", interrupted_track)
+	game.set("is_recording", true)
+	game.set("recording_elapsed", 1.4)
+	game.set("record_sample_accumulator", 0.03)
+	game.set("player_position", Vector2(640, 380))
+	game.set("hazard_time", 0.0)
+	game.call("_check_sentinel_collision")
+	var cleared_track = game.get("recording_track")
+	_check(not bool(game.get("is_recording")), "Sentinel contact should cancel an active recording.")
+	_check(is_zero_approx(float(game.get("recording_elapsed"))), "Sentinel contact should reset recording time.")
+	_check(is_zero_approx(float(game.get("record_sample_accumulator"))), "Sentinel contact should reset the sample accumulator.")
+	_check(cleared_track.samples.is_empty(), "Sentinel contact should clear the interrupted route instead of recording a teleport.")
+	_check(str(game.get("status_message")).contains("recording lost"), "The collision message should explain that the interrupted recording was lost.")
+
 
 func _test_restart_clears_state(game: Control) -> void:
 	game.call("_start_level", 0)
