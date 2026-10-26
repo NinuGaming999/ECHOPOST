@@ -20,7 +20,7 @@
 
 ## Verification status
 
-The latest GitHub Actions run passed the Godot project import/parse step, the data-layer smoke tests, and the main-scene gameplay integration tests. The integration checks confirm invalid echo-route rejection, accepted echo creation, and gate activation when the echo and player occupy the two switches. No Android APK has been built or tested on a physical device. The source is an early game foundation, not a release-ready claim.
+GitHub Actions run 14 passed on both Godot 4.4.0 and 4.7.2 after the lifecycle-pause code and integration test were added ([run details](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40384700347)). The checks import/parse the project and run data-layer plus gameplay smoke tests, covering invalid echo-route rejection, accepted echo creation, gate activation, and automatic pause while preserving an active recording. No Android APK has been built or tested on a physical device. The source is an early game foundation, not a release-ready claim.
 
 ## Next work items
 
