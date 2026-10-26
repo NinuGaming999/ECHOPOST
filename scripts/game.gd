@@ -19,12 +19,15 @@ const ECHO_TRACK_SCRIPT = preload("res://scripts/core/echo_track.gd")
 const LEVEL_CATALOG = preload("res://scripts/data/level_catalog.gd")
 const LEVELS: Array[Dictionary] = LEVEL_CATALOG.LEVELS
 const PROGRESS_STORE = preload("res://scripts/data/progress_store.gd")
+const SETTINGS_STORE = preload("res://scripts/data/settings_store.gd")
 
 var screen_state: ScreenState = ScreenState.MENU
 var current_level_index: int = 0
 var unlocked_level: int = 0
 var rooms_completed: int = 0
 var collected_shards: PackedInt32Array = PackedInt32Array()
+var player_move_speed: float = MOVE_SPEED
+var left_handed_controls: bool = false
 var level_data: Dictionary = {}
 
 var player_position: Vector2 = Vector2(160, 365)
@@ -54,6 +57,15 @@ var game_hud: Control
 var complete_panel: Panel
 var help_panel: Panel
 var level_select_panel: Panel
+var memory_archive_panel: Panel
+var options_panel: Panel
+var memory_archive_status_label: Label
+var memory_archive_title_labels: Array[Label] = []
+var memory_archive_lore_labels: Array[Label] = []
+var speed_slow_button: Button
+var speed_normal_button: Button
+var speed_fast_button: Button
+var left_handed_button: Button
 var menu_progress_label: Label
 var level_title_label: Label
 var level_hint_label: Label
@@ -93,6 +105,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_create_stars()
 	_load_progress()
+	_load_settings()
 	_build_interface()
 	_show_menu()
 	queue_redraw()
@@ -158,7 +171,13 @@ func _input(event: InputEvent) -> void:
 
 
 func _is_joystick_area(point: Vector2) -> bool:
-	return point.x < 285.0 and point.y > size.y * 0.56 and not (point.y > 650.0 and point.x < 180.0)
+	if point.y <= size.y * 0.56:
+		return false
+	if left_handed_controls:
+		# Reserve the lower-right restart button area when the joystick is moved to the right.
+		return point.x > size.x - 285.0 and not (point.y > 650.0 and point.x > size.x - 300.0)
+	# Reserve the lower-left main-menu button area for the default left-side joystick.
+	return point.x < 285.0 and not (point.y > 650.0 and point.x < 180.0)
 
 
 func _update_joystick(point: Vector2) -> void:
@@ -180,6 +199,7 @@ func _build_interface() -> void:
 	_build_help_panel()
 	_build_level_select_panel()
 	_build_memory_archive_panel()
+	_build_options_panel()
 
 
 func _build_menu() -> void:
@@ -195,15 +215,17 @@ func _build_menu() -> void:
 	_make_label(menu_root, "Tagline", Vector2(180, 235), Vector2(920, 42), "EVERY PLAYER LEAVES A GHOST", 22, Color(0.39, 0.85, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
 	_make_label(menu_root, "Intro", Vector2(250, 280), Vector2(780, 58), "Record your movement. Let your echo hold the past\nwhile you find a way into the future.", 18, Color(0.70, 0.78, 0.88), HORIZONTAL_ALIGNMENT_CENTER)
 
-	start_button = _make_button(menu_root, "StartButton", Vector2(475, 375), Vector2(330, 58), "CONTINUE JOURNEY", Color(0.06, 0.45, 0.62), Color(0.08, 0.61, 0.78), 20)
+	start_button = _make_button(menu_root, "StartButton", Vector2(475, 348), Vector2(330, 54), "CONTINUE JOURNEY", Color(0.06, 0.45, 0.62), Color(0.08, 0.61, 0.78), 20)
 	start_button.pressed.connect(_on_start_pressed)
-	var chapters := _make_button(menu_root, "ChaptersButton", Vector2(475, 445), Vector2(330, 54), "CHAPTER SELECT", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 18)
+	var chapters := _make_button(menu_root, "ChaptersButton", Vector2(475, 409), Vector2(330, 50), "CHAPTER SELECT", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 17)
 	chapters.pressed.connect(_open_level_select)
-	var help := _make_button(menu_root, "HowToPlayButton", Vector2(475, 510), Vector2(330, 52), "HOW TO PLAY", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 18)
+	var help := _make_button(menu_root, "HowToPlayButton", Vector2(475, 466), Vector2(330, 48), "HOW TO PLAY", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 17)
 	help.pressed.connect(_open_help)
-	var archive := _make_button(menu_root, "MemoryArchiveButton", Vector2(475, 568), Vector2(330, 46), "MEMORY ARCHIVE", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 16)
+	var archive := _make_button(menu_root, "MemoryArchiveButton", Vector2(475, 520), Vector2(330, 42), "MEMORY ARCHIVE", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 15)
 	archive.pressed.connect(_open_memory_archive)
-	menu_progress_label = _make_label(menu_root, "Progress", Vector2(240, 621), Vector2(800, 28), "CHAMBERS DISCOVERED: 1 / 6   •   MEMORIES: 0 / 6", 14, Color(0.49, 0.61, 0.73), HORIZONTAL_ALIGNMENT_CENTER)
+	var options := _make_button(menu_root, "OptionsButton", Vector2(475, 567), Vector2(330, 42), "OPTIONS", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 16)
+	options.pressed.connect(_open_options)
+	menu_progress_label = _make_label(menu_root, "Progress", Vector2(240, 619), Vector2(800, 28), "CHAMBERS DISCOVERED: 1 / 6   •   MEMORIES: 0 / 6", 14, Color(0.49, 0.61, 0.73), HORIZONTAL_ALIGNMENT_CENTER)
 	_make_label(menu_root, "Version", Vector2(22, 688), Vector2(260, 22), "ECHOPOST  •  EARLY DEVELOPMENT BUILD", 10, Color(0.30, 0.42, 0.55), HORIZONTAL_ALIGNMENT_LEFT)
 
 
@@ -353,6 +375,79 @@ func _open_memory_archive() -> void:
 	memory_archive_panel.show()
 
 
+func _build_options_panel() -> void:
+	options_panel = _make_panel("OptionsPanel", Vector2(370, 155), Vector2(540, 410))
+	_make_label(options_panel, "OptionsTitle", Vector2(24, 18), Vector2(492, 42), "OPTIONS", 27, Color(0.88, 0.97, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	_make_label(options_panel, "SpeedLabel", Vector2(38, 73), Vector2(464, 30), "MOVEMENT SPEED", 16, Color(0.72, 0.83, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
+
+	speed_slow_button = _make_button(options_panel, "SpeedSlow", Vector2(36, 112), Vector2(145, 46), "SLOW", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 15)
+	speed_slow_button.pressed.connect(_set_move_speed.bind(200.0))
+	speed_normal_button = _make_button(options_panel, "SpeedNormal", Vector2(197, 112), Vector2(145, 46), "NORMAL", Color(0.06, 0.40, 0.55), Color(0.08, 0.56, 0.70), 15)
+	speed_normal_button.pressed.connect(_set_move_speed.bind(255.0))
+	speed_fast_button = _make_button(options_panel, "SpeedFast", Vector2(358, 112), Vector2(145, 46), "FAST", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 15)
+	speed_fast_button.pressed.connect(_set_move_speed.bind(310.0))
+
+	_make_label(options_panel, "SpeedHelp", Vector2(34, 164), Vector2(472, 34), "Changes how quickly the courier moves.", 13, Color(0.55, 0.68, 0.81), HORIZONTAL_ALIGNMENT_CENTER)
+	left_handed_button = _make_button(options_panel, "LeftHandedButton", Vector2(62, 218), Vector2(416, 48), "", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 15)
+	left_handed_button.pressed.connect(_toggle_left_handed_controls)
+	_make_label(options_panel, "HandedHelp", Vector2(35, 272), Vector2(470, 36), "Move the virtual joystick to the right or left side.", 12, Color(0.55, 0.68, 0.81), HORIZONTAL_ALIGNMENT_CENTER)
+
+	var back := _make_button(options_panel, "OptionsBack", Vector2(150, 340), Vector2(240, 44), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 15)
+	back.pressed.connect(func():
+		options_panel.hide()
+		menu_root.show()
+	)
+	options_panel.hide()
+	_update_options_panel()
+
+
+func _open_options() -> void:
+	_update_options_panel()
+	menu_root.hide()
+	options_panel.show()
+
+
+func _set_move_speed(speed: float) -> void:
+	player_move_speed = _normalize_move_speed(speed)
+	_save_settings()
+	_update_options_panel()
+	if screen_state == ScreenState.PLAYING:
+		status_message = "Movement speed updated."
+		_update_hud()
+	queue_redraw()
+
+
+func _normalize_move_speed(speed: float) -> float:
+	if is_equal_approx(speed, 200.0):
+		return 200.0
+	if is_equal_approx(speed, 310.0):
+		return 310.0
+	return 255.0
+
+
+func _toggle_left_handed_controls() -> void:
+	_set_left_handed_controls(not left_handed_controls)
+
+
+func _set_left_handed_controls(enabled: bool) -> void:
+	left_handed_controls = enabled
+	joystick_touch_index = -1
+	joystick_mouse_active = false
+	joystick_direction = Vector2.ZERO
+	_save_settings()
+	_update_options_panel()
+	queue_redraw()
+
+
+func _update_options_panel() -> void:
+	if not is_instance_valid(speed_slow_button):
+		return
+	speed_slow_button.text = "SLOW  ✓" if is_equal_approx(player_move_speed, 200.0) else "SLOW"
+	speed_normal_button.text = "NORMAL  ✓" if is_equal_approx(player_move_speed, 255.0) else "NORMAL"
+	speed_fast_button.text = "FAST  ✓" if is_equal_approx(player_move_speed, 310.0) else "FAST"
+	left_handed_button.text = "LEFT-HANDED JOYSTICK: ON" if left_handed_controls else "LEFT-HANDED JOYSTICK: OFF"
+
+
 func _update_memory_archive() -> void:
 	if not is_instance_valid(memory_archive_status_label):
 		return
@@ -441,6 +536,8 @@ func _show_menu() -> void:
 	joystick_direction = Vector2.ZERO
 	menu_root.show()
 	game_hud.hide()
+	if is_instance_valid(options_panel):
+		options_panel.hide()
 	complete_panel.hide()
 	help_panel.hide()
 	level_select_panel.hide()
@@ -482,6 +579,8 @@ func _start_level(level_index: int) -> void:
 	level_select_panel.hide()
 	if is_instance_valid(memory_archive_panel):
 		memory_archive_panel.hide()
+	if is_instance_valid(options_panel):
+		options_panel.hide()
 	pause_button.text = "PAUSE"
 	_update_hud()
 	queue_redraw()
@@ -542,7 +641,7 @@ func _update_player(delta: float) -> void:
 	var direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	if joystick_direction.length() > 0.12:
 		direction = joystick_direction
-	var next_position := player_position + direction * MOVE_SPEED * delta
+	var next_position := player_position + direction * player_move_speed * delta
 	next_position.x = clampf(next_position.x, ROOM_LEFT + PLAYER_RADIUS + 10.0, ROOM_RIGHT - PLAYER_RADIUS - 10.0)
 	next_position.y = clampf(next_position.y, ROOM_TOP + PLAYER_RADIUS + 13.0, ROOM_BOTTOM - PLAYER_RADIUS - 12.0)
 	var gate_block_x := GATE_X - PLAYER_RADIUS - 3.0
@@ -742,6 +841,18 @@ func _load_progress() -> void:
 	collected_shards = saved.get("collected_shards", PackedInt32Array())
 
 
+func _load_settings() -> void:
+	var settings: Dictionary = SETTINGS_STORE.load_settings()
+	player_move_speed = float(settings["move_speed"])
+	left_handed_controls = bool(settings["left_handed_controls"])
+
+
+func _save_settings() -> void:
+	var error: int = SETTINGS_STORE.save_settings(player_move_speed, left_handed_controls)
+	if error != OK:
+		push_warning("Could not save control settings. Error code: %s" % error)
+
+
 func _save_progress() -> void:
 	var error: int = PROGRESS_STORE.save_progress(unlocked_level, rooms_completed, PROGRESS_STORE.SAVE_PATH, collected_shards)
 	if error != OK:
@@ -813,7 +924,7 @@ func _draw_room() -> void:
 	if joystick_touch_index != -1 or joystick_mouse_active or joystick_direction.length() > 0.05:
 		_draw_joystick()
 	else:
-		var joystick_hint := Vector2(136, 555)
+		var joystick_hint := Vector2(size.x - 136.0 if left_handed_controls else 136.0, 555)
 		draw_circle(joystick_hint, 44.0, Color(0.12, 0.24, 0.34, 0.16))
 		draw_arc(joystick_hint, 44.0, 0, TAU, 40, Color(0.40, 0.72, 0.86, 0.27), 2.0, true)
 		draw_circle(joystick_hint, 17.0, Color(0.30, 0.78, 0.94, 0.14))
