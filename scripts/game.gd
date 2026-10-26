@@ -166,6 +166,10 @@ func _process(delta: float) -> void:
 	_update_echo(safe_delta)
 	hazard_time += safe_delta
 	_check_sentinel_collision()
+	if failure_reset_timer > 0.0:
+		# Do not continue puzzle evaluation on the same frame that caused failure.
+		queue_redraw()
+		return
 	_check_memory_shard_collection()
 	_update_timed_gate(safe_delta)
 	_check_puzzle_state()
