@@ -661,6 +661,37 @@ func _track_passes_waypoint(track: Variant, waypoint: Vector2, radius: float) ->
 	return _track_waypoint_progress(track, waypoint, radius, 0.0) >= 0.0
 
 
+func _is_relay_waypoint_linked(waypoint_index: int) -> bool:
+	var waypoints: Array = []
+	if level_data.has("echo_waypoints"):
+		waypoints = level_data["echo_waypoints"]
+	elif level_data.has("echo_waypoint"):
+		waypoints = [level_data["echo_waypoint"]]
+
+	if waypoint_index < 0 or waypoint_index >= waypoints.size():
+		return false
+
+	var route: Variant = null
+	if is_recording:
+		route = recording_track
+	elif echo_visible:
+		route = echo_track
+	if route == null:
+		return false
+
+	# A beacon is only considered linked after the route reaches it in sequence.
+	var minimum_route_progress := 0.0
+	for i in range(waypoint_index + 1):
+		var waypoint_value: Variant = waypoints[i]
+		if not (waypoint_value is Vector2):
+			return false
+		var route_progress := _track_waypoint_progress(route, waypoint_value, 40.0, minimum_route_progress)
+		if route_progress < 0.0:
+			return false
+		minimum_route_progress = route_progress + 0.0001
+	return true
+
+
 func _track_passes_waypoints_in_order(track: Variant, waypoints: Array, radius: float) -> bool:
 	if track.samples.is_empty() or waypoints.is_empty():
 		return false
@@ -971,11 +1002,19 @@ func _draw_room() -> void:
 	_draw_gate()
 	_draw_portal(Vector2(1170, 365), door_open)
 	if level_data.has("echo_waypoint"):
-		_draw_echo_waypoint(level_data["echo_waypoint"])
+		_draw_echo_waypoint(
+			level_data["echo_waypoint"],
+			"RELAY",
+			_is_relay_waypoint_linked(0)
+		)
 	if level_data.has("echo_waypoints"):
 		var relay_waypoints: Array = level_data["echo_waypoints"]
 		for relay_index in range(relay_waypoints.size()):
-			_draw_echo_waypoint(relay_waypoints[relay_index], "RELAY %d" % (relay_index + 1))
+			_draw_echo_waypoint(
+				relay_waypoints[relay_index],
+				"RELAY %d" % (relay_index + 1),
+				_is_relay_waypoint_linked(relay_index)
+			)
 	if level_data.has("memory_shard") and not collected_shards.has(current_level_index):
 		_draw_memory_shard(level_data["memory_shard"])
 
@@ -1018,20 +1057,24 @@ func _draw_room() -> void:
 
 
 
-func _draw_echo_waypoint(position: Vector2, label: String = "RELAY") -> void:
-	# Amber relay beacon: unlike Memory Shards, this marker is required to make the route valid.
-	draw_circle(position, 34.0, Color(1.0, 0.66, 0.25, 0.08))
-	draw_arc(position, 25.0, 0.0, TAU, 48, Color(1.0, 0.69, 0.30, 0.84), 2.5, true)
-	draw_arc(position, 15.0, 0.0, TAU, 48, Color(1.0, 0.83, 0.53, 0.65), 1.5, true)
+func _draw_echo_waypoint(position: Vector2, label: String = "RELAY", linked: bool = false) -> void:
+	# Amber means not reached; green means the current route has linked this checkpoint in order.
+	var glow := Color(0.24, 1.0, 0.72) if linked else Color(1.0, 0.66, 0.25)
+	draw_circle(position, 34.0, Color(glow.r, glow.g, glow.b, 0.10 if linked else 0.08))
+	draw_arc(position, 25.0, 0.0, TAU, 48, Color(glow.r, glow.g, glow.b, 0.92 if linked else 0.84), 2.5, true)
+	draw_arc(position, 15.0, 0.0, TAU, 48, Color(glow.r, glow.g, glow.b, 0.70 if linked else 0.65), 1.5, true)
 	var diamond := PackedVector2Array([
 		position + Vector2(0, -13),
 		position + Vector2(11, 0),
 		position + Vector2(0, 13),
 		position + Vector2(-11, 0),
 	])
-	draw_colored_polygon(diamond, Color(1.0, 0.66, 0.27, 0.94))
-	draw_polyline(PackedVector2Array([diamond[0], diamond[1], diamond[2], diamond[3], diamond[0]]), Color(1.0, 0.88, 0.62, 0.98), 1.5, true)
-	draw_string(ThemeDB.fallback_font, position + Vector2(20, 4), label, HORIZONTAL_ALIGNMENT_LEFT, 90, 11, Color(1.0, 0.80, 0.47))
+	draw_colored_polygon(diamond, Color(0.64, 1.0, 0.84, 0.97) if linked else Color(1.0, 0.66, 0.27, 0.94))
+	var outline := Color(0.91, 1.0, 0.96, 0.99) if linked else Color(1.0, 0.88, 0.62, 0.98)
+	draw_polyline(PackedVector2Array([diamond[0], diamond[1], diamond[2], diamond[3], diamond[0]]), outline, 1.5, true)
+	var beacon_label := label + " LINKED" if linked else label
+	var label_color := Color(0.42, 1.0, 0.77) if linked else Color(1.0, 0.80, 0.47)
+	draw_string(ThemeDB.fallback_font, position + Vector2(20, 4), beacon_label, HORIZONTAL_ALIGNMENT_LEFT, 130, 11, label_color)
 
 
 func _draw_memory_shard(position: Vector2) -> void:
