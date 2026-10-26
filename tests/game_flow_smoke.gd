@@ -23,6 +23,7 @@ func _run_tests() -> void:
 	_test_memory_shard_collection(game)
 	_test_memory_archive_ui(game)
 	_test_options_panel(game)
+	_test_echo_waypoint_requirement(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
@@ -332,6 +333,44 @@ func _test_options_panel(game: Control) -> void:
 	_check(not bool(panel.visible), "Returning from Options should hide the settings panel.")
 	_check(is_equal_approx(float(game.get("player_move_speed")), previous_speed), "The test should restore the original movement speed.")
 	_check(bool(game.get("left_handed_controls")) == previous_handedness, "The test should restore the original handedness preference.")
+
+
+
+func _test_echo_waypoint_requirement(game: Control) -> void:
+	game.call("_start_level", 5)
+	var room: Dictionary = game.get("level_data")
+	_check(room.has("echo_waypoint"), "Static Bloom should author a required relay beacon.")
+	var spawn: Vector2 = room["spawn"]
+	var waypoint: Vector2 = room["echo_waypoint"]
+	var plate_a: Vector2 = room["plate_a"]
+
+	# The direct spawn-to-A segment should be rejected because it does not pass the relay.
+	var direct_track = EchoTrackScript.new()
+	direct_track.add_sample(0.0, spawn)
+	direct_track.add_sample(2.0, plate_a)
+	game.set("recording_track", direct_track)
+	game.set("recording_elapsed", 2.0)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(not bool(game.get("echo_visible")), "A route that misses the required relay beacon must not create an echo.")
+	_check(str(game.get("status_message")).contains("RELAY BEACON"), "A rejected relay route should explain the missing beacon.")
+
+	# A route that crosses the beacon between its spawn and A samples should be accepted.
+	var relay_track = EchoTrackScript.new()
+	relay_track.add_sample(0.0, spawn)
+	relay_track.add_sample(1.0, waypoint)
+	relay_track.add_sample(2.0, plate_a)
+	game.set("recording_track", relay_track)
+	game.set("recording_elapsed", 2.0)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(bool(game.get("echo_visible")), "A route passing through the relay and ending on A should create an echo.")
+	_check(bool(game.get("echo_playing")), "An accepted relay route should begin echo playback.")
+	game.call("_start_level", 0)
 
 
 func _check(condition: bool, message: String) -> void:
