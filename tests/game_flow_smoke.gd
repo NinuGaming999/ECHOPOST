@@ -20,6 +20,9 @@ func _run_tests() -> void:
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
+	_test_lifecycle_pause(game)
+	game.call("_start_level", 0)
+
 	var invalid_track = EchoTrackScript.new()
 	invalid_track.add_sample(0.0, Vector2(160, 365))
 	invalid_track.add_sample(1.0, Vector2(845, 365))
@@ -60,6 +63,24 @@ func _run_tests() -> void:
 		push_error("ECHOPOST game-flow smoke tests failed: %d" % failures)
 		quit(1)
 
+
+
+func _test_lifecycle_pause(game: Control) -> void:
+	game.set("is_recording", true)
+	game.set("recording_elapsed", 1.25)
+	game.set("joystick_direction", Vector2.RIGHT)
+	game.call("_notification", Node.NOTIFICATION_APPLICATION_PAUSED)
+	_check(int(game.get("screen_state")) == 2, "Application suspension should pause active gameplay.")
+	_check(game.get("joystick_direction") == Vector2.ZERO, "Lifecycle pause should clear movement input.")
+	_check(bool(game.get("is_recording")), "Lifecycle pause should preserve an in-progress recording.")
+	_check(is_equal_approx(float(game.get("recording_elapsed")), 1.25), "Lifecycle pause should preserve recording time.")
+	game.call("_process", 1.0)
+	_check(is_equal_approx(float(game.get("recording_elapsed")), 1.25), "Game timers should not advance while paused.")
+	game.call("_notification", Node.NOTIFICATION_APPLICATION_RESUMED)
+	_check(int(game.get("screen_state")) == 2, "Returning to the app should not resume gameplay without player input.")
+	game.call("_on_pause_pressed")
+	_check(int(game.get("screen_state")) == 1, "The player should be able to resume gameplay explicitly.")
+	_check(not bool(game.get("joystick_mouse_active")), "Resume must not reactivate a stale joystick press.")
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:
