@@ -412,7 +412,7 @@ This function index matches source blob SHA `dd2d8d8b9bb9968095ee22a2a0ba35ae0c6
 - **L1045–L1048 — _room_requires_relay():** Identify chambers with required relay checkpoints.
 - **L1049–L1080 — _schedule_room_reset():** Clear the failed take, block input, show explanation and schedule same-room restart.
 - **L1081–L1092 — _check_sentinel_collision():** Sentinel contact cancels the take and triggers full room reset.
-- **L1103–L1140:** Memory Shard collection and timed-gate retry/crossing logic.
+- **L1093–L1129:** Memory Shard collection and timed-gate retry/crossing logic.
 - **L1130–L1171 — _check_puzzle_state():** Evaluate switches, latching, gate and portal completion.
 - **L1172–L1261:** Completion/save, pause, chapter navigation and menu progress.
 - **L1262–L1294 — _update_hud():** Dynamic status, button captions/disabled states during reset.
@@ -492,7 +492,7 @@ This function index matches source blob SHA `dd2d8d8b9bb9968095ee22a2a0ba35ae0c6
 - **L831–L850 — `_finish_failure_reset()`:** Advance countdown without input and assert the same room returns with failed recording/echo, gate and latch cleared.
 - **L851–L901 — `_test_premium_mobile_ui()`:** Touch-target sizing, shared button style, wide/compact viewport reflow, menu fit, control spacing and proportional joystick zones.
 - **L904–L907:** Assertion helper.
-- **L879–L882:** Assertion helper.
+
 
 
 ### `scenes/main.tscn` (13 lines)
