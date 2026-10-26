@@ -166,6 +166,24 @@ const LEVELS: Array[Dictionary] = [
 		"hazard_amplitude": 0.0,
 		"hazard_speed": 0.0,
 		"accent": Color(0.42, 0.82, 1.0)
+	},
+	{
+		"name": "Fracture Clock",
+		"subtitle": "THE ROUTE AND THE WINDOW",
+		"hint": "Cross RELAY 1, RELAY 2, then RELAY 3 before finishing on SWITCH A. When your echo holds A and you stand on B, the gate opens for 4.5 seconds—cross the barrier before it closes.",
+		"spawn": Vector2(150, 220),
+		"plate_a": Vector2(820, 500),
+		"plate_b": Vector2(1000, 220),
+		"echo_waypoints": [Vector2(300, 470), Vector2(470, 230), Vector2(650, 470)],
+		"memory_shard": Vector2(900, 310),
+		"shard_lore": "The clock and relay were built by different crews. Their final message survived only when every signal arrived before the gate fell silent.",
+		"linger": 9.0,
+		"gate_open_seconds": 4.5,
+		"hazard": false,
+		"hazard_y": 365.0,
+		"hazard_amplitude": 0.0,
+		"hazard_speed": 0.0,
+		"accent": Color(1.0, 0.55, 0.35)
 	}
 ]
 
