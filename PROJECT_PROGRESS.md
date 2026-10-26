@@ -19,7 +19,11 @@
 **Reverse-route assertion correction:** `5bacf273819e2a420f03f40468e5385b1e447733`  
 **Pulse Lock countdown visual:** `00f238cdc158a4ab8a6f141c1e1f930d412e78e6`  
 **Pulse Lock timer regression test:** `d8d67302b109c3e4336ee54863c831698ad31691`  
-**Main controller source blob for the exact line map below:** `c96db82800a0f7e43104a11041965342628b830d` (1210 lines)  
+**All-memory signal reward commit:** `dd11471aea0f87399f7a816304daaba3ac68df4b`  
+**Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
+**All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
+**Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
+**Main controller source blob for the exact line map below:** `81b5c3c8703fdad0d92cf7c66d91ff96b3c94053` (1217 lines)  
 **Status:** Early playable foundation / vertical slice — **not complete, not release-ready**.
 
 ---
@@ -50,6 +54,19 @@ The first five rooms teach the two-switch echo mechanic with varied geometry/pat
 The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon is the main external art asset. Procedural visuals keep the project importable without an asset pack but are placeholder art, not final art. Each chamber also has one optional Memory Shard that reveals a short courier-network lore fragment.
 
 ## 2. Latest work in this development pass
+
+### All-memory restored-signal reward and dynamic Archive count
+**Changed:** `scripts/game.gd`, `tests/game_flow_smoke.gd`, README and design/build/roadmap documentation.
+
+- `scripts/game.gd:L812–L829`: collecting the final uncollected Memory Shard changes the status from the ordinary `MEMORY:` lore message to `SIGNAL RESTORED` plus the final shard's lore. This reward is optional and does not affect gates, room completion or unlocks.
+- `scripts/game.gd:L454–L471`: Memory Archive now shows `SIGNAL RESTORED — ALL MEMORIES FOUND` when all room shards are collected; otherwise it shows the live recovered/total count.
+- `scripts/game.gd:L313–L372`: the Archive's initial status placeholder uses `LEVELS.size()` instead of a hard-coded six, keeping the UI compatible as the campaign grows.
+- `tests/game_flow_smoke.gd:L287–L316`: `_test_all_memories_restore_signal()` simulates collecting the final room's shard through the real pickup path, checks the message/Archive reward, then restores the player's original save values.
+- `tests/game_flow_smoke.gd:L319–L347`: Memory Archive UI test covers the normal count or restored-signal state and asserts the displayed denominator matches the live room count.
+- The reward source commit is `dd11471aea0f87399f7a816304daaba3ac68df4b`; the dynamic archive placeholder is `f900f967fa83f618e3615f423a9ef613f85bd71a`; the regression coverage is in `04be8ef22ca631b000d14b541bbce2ca0426b5b8` and `7531407e22c8a8068b4d62df90c190272713668d`.
+- [Godot CI run 140](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40398632047) passed on both Godot 4.4.0 and 4.7.2, including the full final-shard pickup path and Archive status checks.
+
+This is an optional exploration reward, not a paid gate. All eight rooms remain completable without collecting any Memory Shard.
 
 ### Ordered Relay feedback and Pulse Lock timed gate
 **Changed:** `scripts/data/level_catalog.gd`, `scripts/game.gd`, `tests/headless_smoke.gd`, and `tests/game_flow_smoke.gd`, plus README/design/roadmap/build-status documentation.
@@ -246,21 +263,21 @@ This change is covered by an automated headless integration test. It is **not ye
 
 ## 4. Exact source line map — `scripts/game.gd`
 
-This function index matches source blob SHA `c96db82800a0f7e43104a11041965342628b830d` (1210 lines). It is authoritative for the current source. Older code-line references inside the historical change notes above refer to their source state when that change was made.
+This function index matches source blob SHA `81b5c3c8703fdad0d92cf7c66d91ff96b3c94053` (1217 lines). It is authoritative for the current source. Older code-line references inside historical feature notes refer to the source revision at the time.
 
 - **L1–L4:** Script header and procedural-art note.
 - **L6:** `ScreenState` enum (MENU, PLAYING, PAUSED, COMPLETE).
 - **L8–L22:** Playfield bounds, player/record timers, EchoTrack/level/progress/settings preloads.
-- **L24–L31:** Campaign progress, collected Memory Shards, speed/handedness settings and current room data.
-- **L33–L48:** Player/echo state, tracks, recording timers, standard/timed-gate state and sentinel clock.
+- **L24–L31:** Campaign progress, collected Memory Shards, movement-speed/handedness preferences and current room data.
+- **L33–L48:** Player/echo positions, tracks, recording timers, standard/timed-gate state and sentinel clock.
 - **L50–L54:** Touch/mouse joystick state.
-- **L56–L80:** Dynamic menu/HUD, Archive/Options, labels, buttons and chapter references.
+- **L56–L80:** Menu/HUD, Archive/Options, labels, buttons and chapter references.
 - **L85–L89 — `_notification()`:** Handle application suspension/focus loss and delegate to lifecycle pause.
 - **L92–L102 — `_pause_for_lifecycle()`:** Pause only active play, clear stale joystick input, preserve recording state, and refresh HUD.
 - **L105–L113 — `_ready()`:** Set full-screen layout, seed decoration, load progress/settings, construct UI, and show the menu.
-- **L116–L140 — `_process()`:** Advance gameplay only while PLAYING; clamp delta and recording time, move/sample, update echo/hazard/shards/timed gate/puzzle, then redraw.
+- **L116–L140 — `_process()`:** Advance gameplay only while PLAYING; clamp delta/recording time, move/sample, update echo/hazard/shards/timed gate/puzzle, and redraw.
 - **L143–L173 — `_input()`:** Translate touchscreen and mouse gestures into virtual joystick input.
-- **L176–L183 — `_is_joystick_area()`:** Choose the virtual joystick hit area for left- or right-handed mode while preserving bottom-button space.
+- **L176–L183 — `_is_joystick_area()`:** Choose the virtual joystick hit area for the selected handedness while preserving bottom-button space.
 - **L186–L188 — `_update_joystick()`:** Convert pointer offset from joystick origin into normalized movement.
 - **L191–L195 — `_create_stars()`:** Generate stable decorative star positions.
 - **L198–L205 — `_build_interface()`:** Construct menu, HUD, completion, help, chapter, Memory Archive, and Options panels.
@@ -278,52 +295,52 @@ This function index matches source blob SHA `c96db82800a0f7e43104a11041965342628
 - **L431–L432 — `_toggle_left_handed_controls()`:** Flip joystick handedness.
 - **L435–L442 — `_set_left_handed_controls()`:** Apply handedness, cancel held input, save preferences, and redraw.
 - **L445–L451 — `_update_options_panel()`:** Mark selected speed and handedness in Options.
-- **L454–L468 — `_update_memory_archive()`:** Show collected lore or a find-the-shard hint for each chamber.
-- **L471–L485 — `_make_panel()`:** Shared panel style constructor.
-- **L488–L500 — `_make_label()`:** Shared label constructor and typography.
-- **L503–L531 — `_make_button()`:** Shared button constructor and state styling.
-- **L534–L550 — `_show_menu()`:** Return to menu, hide overlays, and clear transient recording/input state.
-- **L553–L554 — `_on_start_pressed()`:** Continue from the highest unlocked chamber.
-- **L557–L591 — `_start_level()`:** Reset room, echo, gate, recording and input state; show gameplay.
-- **L594–L610 — `_on_record_pressed()`:** Start recording or finish/send the current route.
-- **L613–L658 — `_finish_recording()`:** Enforce minimum duration, Switch A endpoint, single relay or ordered multi-relay requirements, then release a valid echo.
-- **L661–L662 — `_add_record_sample()`:** Append one time/position sample to the current take.
-- **L665–L666 — `_track_passes_waypoint()`:** Return whether a route reaches a single checkpoint within its radius.
-- **L669–L705 — `_is_relay_waypoint_linked()`:** Evaluate first crossing of all beacons so the linked indicator reflects valid path order.
-- **L708–L722 — `_track_passes_waypoints_in_order()`:** Require each ordered waypoint to be visited after the preceding checkpoint.
-- **L725–L757 — `_track_waypoint_progress()`:** Find the first eligible route progress where a sample-to-sample segment enters a checkpoint radius.
-- **L760–L770 — `_update_player()`:** Apply keyboard/joystick motion, clamp to room bounds, and block crossing a closed gate.
-- **L773–L785 — `_update_echo()`:** Advance echo interpolation and fade it after endpoint linger expires.
-- **L788–L806 — `_check_sentinel_collision()`:** Return player to spawn; cancel and clear unfinished take to prevent a fake teleport.
-- **L809–L822 — `_check_memory_shard_collection()`:** Collect each optional shard once, reveal lore, persist progress, and update Archive.
-- **L825–L839 — `_update_timed_gate()`:** Tick Pulse Lock only during gameplay; timeout closes before the barrier, latches a missed attempt, or preserves power after crossing.
-- **L842–L874 — `_check_puzzle_state()`:** Evaluate Switch A/B, timed-window/retry state and portal arrival.
-- **L877–L897 — `_complete_level()`:** Guard against duplicate completion, increment completion/unlock state, save and show completion panel.
-- **L900–L904 — `_on_next_level_pressed()`:** Advance to next chamber or restart campaign.
-- **L907–L908 — `_on_replay_pressed()`:** Restart current chamber from completion UI.
-- **L911–L912 — `_on_reset_pressed()`:** Restart current chamber.
-- **L915–L928 — `_on_pause_pressed()`:** Toggle manual pause/resume and clear stale joystick state.
-- **L931–L932 — `_open_help()`:** Show instructions.
-- **L935–L937 — `_open_level_select()`:** Refresh labels and show chapter selector.
-- **L940–L942 — `_on_chapter_selected()`:** Start only unlocked rooms.
-- **L945–L950 — `_update_chapter_buttons()`:** Refresh chapter labels and disabled states.
-- **L953–L960 — `_update_menu_progress()`:** Update room/memory totals, continue button and archive summary.
-- **L963–L986 — `_update_hud()`:** Refresh labels, recording controls, echo state, and Pulse Lock countdown.
-- **L989–L993 — `_load_progress()`:** Load campaign progress and collected shard indices.
-- **L996–L999 — `_load_settings()`:** Load movement speed and joystick-side preferences.
-- **L1002–L1005 — `_save_settings()`:** Persist preferences independently of campaign progress.
-- **L1008–L1011 — `_save_progress()`:** Save progress and collected shards; warn on failure.
-- **L1014–L1023 — `_draw()`:** Draw background then menu/gameplay and the paused overlay.
-- **L1026–L1032 — `_draw_menu_art()`:** Draw menu decorations and placeholder robots.
-- **L1035–L1103 — `_draw_room()`:** Draw switches, timed/standard gate, portal, linked-state relays, shard, hazard, route preview, actors and joystick hint.
-- **L1107–L1124 — `_draw_echo_waypoint()`:** Draw amber unlinked or green linked Relay Beacon marker and label.
-- **L1127–L1143 — `_draw_memory_shard()`:** Draw optional violet crystal.
-- **L1146–L1154 — `_draw_switch()`:** Draw switch and active/inactive indicator.
-- **L1157–L1168 — `_draw_gate()`:** Draw standard gate or amber timed-crossing state.
-- **L1171–L1177 — `_draw_portal()`:** Draw powered/unpowered exit portal.
-- **L1180–L1190 — `_draw_robot()`:** Draw procedural player/echo robot.
-- **L1193–L1199 — `_draw_joystick()`:** Draw active touch joystick.
-- **L1202–L1208 — `_draw_track_path()`:** Draw recorded samples as colored route line.
+- **L454–L471 — `_update_memory_archive()`:** Show collected lore or discovery hints, progress, and the restored-signal reward.
+- **L474–L488 — `_make_panel()`:** Shared panel style constructor.
+- **L491–L503 — `_make_label()`:** Shared label constructor and typography.
+- **L506–L534 — `_make_button()`:** Shared button constructor and state styling.
+- **L537–L553 — `_show_menu()`:** Return to menu, hide overlays, and clear transient recording/input state.
+- **L556–L557 — `_on_start_pressed()`:** Continue from the highest unlocked chamber.
+- **L560–L594 — `_start_level()`:** Reset room, echo, gate, recording and input state; show gameplay.
+- **L597–L613 — `_on_record_pressed()`:** Start recording or finish/send the current route.
+- **L616–L661 — `_finish_recording()`:** Enforce minimum duration, Switch A endpoint, single relay or ordered multi-relay requirements, then release a valid echo.
+- **L664–L665 — `_add_record_sample()`:** Append one time/position sample to the current take.
+- **L668–L669 — `_track_passes_waypoint()`:** Return whether a route reaches a single checkpoint within its radius.
+- **L672–L708 — `_is_relay_waypoint_linked()`:** Evaluate first crossings so linked indicators reflect valid relay order.
+- **L711–L725 — `_track_passes_waypoints_in_order()`:** Require each ordered waypoint to be visited after the preceding checkpoint.
+- **L728–L760 — `_track_waypoint_progress()`:** Find the first eligible route progress where a sample-to-sample segment enters a checkpoint radius.
+- **L763–L773 — `_update_player()`:** Apply keyboard/joystick motion, clamp to room bounds, and block crossing a closed gate.
+- **L776–L788 — `_update_echo()`:** Advance echo interpolation and fade it after endpoint linger expires.
+- **L791–L809 — `_check_sentinel_collision()`:** Return player to spawn; cancel and clear unfinished take to prevent a fake teleport.
+- **L812–L829 — `_check_memory_shard_collection()`:** Collect each optional shard once, reveal lore, persist progress, and announce SIGNAL RESTORED when the last memory is found.
+- **L832–L846 — `_update_timed_gate()`:** Tick Pulse Lock only during gameplay; timeout closes before the barrier, latches a missed attempt, or preserves power after crossing.
+- **L849–L881 — `_check_puzzle_state()`:** Evaluate Switch A/B, timed-window/retry state and portal arrival.
+- **L884–L904 — `_complete_level()`:** Guard against duplicate completion, increment completion/unlock state, save and show completion panel.
+- **L907–L911 — `_on_next_level_pressed()`:** Advance to next chamber or restart campaign.
+- **L914–L915 — `_on_replay_pressed()`:** Restart current chamber from completion UI.
+- **L918–L919 — `_on_reset_pressed()`:** Restart current chamber.
+- **L922–L935 — `_on_pause_pressed()`:** Toggle manual pause/resume and clear stale joystick state.
+- **L938–L939 — `_open_help()`:** Show instructions.
+- **L942–L944 — `_open_level_select()`:** Refresh labels and show chapter selector.
+- **L947–L949 — `_on_chapter_selected()`:** Start only unlocked rooms.
+- **L952–L957 — `_update_chapter_buttons()`:** Refresh chapter labels and disabled states.
+- **L960–L967 — `_update_menu_progress()`:** Update room/memory totals, continue button and archive summary.
+- **L970–L993 — `_update_hud()`:** Refresh labels, recording controls, echo state, and Pulse Lock countdown.
+- **L996–L1000 — `_load_progress()`:** Load campaign progress and collected shard indices.
+- **L1003–L1006 — `_load_settings()`:** Load movement speed and joystick-side preferences.
+- **L1009–L1012 — `_save_settings()`:** Persist preferences independently of campaign progress.
+- **L1015–L1018 — `_save_progress()`:** Save progress and collected shards; warn on failure.
+- **L1021–L1030 — `_draw()`:** Draw background then menu/gameplay and the paused overlay.
+- **L1033–L1039 — `_draw_menu_art()`:** Draw menu decorations and placeholder robots.
+- **L1042–L1110 — `_draw_room()`:** Draw switches, timed/standard gate, portal, linked-state relays, shard, hazard, route preview, actors and joystick hint.
+- **L1114–L1131 — `_draw_echo_waypoint()`:** Draw amber unlinked or green linked Relay Beacon marker and label.
+- **L1134–L1150 — `_draw_memory_shard()`:** Draw optional violet crystal.
+- **L1153–L1161 — `_draw_switch()`:** Draw switch and active/inactive indicator.
+- **L1164–L1175 — `_draw_gate()`:** Draw standard gate or amber timed-crossing state.
+- **L1178–L1184 — `_draw_portal()`:** Draw powered/unpowered exit portal.
+- **L1187–L1197 — `_draw_robot()`:** Draw procedural player/echo robot.
+- **L1200–L1206 — `_draw_joystick()`:** Draw active touch joystick.
+- **L1209–L1215 — `_draw_track_path()`:** Draw recorded samples as colored route line.
 
 ## 5. Exact line map — supporting scripts and tests
 
