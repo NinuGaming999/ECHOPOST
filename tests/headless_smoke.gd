@@ -48,7 +48,7 @@ func _test_echo_track() -> void:
 
 
 func _test_level_catalog() -> void:
-	_check(LevelCatalog.LEVELS.size() >= 11, "The early campaign should contain at least eleven chambers.")
+	_check(LevelCatalog.LEVELS.size() >= 12, "The early campaign should contain at least twelve chambers.")
 	_check(LevelCatalog.validate_levels().is_empty(), "The campaign catalog should pass its own level-data validator.")
 	var names_seen: Dictionary = {}
 	var relay_room_found := false
@@ -57,12 +57,25 @@ func _test_level_catalog() -> void:
 	var triple_relay_room_found := false
 	var triune_relay_room_found := false
 	var relay_timer_combo_found := false
+	var fracture_clock_room_found := false
+	var dead_air_room_found := false
+	var four_relay_hunt_found := false
 	for index in range(LevelCatalog.LEVELS.size()):
 		var level: Dictionary = LevelCatalog.get_level(index)
 		var level_name := str(level.get("name", ""))
 		if level_name == "Triune Relay":
 			triune_relay_room_found = true
 			_check(level.has("echo_waypoints") and level["echo_waypoints"] is Array and level["echo_waypoints"].size() == 3, "Triune Relay should define exactly three ordered checkpoints.")
+		if level_name == "Fracture Clock":
+			fracture_clock_room_found = true
+			_check(level.has("echo_waypoints") and level["echo_waypoints"] is Array and level["echo_waypoints"].size() == 3, "Fracture Clock should retain its three-relay route.")
+			_check(is_equal_approx(float(level.get("gate_open_seconds", 0.0)), 4.5), "Fracture Clock should retain its 4.5-second window.")
+		if level_name == "Dead Air Protocol":
+			dead_air_room_found = true
+			_check(level.has("echo_waypoints") and level["echo_waypoints"] is Array and level["echo_waypoints"].size() == 4, "Dead Air Protocol should define four ordered relays.")
+			_check(bool(level.get("hazard", false)), "Dead Air Protocol should keep its active sentinel.")
+			_check(is_equal_approx(float(level.get("gate_open_seconds", 0.0)), 2.2), "Dead Air Protocol should use a 2.2-second gate window.")
+			_check(is_equal_approx(float(level.get("linger", 0.0)), 6.5), "Dead Air Protocol should use its shorter 6.5-second echo linger.")
 		_check(not level_name.is_empty(), "Every chamber needs a non-empty name.")
 		_check(not names_seen.has(level_name), "Chamber names must be unique: %s" % level_name)
 		names_seen[level_name] = true
@@ -82,7 +95,9 @@ func _test_level_catalog() -> void:
 			timed_gate_room_found = true
 			if level.has("echo_waypoints") and level["echo_waypoints"] is Array and level["echo_waypoints"].size() >= 3:
 				relay_timer_combo_found = true
-				_check(str(level_name) == "Fracture Clock", "The room combining three relays and a timed gate should be named Fracture Clock.")
+				if bool(level.get("hazard", false)) and level["echo_waypoints"].size() >= 4:
+					four_relay_hunt_found = true
+					_check(str(level_name) == "Dead Air Protocol", "The four-relay sentinel/timed-gate challenge should be named Dead Air Protocol.")
 			var gate_duration: Variant = level["gate_open_seconds"]
 			_check(gate_duration is int or gate_duration is float, "Timed gate duration must be numeric.")
 			if gate_duration is int or gate_duration is float:
@@ -100,6 +115,9 @@ func _test_level_catalog() -> void:
 	_check(triple_relay_room_found, "The campaign should include a three-relay route challenge.")
 	_check(triune_relay_room_found, "The campaign should include Triune Relay as a named authored room.")
 	_check(relay_timer_combo_found, "The campaign should combine three ordered relays with a timed gate in at least one room.")
+	_check(fracture_clock_room_found, "The campaign should retain Fracture Clock as the three-relay timed-gate lesson.")
+	_check(dead_air_room_found, "The campaign should include the named Dead Air Protocol challenge.")
+	_check(four_relay_hunt_found, "The campaign should combine four ordered relays, an active sentinel, and a timed gate.")
 	var original_name := str(LevelCatalog.LEVELS[0]["name"])
 	var isolated_copy: Dictionary = LevelCatalog.get_level(0)
 	isolated_copy["name"] = "Changed only in this test copy"
