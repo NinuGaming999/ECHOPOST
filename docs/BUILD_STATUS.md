@@ -19,7 +19,7 @@
 
 ## Verification status
 
-The Godot project import/parse step and data-layer tests passed in GitHub Actions. The gameplay integration test is now included in the workflow; its latest run should be checked on the Actions page before treating it as verified. No Android APK has been built or tested on a physical device. The source is an early game foundation, not a release-ready claim.
+The latest GitHub Actions run passed the Godot project import/parse step, the data-layer smoke tests, and the main-scene gameplay integration tests. The integration checks confirm invalid echo-route rejection, accepted echo creation, and gate activation when the echo and player occupy the two switches. No Android APK has been built or tested on a physical device. The source is an early game foundation, not a release-ready claim.
 
 ## Next work items
 
