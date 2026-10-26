@@ -453,17 +453,18 @@ This function index matches source blob SHA `30343671f2d673b8a19de6fb3bc15e784fc
 - **L28–L31:** Return route duration.
 - **L34–L59:** Resolve position before/after route, interpolate between ordered points, and tolerate near-duplicate timestamps.
 
-### `scripts/data/level_catalog.gd` (324 lines, blob SHA `f19c6cbce0cbeb70e20615b759bdc54b4549ed2c`)
+### `scripts/data/level_catalog.gd` (342 lines, blob SHA `edc2baa845373366575a44a654227b1201008c8c`)
 - **L1–L3:** RefCounted catalog and purpose.
 - **L4–L152:** First nine room definitions, ending with Latch Protocol's toggle-style Switch B.
 - **L153–L169:** Triune Relay's tenth-room definition, including three ordered relay coordinates and optional Memory Shard lore.
 - **L170–L187:** Fracture Clock's eleventh-room definition, combining three ordered relays and a 4.5-second timed gate.
-- **L190–L199:** Defensive-copy level getter, room-count helper, and canonical validation entry point.
-- **L203–L218:** Validate nonempty campaigns, unique/nonblank names, required schema keys, core Vector2 positions, lore text and positive echo linger.
-- **L219–L236:** Validate single relay type, toggle-mode values, timed-gate duration type/range, and ordered-waypoint container type.
-- **L237–L269:** Validate room bounds, spawn-to-A and A-to-B separation, and Memory Shard/single-relay spacing from objectives.
-- **L270–L296:** Validate ordered relay arrays, each waypoint's type/bounds/objective separation, and separation between relay markers.
-- **L297–L323:** Validate sentinel patrol keys, height, sweep amplitude and speed.
+- **L188–L205:** Dead Air Protocol's twelfth-room definition, including four ordered relays, a fast sentinel, 6.5-second echo linger and 2.2-second timed gate.
+- **L208–L219:** Defensive-copy level getter, room-count helper and canonical validation entry points.
+- **L221–L250:** Validate nonempty campaigns, unique/nonblank names, required keys, core Vector2 positions, lore text and echo linger.
+- **L251–L287:** Validate toggle-mode values, timed-gate duration type/range, optional waypoint types/bounds, and spawn/Switch A/Switch B separation.
+- **L289–L304:** Validate Memory Shard and single Relay Beacon spacing from objectives.
+- **L305–L327:** Validate ordered relay arrays, every waypoint's type/bounds/objective separation, and separation between relay markers.
+- **L328–L341:** Validate sentinel patrol keys, height, sweep amplitude and speed.
 
 ### `scripts/data/progress_store.gd` (58 lines, blob SHA `c74c684bab3ca4e40b8ea49b995633b795c4974a`)
 - **L1–L5:** Local campaign save boundary and schema version 2.
