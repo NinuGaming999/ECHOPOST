@@ -23,7 +23,7 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Main controller source blob for the exact line map below:** `dd2d8d8b9bb9968095ee22a2a0ba35ae0c64c1e1` (1532 lines)  
+**Main controller source blob for the exact line map below:** `2bbfb07c528b73e128aaf795cebee146075c28ed` (1537 lines)  
 **Triune Relay level-data commit:** `48aa2ccd090f7cda6b74c8d8a9a0bbdd016d9e3d`  
 **Initial ten-room schema-test commit (before Fracture Clock):** `76cc6722aea77edc5bba938aa36318271645afc2`  
 **Three-relay gameplay test commit:** `9f08fae5aa9a7a8588a01cae3dcad86cad03ca55`  
@@ -84,13 +84,13 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 **Current feature pass. Changed:** `scripts/game.gd`, `tests/game_flow_smoke.gd`, README, design, roadmap and build-status docs.
 
 - `scripts/game.gd:L131–L180`: a pending failure reset gets its own short timer path, ignores movement/actions, and restarts the current room without another tap. Processing returns immediately on the frame a sentinel collision triggers failure, so puzzle/gate checks do not continue after death.
-- `scripts/game.gd:L866–L913`: in rooms with required relay(s), finishing away from Switch A, missing a single beacon, or visiting ordered relays out of sequence clears the attempt and schedules an automatic same-room reset. A short recording still asks the player to keep recording; non-relay endpoint mistakes remain retryable.
-- `scripts/game.gd:L1045–L1090`: `_room_requires_relay()` and `_schedule_room_reset()` centralize failure handling. A red SIGNAL LOST/relay-failure card explains why, disables the normal HUD, displays a shrinking reset bar, discards the unfinished take and resets the player position immediately; after 0.85 seconds, `_start_level(current_level_index)` restores the full room state.
-- `scripts/game.gd:L524–L649`: new failure-card UI, centered modal layout, responsive menu/HUD placement, a shared darker premium panel/button theme, larger bottom controls (54 design units) and a 48-unit pause target.
-- `scripts/game.gd:L693–L750`: common button style now has softened shadows, bordered states and short press/hover tweens. `L562–L655` reflows the menu, pause/status labels, bottom action row, joystick hint and modal panels when the viewport changes. `L219–L228` uses proportional joystick hit regions for either handedness.
-- `tests/game_flow_smoke.gd:L454–L490`, `L498–L545`, `L554–L603`, `L613–L670` and `L681–L769`: failure-reset assertions now cover single, two-, three- and four-relay routes plus sentinel collisions. `L831–L850` advances the timer without user input and verifies the same room returns with echo/recording/gate/latch reset. `L851–L901` checks mobile touch heights, viewport-driven anchoring and left/right joystick regions.
-- Initial reset commit: `ecc3243707091262f791fc700f1abf3d79e43ff0`; latest controller commit: `dc3700236c2cac22b2d2aaa16e7908a4640aebf4` (blob `dd2d8d8b9bb9968095ee22a2a0ba35ae0c64c1e1`, 1532 lines). Latest compact-UI regression commit: `0aa185ac46f37ca24f1baaad50d6fcbfb9f46940` (test blob `5b6bad9e2548e18184a917a24d60314714a42958`, 908 lines). Earlier implementation commits: `02687b13b3aae614acd4125cdb2d0dd2d19b6b5e`, `0d22550fd4518548b5243b565d5a074c566f1cda`, `453beb8e486c63c08502829aa8cc0304968db2f4`, `60b10923fe6196fa26edab18642ea240ee6f167d`, `81b18268e58f196432ea4c8a7fa47fedeccb2b98`.
-- README/design/roadmap/build-status doc commits: `242ab9a505ee5de4a796a1e21ebf367da767db16`, `522d4b591ec46b6ae7371d060475434b3e2eccf1`, `03e4a4f00d4b2be88c63e7470b50d942fe6bb53f`, and `c3f6a2cb42838b2ad51580b737fad81a80d842d`.
+- `scripts/game.gd:L871–L922`: in rooms with required relay(s), finishing away from Switch A, missing a single beacon, or visiting ordered relays out of sequence clears the attempt and schedules an automatic same-room reset. A short recording still asks the player to keep recording; non-relay endpoint mistakes remain retryable.
+- `scripts/game.gd:L1050–L1097`: `_room_requires_relay()` and `_schedule_room_reset()` centralize failure handling. A red SIGNAL LOST/relay-failure card explains why, disables the normal HUD, displays a shrinking reset bar, discards the unfinished take and resets the player position immediately; after 0.85 seconds, `_start_level(current_level_index)` restores the full room state.
+- `scripts/game.gd:L524–L654`: new failure-card UI, centered modal layout, responsive menu/HUD placement, a shared darker premium panel/button theme, larger bottom controls (54 design units) and a 48-unit pause target.
+- `scripts/game.gd:L698–L755`: common button style now has softened shadows, bordered states and short press/hover tweens. `L562–L660` reflows the menu, pause/status labels, bottom action row, joystick hint and modal panels when the viewport changes. `L219–L231` uses proportional joystick hit regions for either handedness.
+- `tests/game_flow_smoke.gd:L851–L903` checks mobile touch heights, viewport-driven anchoring, compact 960×540 menu layout, non-overlapping actions, centered animation pivots and left/right joystick regions.
+- Initial reset commit: `ecc3243707091262f791fc700f1abf3d79e43ff0`; latest controller commit: `e2f9b9a0adc876aca3a9527ebea2e95bcbcdf389` (blob `2bbfb07c528b73e128aaf795cebee146075c28ed`, 1537 lines). Latest mobile/reset test commit: `a12b494c2a3b65d454edaf6837cff4fcc06b408f` (blob `c20bf9e555759d5815001b4bef36e9e1583e81f1`, 910 lines). Earlier implementation commits: `02687b13b3aae614acd4125cdb2d0dd2d19b6b5e`, `0d22550fd4518548b5243b565d5a074c566f1cda`, `453beb8e486c63c08502829aa8cc0304968db2f4`, `60b10923fe6196fa26edab18642ea240ee6f167d`, and `81b18268e58f196432ea4c8a7fa47fedeccb2b98`.
+- README/design/roadmap/build-status doc commits: `5cfb07bec7396eecc0de548d8fe863b7214ba303`, `522d4b591ec46b6ae7371d060475434b3e2eccf1`, `03e4a4f00d4b2be88c63e7470b50d942fe6bb53f`, and `c3f6a2cb42838b2ad51580b737fad81a80d842d`.
 - **Verification:** the last known fully passing CI baseline is run 210, which predates this feature pass. The GitHub integration available here did not expose the latest push-triggered Actions check result, so the new code/tests are **not yet confirmed CI-green**. The controller was manually inspected for line-flow/return-state consistency, but a Godot editor/runtime is not available in this environment. Real-phone touch layout and visual quality still need manual QA.
 
 The automatic reset now treats sentinel death and relay sequence failure as a full room restart rather than leaving the player stranded in a partially failed state. The 0.85-second card is deliberately brief; playtesting should confirm its readability without making repeated failures feel slow.
@@ -381,45 +381,45 @@ This change is covered by an automated headless integration test. It is **not ye
 
 ## 4. Exact source line map — `scripts/game.gd`
 
-This function index matches source blob SHA `dd2d8d8b9bb9968095ee22a2a0ba35ae0c64c1e1` (1532 lines). It is authoritative for the current source. Older code-line references inside historical feature notes refer to the source revision at the time.
+This function index matches source blob SHA `2bbfb07c528b73e128aaf795cebee146075c28ed` (1537 lines). It is authoritative for the current source. Older code-line references inside historical feature notes refer to the source revision at the time.
 
 - **L1–L5:** Script header and movement, recording, and reset-transition constants.
 - **L7–L23:** Playfield bounds and preloaded echo/level/progress/settings dependencies.
 - **L25–L55:** Campaign state, echo/recording data, gate/sentinel state and pending-reset fields.
 - **L58–L91:** Menu/HUD, options/archive/failure panels, labels and gameplay controls.
-- **L94–L102 — _notification():** Defer responsive layout after viewport resize and pause after lifecycle focus-out.
-- **L104–L116 — _pause_for_lifecycle():** Pause active gameplay without interrupting a failure-reset sequence.
-- **L119–L128 — _ready():** Load saves/preferences, build UI, apply responsive layout, show menu.
-- **L131–L180 — _process():** Countdown/restart handling; stop frame evaluation when sentinel contact starts a reset.
-- **L180–L218 — _input():** Keyboard latch shortcut, touch/mouse joystick handling and movement events; input is ignored during reset.
-- **L219–L231 — _is_joystick_area():** Proportional left/right joystick zones and a protected bottom-action band.
+- **L94–L102 — `_notification()`:** Defer responsive layout after viewport resize and pause after lifecycle focus-out.
+- **L104–L116 — `_pause_for_lifecycle()`:** Pause active gameplay without interrupting a failure-reset sequence.
+- **L119–L128 — `_ready()`:** Load saves/preferences, build UI, apply responsive layout, show menu.
+- **L131–L180 — `_process()`:** Countdown/restart handling; stop frame evaluation when sentinel contact starts a reset.
+- **L180–L218 — `_input()`:** Keyboard latch shortcut, touch/mouse joystick handling and movement events; input is ignored during reset.
+- **L219–L231 — `_is_joystick_area()`:** Proportional left/right joystick zones and a protected bottom-action band.
 - **L232–L243:** Joystick movement normalization and deterministic star decoration.
-- **L244–L281 — _build_interface() / _build_menu():** Build screen panels and main menu.
-- **L282–L306 — _build_game_hud():** Header/status and pause/record/latch/restart/menu controls.
+- **L244–L281 — `_build_interface()` / `_build_menu()`:** Build screen panels and main menu.
+- **L282–L306 — `_build_game_hud()`:** Header/status and pause/record/latch/restart/menu controls.
 - **L307–L430:** Completion, Help, chapter select, Memory Archive and Options panels.
 - **L431–L523:** Options actions, settings persistence and archive status.
-- **L524–L561 — _build_failure_panel():** Failure reason/detail card and shrinking reset indicator.
-- **L562–L649 — _layout_responsive_ui():** Center/shrink menu text, compact-height menu stack, and compute a non-overlapping bottom action row.
-- **L650–L655 — _layout_centered_panels():** Recenter modals after viewport changes.
-- **L656–L692 — _make_panel() / _make_label():** Shared panel depth/radius/border and typography construction.
-- **L693–L750 — _make_button() / _animate_button():** Shared rounded/bordered states and short press/hover animations.
-- **L751–L777 — _show_menu() / _on_start_pressed():** Cancel pending reset and navigate from menu.
-- **L778–L819 — _start_level():** Initialize a clean chamber and clear pending reset state.
-- **L820–L865 — record/latch actions:** Start/finish a route or validate the toggle switch, guarding against input during reset.
-- **L866–L917 — _finish_recording():** Validate minimum duration, Switch A endpoint and single/ordered relay requirements; failed relay attempts schedule reset.
-- **L918–L1016:** Track sample insertion, relay linked state, ordered-waypoint progression and segment crossing tests.
-- **L1017–L1048:** Player/echo movement, linger behavior and relay-room detection.
-- **L1045–L1048 — _room_requires_relay():** Identify chambers with required relay checkpoints.
-- **L1049–L1080 — _schedule_room_reset():** Clear the failed take, block input, show explanation and schedule same-room restart.
-- **L1081–L1092 — _check_sentinel_collision():** Sentinel contact cancels the take and triggers full room reset.
-- **L1093–L1129:** Memory Shard collection and timed-gate retry/crossing logic.
-- **L1130–L1171 — _check_puzzle_state():** Evaluate switches, latching, gate and portal completion.
-- **L1172–L1261:** Completion/save, pause, chapter navigation and menu progress.
-- **L1262–L1294 — _update_hud():** Dynamic status, button captions/disabled states during reset.
-- **L1296–L1320:** Local campaign/settings load and save.
-- **L1320–L1347:** Background/menu art and gate-timer ratio.
-- **L1349–L1428 — _draw_room():** Room, switches, gate, portal, relays, shard, sentinel, echo trail and joystick hint.
-- **L1429–L1531:** Procedural relay, shard, switch, gate, portal, robot, joystick and route drawing.
+- **L524–L561 — `_build_failure_panel()`:** Failure reason/detail card and shrinking reset indicator.
+- **L562–L654 — `_layout_responsive_ui()`:** Center/shrink menu text, compact-height menu stack, resize/reflow bottom actions, keep animation pivots centered and prevent button overlap.
+- **L655–L660 — `_layout_centered_panels()`:** Recenter modals after viewport changes.
+- **L661–L697 — `_make_panel()` / `_make_label()`:** Shared panel depth/radius/border and typography construction.
+- **L698–L755 — `_make_button()` / `_animate_button()`:** Shared rounded/bordered states, subtle hover/press tweens and responsive animation pivots.
+- **L756–L782 — `_show_menu()` / `_on_start_pressed()`:** Cancel pending reset and navigate from menu.
+- **L783–L824 — `_start_level()`:** Initialize a clean chamber and clear pending reset state.
+- **L825–L870 — record/latch actions:** Start/finish route recording or validate toggle switch while guarding input during reset.
+- **L871–L922 — `_finish_recording()`:** Validate duration, Switch A endpoint and single/ordered relay requirements; failed routes in relay rooms schedule reset.
+- **L923–L1021:** Track samples, relay linked state, ordered waypoint progress and segment crossing tests.
+- **L1022–L1049:** Player/echo movement, linger behavior and relay-room detection.
+- **L1050–L1053 — `_room_requires_relay()`:** Identify rooms with required relay checkpoints.
+- **L1054–L1085 — `_schedule_room_reset()`:** Clear failed take, block input, show reason, and schedule a same-room restart.
+- **L1086–L1097 — `_check_sentinel_collision()`:** Sentinel contact cancels the take and triggers a full room reset.
+- **L1098–L1134:** Memory Shard collection and timed-gate retry/crossing logic.
+- **L1135–L1176 — `_check_puzzle_state()`:** Evaluate switches, latch state, gate and portal.
+- **L1177–L1266:** Completion/save, pause, chapter navigation and menu progress.
+- **L1267–L1300 — `_update_hud()`:** Refresh status/button captions and disable record while reset is pending.
+- **L1301–L1325:** Local campaign/settings load and save.
+- **L1326–L1353:** Background, menu art and gate-timer ratio.
+- **L1354–L1433 — `_draw_room()`:** Draw room, switches, gate, portal, relays, shard, sentinel, echo trail and joystick hint.
+- **L1434–L1536:** Procedural relay, shard, switch, gate, portal, robot, joystick and route drawing.
 
 ## 5. Exact line map — supporting scripts and tests
 
@@ -468,7 +468,7 @@ This function index matches source blob SHA `dd2d8d8b9bb9968095ee22a2a0ba35ae0c6
 - **L194–L215:** Verify settings defaults, preference persistence, handedness and speed normalization.
 - **L217–L220:** Assertion helper.
 
-### `tests/game_flow_smoke.gd` (908 lines, blob SHA `5b6bad9e2548e18184a917a24d60314714a42958`)
+### `tests/game_flow_smoke.gd` (910 lines, blob SHA `c20bf9e555759d5815001b4bef36e9e1583e81f1`)
 - **L1–L10:** Integration harness, main scene, relay/level/progress preloads.
 - **L13–L88:** Run the UI/reset tests and complete puzzle-flow suite.
 - **L91–L110:** Lifecycle pause preserves recording and freezes recording/gate time.
@@ -490,8 +490,8 @@ This function index matches source blob SHA `dd2d8d8b9bb9968095ee22a2a0ba35ae0c6
 - **L681–L770:** Dead Air Protocol validates invalid/valid four-relay sequence, 1.8-second gate/timeout, plus full room reset on relay failure and sentinel contact.
 - **L771–L830:** Pulse Lock start/countdown bar, real-frame countdown, pause freeze, timeout/rearm/retry and crossing.
 - **L831–L850 — `_finish_failure_reset()`:** Advance countdown without input and assert the same room returns with failed recording/echo, gate and latch cleared.
-- **L851–L901 — `_test_premium_mobile_ui()`:** Touch-target sizing, shared button style, wide/compact viewport reflow, menu fit, control spacing and proportional joystick zones.
-- **L904–L907:** Assertion helper.
+- **L851–L903 — `_test_premium_mobile_ui()`:** Touch-target sizing, shared button style, wide/compact viewport reflow, menu fit, control spacing, centered animation pivots and proportional joystick zones.
+- **L906–L909:** Assertion helper.
 
 
 
