@@ -357,10 +357,12 @@ func _test_echo_waypoint_requirement(game: Control) -> void:
 	_check(not bool(game.get("echo_visible")), "A route that misses the required relay beacon must not create an echo.")
 	_check(str(game.get("status_message")).contains("RELAY BEACON"), "A rejected relay route should explain the missing beacon.")
 
-	# A route that crosses the beacon between its spawn and A samples should be accepted.
+	# The beacon should count even when the player only passes near it between sampled points.
+	# Neither segment endpoint is the beacon itself; the segment's closest point is inside its radius.
 	var relay_track = EchoTrackScript.new()
 	relay_track.add_sample(0.0, spawn)
-	relay_track.add_sample(1.0, waypoint)
+	relay_track.add_sample(0.7, Vector2(300, 300))
+	relay_track.add_sample(1.3, Vector2(460, 220))
 	relay_track.add_sample(2.0, plate_a)
 	game.set("recording_track", relay_track)
 	game.set("recording_elapsed", 2.0)
