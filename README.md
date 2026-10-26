@@ -6,7 +6,7 @@
 
 This repository is the long-term home of the full game. The current source implements an early playable slice: keyboard/touch movement, recording/playback echoes with endpoint validation, an amber live route preview, pressure switches, gates/exits, six chamber layouts, roaming sentinels, optional Memory Shards with lore fragments, scrollable chapter selection, chapter unlocks, versioned local save data, and procedural graphics so it runs without external art assets.
 
-> **Development status:** Early development. Automated Godot CI parses the project and runs smoke tests on every push and pull request. Production art/audio, accessibility options, online echo sharing, and Android release packaging remain future work.
+> **Development status:** Early development. Automated Godot CI parses the project and runs smoke tests on every push and pull request. Production art/audio, broader accessibility options, online echo sharing, and Android release packaging remain future work.
 
 ## Run the game
 
@@ -23,6 +23,7 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 - **Record Echo:** begin recording your route; press again to release the echo.
 - **Restart Room:** restart the current puzzle.
 - **Pause:** freeze or resume play.
+- **Options:** choose slow/normal/fast movement and put the virtual joystick on the right for left-handed play.
 - **Touch:** use the on-screen virtual joystick and buttons.
 
 ## Core puzzle
@@ -44,6 +45,7 @@ ECHOPOST/
 ├── scripts/core/echo_track.gd
 ├── scripts/data/level_catalog.gd
 ├── scripts/data/progress_store.gd
+├── scripts/data/settings_store.gd
 ├── assets/echopost_icon.svg
 ├── tests/headless_smoke.gd
 ├── tests/game_flow_smoke.gd
@@ -66,7 +68,7 @@ godot --headless --path . --script res://tests/headless_smoke.gd
 godot --headless --path . --script res://tests/game_flow_smoke.gd
 ```
 
-On Windows, run `RUN_TESTS.bat`. The data tests cover echo-track timing/interpolation, campaign validation, and save/load boundaries. The gameplay integration test verifies recording limits, short-recording feedback, sentinel resets, restart cleanup, idempotent portal completion with save restoration, valid/invalid routes, chapter scrolling, echo creation, gate activation, and lifecycle pause. GitHub Actions installs Godot and runs these tests on each push and pull request. See `PROJECT_PROGRESS.md` for the exact source map, known gaps, recent CI results, and next tasks.
+On Windows, run `RUN_TESTS.bat`. The data tests cover echo-track timing/interpolation, campaign validation, and save/load boundaries. The data smoke tests also verify that control preferences save independently from campaign progress. The gameplay integration test verifies recording limits, short-recording feedback, sentinel resets, restart cleanup, idempotent portal completion with save restoration, chapter/archive/options layouts, Memory Shard lore persistence, valid/invalid routes, echo creation, gate activation, and lifecycle pause. GitHub Actions installs Godot and runs these tests on each push and pull request. See `PROJECT_PROGRESS.md` for the exact source map, known gaps, recent CI results, and next tasks.
 
 ## Android
 
@@ -74,7 +76,7 @@ The project is configured for a landscape 1280×720 viewport and the Compatibili
 
 ## Saves
 
-Progress is stored locally at `user://echopost_save.cfg`. Cloud save and online echo-sharing features are future milestones. See `docs/ROADMAP.md` and `docs/GAME_DESIGN.md`.
+Campaign progress and collected memories are stored at `user://echopost_save.cfg`. Control preferences are stored separately at `user://echopost_settings.cfg`, so changing speed or joystick side does not reset progress. Cloud save and online echo-sharing features are future milestones. See `docs/ROADMAP.md` and `docs/GAME_DESIGN.md`.
 
 ## Contributing
 
