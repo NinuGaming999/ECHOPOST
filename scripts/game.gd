@@ -616,19 +616,29 @@ func _layout_responsive_ui() -> void:
 					intro.size.y = 42.0
 					intro.add_theme_font_size_override("font_size", clampi(roundi(13.0 * width_scale), 10, 13))
 				var ultra_top := 136.0
-				var ultra_gap := 50.0
+				var column_width := (size.x - 48.0) * 0.5
+				var row_heights: Array[float] = [0.0, 0.0, 0.0]
 				for i in range(compact_button_names.size()):
 					var ultra_button := menu_root.get_node_or_null(compact_button_names[i]) as Button
 					if ultra_button == null:
 						continue
 					var column := i % 2
-					# Cast explicitly: integer division has differed across Godot versions.
-					# Every pair must share a row, otherwise the staggered buttons overlap.
 					var row_index := floori(float(i) / 2.0)
-					var column_width := (size.x - 48.0) * 0.5
 					ultra_button.size = Vector2(column_width, 44.0)
-					ultra_button.position = Vector2(16.0 + float(column) * (column_width + 16.0), ultra_top + float(row_index) * ultra_gap)
+					ultra_button.position = Vector2(16.0 + float(column) * (column_width + 16.0), ultra_top)
 					ultra_button.pivot_offset = ultra_button.size * 0.5
+					# Godot's theme can enforce a taller real minimum than the requested
+					# size. Measure it so the following row never overlaps on any version.
+					row_heights[row_index] = maxf(row_heights[row_index], ultra_button.size.y)
+				var row_y := ultra_top
+				for row_index in range(row_heights.size()):
+					for i in range(compact_button_names.size()):
+						if floori(float(i) / 2.0) != row_index:
+							continue
+						var row_button := menu_root.get_node_or_null(compact_button_names[i]) as Button
+						if row_button != null:
+							row_button.position.y = row_y
+					row_y += row_heights[row_index] + 6.0
 				if progress != null:
 					progress.position.y = size.y - 24.0
 					progress.size.y = 20.0
