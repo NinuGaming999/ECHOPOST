@@ -958,6 +958,27 @@ func _test_premium_mobile_ui(game: Control) -> void:
 				var first_rect := Rect2(compact_buttons[i].position, compact_buttons[i].size)
 				var second_rect := Rect2(compact_buttons[j].position, compact_buttons[j].size)
 				_check(not first_rect.intersects(second_rect), "Compact menu overlap at %s: %s %s vs %s %s." % [str(compact_size), ultra_names[i], str(first_rect), ultra_names[j], str(second_rect)])
+
+	# The gameplay HUD shares the bottom row with navigation buttons; validate
+	# that narrower viewports do not allow theme-derived button sizes to collide.
+	var gameplay_hud := game.get("game_hud") as Control
+	var hud_menu := gameplay_hud.get_node("MenuButton") as Button
+	var hud_reset := gameplay_hud.get_node("ResetButton") as Button
+	var hud_record := game.get("record_button") as Button
+	var hud_latch := game.get("latch_switch_button") as Button
+	var hud_sizes: Array[Vector2] = [Vector2(640, 360), Vector2(720, 360), Vector2(800, 320)]
+	for hud_size in hud_sizes:
+		game.size = hud_size
+		game.call("_layout_responsive_ui")
+		var hud_buttons: Array[Button] = [hud_menu, hud_record, hud_latch, hud_reset]
+		for hud_button in hud_buttons:
+			_check(hud_button.position.x >= 0.0 and hud_button.position.x + hud_button.size.x <= game.size.x, "Gameplay HUD control must fit the viewport at %s: %s." % [str(hud_size), hud_button.name])
+			_check(is_equal_approx(hud_button.position.y, game.size.y - 66.0), "Gameplay HUD controls should keep a consistent bottom inset at %s." % str(hud_size))
+		for i in range(hud_buttons.size()):
+			for j in range(i + 1, hud_buttons.size()):
+				var first_hud_rect := Rect2(hud_buttons[i].position, hud_buttons[i].size)
+				var second_hud_rect := Rect2(hud_buttons[j].position, hud_buttons[j].size)
+				_check(not first_hud_rect.intersects(second_hud_rect), "Gameplay HUD overlap at %s: %s %s vs %s %s." % [str(hud_size), hud_buttons[i].name, str(first_hud_rect), hud_buttons[j].name, str(second_hud_rect)])
 	game.size = Vector2(1280, 720)
 	game.call("_layout_responsive_ui")
 	game.call("_set_left_handed_controls", previous_handedness)
