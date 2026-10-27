@@ -90,7 +90,7 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 - `scripts/game.gd`: `_layout_responsive_ui()` now switches to a two-column, three-row menu when viewport height is below 420 design units. The five navigation actions retain 42-unit touch heights, remain within the horizontal viewport, and sit above the progress indicator. Title, tagline and intro typography also compress for this layout.
 - The small-build version label is hidden to free space and explicitly shown again after resizing to a taller viewport.
 - `tests/game_flow_smoke.gd`: adds an 800×360 regression case that checks all five buttons stay within the viewport, remain above the progress line, retain at least 40 units of height, and do not overlap each other.
-- Source commit: [`fb6fea8677ba828901d4513bc18a0059e60d7161`](https://github.com/NinuGaming999/ECHOPOST/commit/fb6fea8677ba828901d4513bc18a0059e60d7161). Regression-test commit: [`a760a8c5f8fc7cb2d65f09c41f18f38e52012ddf`](https://github.com/NinuGaming999/ECHOPOST/commit/a760a8c5f8fc7cb2d65f09c41f18f38e52012ddf).
+- Source layout commit: [`ae8d5326e04de874bca10792dd2ea7d8ce4159c4`](https://github.com/NinuGaming999/ECHOPOST/commit/ae8d5326e04de874bca10792dd2ea7d8ce4159c4). Regression-test commit: [`78010845b900a065eb57b12c8c4b7aa4c3135198`](https://github.com/NinuGaming999/ECHOPOST/commit/78010845b900a065eb57b12c8c4b7aa4c3135198).
 - **Verification boundary:** regression assertions are committed, but no passing CI result has been confirmed for these two commits yet. Do not describe this change as tested until the Godot 4.4.0 and 4.7.2 workflow completes successfully.
 
 ### October 27, 2026 — Android export recovery and mobile-layout CI failures fixed
