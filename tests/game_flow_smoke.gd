@@ -928,6 +928,36 @@ func _test_premium_mobile_ui(game: Control) -> void:
 			var first_rect := Rect2(ultra_buttons[i].position, ultra_buttons[i].size)
 			var second_rect := Rect2(ultra_buttons[j].position, ultra_buttons[j].size)
 			_check(not first_rect.intersects(second_rect), "Ultra-compact menu overlap: %s %s vs %s %s." % [ultra_names[i], str(first_rect), ultra_names[j], str(second_rect)])
+
+	# Recheck narrower and shorter landscape shapes. The intro should be reclaimed
+	# below 340 units, and the progress line hidden only when there is no safe room.
+	var compact_test_sizes: Array[Vector2] = [
+		Vector2(640, 360),
+		Vector2(800, 320),
+		Vector2(800, 280),
+		Vector2(800, 260)
+	]
+	for compact_size in compact_test_sizes:
+		game.size = compact_size
+		game.call("_layout_responsive_ui")
+		var compact_progress := ultra_menu.get_node("Progress") as Label
+		var compact_intro := ultra_menu.get_node("Intro") as Label
+		_check(compact_intro.visible == (compact_size.y >= 340.0), "Compact menu intro visibility must adapt to the available height.")
+		_check(compact_progress.visible == (compact_size.y >= 280.0), "Compact menu progress should hide only when the screen is too short.")
+		var compact_buttons: Array[Button] = []
+		for button_name in ultra_names:
+			var compact_button := ultra_menu.get_node(button_name) as Button
+			compact_buttons.append(compact_button)
+			_check(compact_button.position.x >= 0.0 and compact_button.position.x + compact_button.size.x <= game.size.x, "Compact menu button must stay inside viewport width at %s." % str(compact_size))
+			_check(compact_button.position.y >= 0.0 and compact_button.position.y + compact_button.size.y <= game.size.y, "Compact menu button must stay inside viewport height at %s." % str(compact_size))
+			if compact_progress.visible:
+				_check(compact_button.position.y + compact_button.size.y <= compact_progress.position.y, "Compact menu button must stay above progress at %s." % str(compact_size))
+			_check(compact_button.size.y >= 40.0, "Compact menu button must retain a usable touch height at %s." % str(compact_size))
+		for i in range(compact_buttons.size()):
+			for j in range(i + 1, compact_buttons.size()):
+				var first_rect := Rect2(compact_buttons[i].position, compact_buttons[i].size)
+				var second_rect := Rect2(compact_buttons[j].position, compact_buttons[j].size)
+				_check(not first_rect.intersects(second_rect), "Compact menu overlap at %s: %s %s vs %s %s." % [str(compact_size), ultra_names[i], str(first_rect), ultra_names[j], str(second_rect)])
 	game.size = Vector2(1280, 720)
 	game.call("_layout_responsive_ui")
 	game.call("_set_left_handed_controls", previous_handedness)
