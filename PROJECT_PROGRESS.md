@@ -1,6 +1,6 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
-> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current twelve-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
+> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current thirteen-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
 
 **Repository:** https://github.com/NinuGaming999/ECHOPOST  
 **Working branch:** `main`  
@@ -23,12 +23,16 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Current main controller source blob for the exact line map below:** `f32bec40288de7c5ed62c1cec697adc97db4923a` (1614 lines)  
-**Current gameplay regression-test blob:** `d44d06f1b7eb8d671c373d73140e4866f4f4332f` (991 lines)  
-**Narrow gameplay HUD layout fix commit:** [`c916a86d2ce1e911a33762fa474d270e50f75644`](https://github.com/NinuGaming999/ECHOPOST/commit/c916a86d2ce1e911a33762fa474d270e50f75644)  
-**HUD overlap regression-test commit:** [`e60e235282b16209670a2a675df7339e2f8d1bb4`](https://github.com/NinuGaming999/ECHOPOST/commit/e60e235282b16209670a2a675df7339e2f8d1bb4)  
-**Latest verified Godot CI:** [run 40548485659](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40548485659) passed Godot 4.4.0 and 4.7.2.  
-**Latest Android APK export:** [run 40548485495](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40548485495) succeeded and refreshed nightly APK from source/test commit `e60e235282b16209670a2a675df7339e2f8d1bb4`.  
+**Current main controller source blob for the exact line map below:** `e207974c69a601907bf1a4793f46ed103d849b7f` (1642 lines)  
+**Current gameplay regression-test blob:** `8dfaff640af027beba07ea700be5b2971e0e3afa` (1038 lines)  
+**Current level catalog blob:** `b36787a5440912eafb7b800331e890ab3c51d74e` (382 lines)  
+**Current data smoke-test blob:** `75df36b96e483b5db939297939fe9702226c7399` (233 lines)  
+**Null Corridor level data/validator commit:** [`96d29593ff0d613bc838bc9d9673072272973893`](https://github.com/NinuGaming999/ECHOPOST/commit/96d29593ff0d613bc838bc9d9673072272973893)  
+**Echo-jammer runtime/rendering commit:** [`9edd2f74ce9008ea13b5c001ef222bc7f44f0698`](https://github.com/NinuGaming999/ECHOPOST/commit/9edd2f74ce9008ea13b5c001ef222bc7f44f0698)  
+**Jammer schema-test commit:** [`8e81c985b2b95a98a03313f8cc4467165818c571`](https://github.com/NinuGaming999/ECHOPOST/commit/8e81c985b2b95a98a03313f8cc4467165818c571)  
+**Jammer gameplay-test commit/current main tip:** [`0fa845518310f1d022af98bbc219a96c58a5d48b`](https://github.com/NinuGaming999/ECHOPOST/commit/0fa845518310f1d022af98bbc219a96c58a5d48b)  
+**Latest verified Godot CI for this feature:** [run 40550158187](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40550158187) passed on Godot 4.4.0 and 4.7.2.  
+**Latest Android APK export for this feature:** [run 40550158280](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40550158280) succeeded and refreshed the nightly APK at the same code/test commit.  
 **Android ETC2/ASTC export fix commit:** `e713071219c15d514e0552c099437c265e22b4e2`  
 **Triune Relay level-data commit:** `48aa2ccd090f7cda6b74c8d8a9a0bbdd016d9e3d`  
 **Initial ten-room schema-test commit (before Fracture Clock):** `76cc6722aea77edc5bba938aa36318271645afc2`  
@@ -66,7 +70,7 @@ ECHOPOST is a mobile-first 2D puzzle adventure about recording a route and letti
 5. The two switches open the gate; reaching the portal completes the chamber.
 6. Campaign progress is saved locally and the next chamber unlocks.
 
-The current source includes twelve authored chamber layouts:
+The current source includes thirteen authored chamber layouts:
 - **The First Echo:** basic teach-the-mechanic chamber.
 - **Long Memory:** roaming sentinel and a more distant Switch B.
 - **Split Signal:** faster/larger sentinel movement and opposite-side switches.
@@ -79,12 +83,27 @@ The current source includes twelve authored chamber layouts:
 - **Triune Relay:** three Relay Beacons must be crossed in order before Switch A.
 - **Fracture Clock:** combines three ordered relays with a 4.5-second timed gate crossing.
 - **Dead Air Protocol:** four ordered relays, a fast sentinel that can erase the recording, 6.5 seconds of echo linger, Switch B farther back at x=850, and a 1.8-second gate window.
+- **Null Corridor:** a 105-unit purple echo-only jammer rejects any recording whose line segments enter the field. The direct spawn-to-Switch-A route is blocked; a curved route above the field is accepted. The live player can cross the jammer without a collision.
 
-The first five rooms teach the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces a single required gold Relay Beacon; Chorus Route requires two beacons in order; Pulse Lock adds a timed crossing and retry rule; Latch Protocol adds a toggle switch; Triune Relay extends ordered route planning to three checkpoints; Fracture Clock combines the three-relay sequence with a timed crossing; Dead Air Protocol combines four relays, active sentinel evasion and a short timed gate. Relay tests check line segments between samples, so a crossing between samples is valid. Twelve rooms are still a prototype, not a finished campaign.
+The first five rooms teach the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces a single required gold Relay Beacon; Chorus Route requires two beacons in order; Pulse Lock adds a timed crossing and retry rule; Latch Protocol adds a toggle switch; Triune Relay extends ordered route planning to three checkpoints; Fracture Clock combines the three-relay sequence with a timed crossing; Dead Air Protocol combines four relays, active sentinel evasion and a short timed gate. Relay tests check line segments between samples, so a crossing between samples is valid. Thirteen rooms are still a prototype, not a finished campaign.
 
 The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon is the main external art asset. Procedural visuals keep the project importable without an asset pack but are placeholder art, not final art. Each chamber also has one optional Memory Shard that reveals a short courier-network lore fragment.
 
 ## 2. Latest work in this development pass
+
+### October 27, 2026 — Null Corridor: echo-only jammer puzzle
+
+**Scope:** introduce a route-geometry mechanic that changes how recorded movement is planned, without adding another timer or changing the real player's movement rules.
+
+- `scripts/data/level_catalog.gd:L206–L224`: the thirteenth chamber, **Null Corridor**, defines spawn (150, 500), Switch A (920, 500), Switch B (1060, 220), a purple jammer at (520, 470), radius 105, a Memory Shard, and a new lore fragment. The direct route from spawn to A crosses the jammer; the intended valid route curves through the upper part of the room.
+- `scripts/data/level_catalog.gd:L289–L316`: the schema validator checks the jammer position type, requires a numeric radius paired with a position, limits radius to 40–180 units, requires separation from spawn/switches/shard, and applies normal room-bound checks.
+- `scripts/game.gd:L948–L1009`: `_finish_recording()` rejects a route if any recorded line segment comes within the jammer radius using the existing nearest-point route checker. It clears the echo/take, explains **ECHO DEAD ZONE**, and schedules the same-room reset with reason **ECHO JAMMED**. The live robot itself is not collision-tested against the jammer.
+- `scripts/game.gd:L1441–L1538`: the room renderer draws a dark violet field, two rings, a core marker and an **ECHO DEAD ZONE** label. During recording, a route that crosses the jammer changes from amber to red so the player can see the mistake before sending.
+- `tests/headless_smoke.gd:L50–L161`: asserts the thirteen-room campaign, Null Corridor metadata and jammer radius, and rejects malformed jammer position/radius drafts.
+- `tests/game_flow_smoke.gd:L772–L815`: confirms the direct route intersects the field, fails to release an echo and schedules an automatic reset; after reset, a curved route through (330, 300) and (700, 300) stays outside the field and creates a working echo.
+- Data commit: [`96d29593ff0d613bc838bc9d9673072272973893`](https://github.com/NinuGaming999/ECHOPOST/commit/96d29593ff0d613bc838bc9d9673072272973893); gameplay/render commit: [`9edd2f74ce9008ea13b5c001ef222bc7f44f0698`](https://github.com/NinuGaming999/ECHOPOST/commit/9edd2f74ce9008ea13b5c001ef222bc7f44f0698); schema tests: [`8e81c985b2b95a98a03313f8cc4467165818c571`](https://github.com/NinuGaming999/ECHOPOST/commit/8e81c985b2b95a98a03313f8cc4467165818c571); gameplay integration test: [`0fa845518310f1d022af98bbc219a96c58a5d48b`](https://github.com/NinuGaming999/ECHOPOST/commit/0fa845518310f1d022af98bbc219a96c58a5d48b).
+- **Godot verification:** [run 40550158187](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40550158187) passed project parse/import, data smoke tests and gameplay-flow smoke tests on both Godot 4.4.0 and 4.7.2. The gameplay test verifies both a rejected route and a safe bypass.
+- **Android verification:** [run 40550158280](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40550158280) successfully exported, integrity-checked, uploaded, and published the debug APK. [Nightly download](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk). Physical-device testing, visual readability and fairness remain outstanding.
 
 ### October 27, 2026 — Compact landscape menu and gameplay HUD hardening
 
@@ -385,13 +404,13 @@ This change is covered by an automated headless integration test. It is **not ye
 |---|---|
 | `project.godot` | Application name, icon, landscape 1280×720 viewport, canvas-item stretch, compatibility renderer and WASD/arrow input map. |
 | `scenes/main.tscn` | Very small main scene: full-rect `Control` attached to `scripts/game.gd`. |
-| `scripts/game.gd` | Main controller, menu/HUD construction, movement, echo recording/playback, functional Latch Protocol button/E shortcut and persistent toggle state, dynamic ordered-relay rejection feedback, Pulse Lock timer/progress bar/retry, sentinel, Memory Shard collection/archive, control preferences, save flow and procedural rendering. **1289 lines in the current source snapshot; refactor incrementally after tests protect behavior.** |
+| `scripts/game.gd` | Main controller, menu/HUD construction, movement, echo recording/playback, functional Latch Protocol button/E shortcut and persistent toggle state, dynamic ordered-relay rejection feedback, Pulse Lock timer/progress bar/retry, sentinel, echo-only jammer rejection and visuals, Memory Shard collection/archive, control preferences, save flow and procedural rendering. **1642 lines in the current source snapshot; refactor incrementally after tests protect behavior.** |
 | `scripts/core/echo_track.gd` | Data-only `RefCounted` script loaded through preloaded script resources; avoids global `class_name` lookup; stores points, clamps timestamps to nondecreasing order, copies tracks, returns duration, interpolates route positions, and holds endpoint outside the timestamp range. |
-| `scripts/data/level_catalog.gd` | Twelve room dictionaries, optional shard positions/lore, one-/two-/three-/four-relay requirements, toggle-switch and combined relay/sentinel/timed-gate challenges, defensive-copy accessor and canonical/draft validator for schema, names, spacing, bounds and hazard/timer tuning. |
+| `scripts/data/level_catalog.gd` | Thirteen room dictionaries, optional shard positions/lore, single/ordered relay requirements, toggle switch, timed-gate and sentinel combinations, plus the echo-only jammer challenge. The defensive-copy accessor and canonical/draft validator cover schema, names, jammer radius/spacing, bounds and hazard/timer tuning. |
 | `scripts/data/progress_store.gd` | Version-2 local save boundary (`user://echopost_save.cfg`) using `ConfigFile`; preserves v1 campaign progress and stores normalized Memory Shard room indices. |
 | `scripts/data/settings_store.gd` | Separate preference store (`user://echopost_settings.cfg`) for speed and joystick handedness, defaulting safely and normalizing unsupported movement values. |
-| `tests/headless_smoke.gd` | Data tests for echo interpolation/copying, twelve-room/shard/waypoint/toggle schema, named Triune Relay and Fracture Clock, Dead Air Protocol's four-relay/sentinel/timed-gate combination, malformed-draft validation, v2 shard persistence/sanitization, v1-save compatibility, campaign clamping and isolated control-preference persistence/normalization. |
-| `tests/game_flow_smoke.gd` | Main-scene integration tests for chapter/archive/options UI, Memory Shards, speed presets/handedness, lifecycle pause, record cap/feedback, sentinel cancellation, reset, portal idempotency, Latch Protocol button/E/latch reset, one-/two-/three-/four-relay pass/miss/order/linked state, Fracture Clock, Dead Air Protocol's sentinel interruption and short timer, and timed-gate behavior. |
+| `tests/headless_smoke.gd` | Data tests for echo interpolation/copying, thirteen-room schema including Null Corridor's echo jammer, shard/waypoint/toggle data, named Triune Relay and Fracture Clock, Dead Air Protocol's four-relay/sentinel/timed-gate combination, malformed jammer/draft validation, v2 shard persistence/sanitization, v1-save compatibility, campaign clamping and isolated control-preference persistence/normalization. |
+| `tests/game_flow_smoke.gd` | Main-scene integration tests for chapter/archive/options UI, Memory Shards, speed presets/handedness, lifecycle pause, record cap/feedback, sentinel cancellation, reset, portal idempotency, Latch Protocol button/E/latch reset, one-/two-/three-/four-relay pass/miss/order/linked state, Fracture Clock, Dead Air Protocol's sentinel interruption and short timer, Null Corridor's jammer reject/reset/safe bypass, and timed-gate behavior. |
 | `RUN_TESTS.bat` | Windows shortcut to run both headless smoke tests if Godot is on PATH. |
 | `.github/workflows/godot-checks.yml` | Imports/parses project then runs both tests on a Godot 4.4.0 / 4.7.2 matrix. |
 | `assets/echopost_icon.svg` | Original editable SVG project icon. |
@@ -410,68 +429,48 @@ This change is covered by an automated headless integration test. It is **not ye
 
 ## 4. Exact source line map — `scripts/game.gd`
 
-This function index matches the current source blob SHA `f32bec40288de7c5ed62c1cec697adc97db4923a` (1614 lines). Older line references in historical feature notes refer to the source revision at that time.
+This function index matches the current source blob SHA `e207974c69a601907bf1a4793f46ed103d849b7f` (1642 lines). Historical feature notes may refer to earlier line numbers.
 
-- **L1–L22:** Script header, movement/recording/reset constants, room bounds and preloaded dependencies.
-- **L24–L56:** Screen/campaign state, player and echo state, recording/gate/sentinel fields and failure-reset state.
-- **L58–L91:** Menu, HUD, modal, Options, Memory Archive, failure, and primary control references.
-- **L94–L103 — `_notification()`:** defer responsive layout after viewport resize and pause after lifecycle focus-out.
-- **L104–L118 — `_pause_for_lifecycle()`:** pause active gameplay without interrupting a failure-reset transition.
-- **L119–L130 — `_ready()`:** load saves/preferences, build UI, apply responsive layout, show menu.
-- **L131–L179 — `_process()`:** failure countdown/restart, player/echo/hazard updates and puzzle evaluation.
-- **L180–L218 — `_input()`:** keyboard latch shortcut, touch/mouse joystick handling, and ignored input during reset.
-- **L219–L231 — `_is_joystick_area()`:** proportional left/right joystick zones and protected bottom-control regions.
-- **L232–L243:** joystick normalization and deterministic star decoration.
-- **L244–L281 — `_build_interface()` / `_build_menu()`:** build panels and main-menu controls.
-- **L282–L306 — `_build_game_hud()`:** gameplay header/status, pause/record/latch/restart/menu controls.
-- **L307–L424:** completion, Help, chapter selection and Memory Archive panel creation.
-- **L425–L430 — `_open_memory_archive()`:** refresh archive content and open it.
-- **L431–L523:** Options actions, movement-speed normalization, left-handed control persistence and archive state.
-- **L524–L561 — `_build_failure_panel()`:** failure reason/details and shrinking reset indicator.
-- **L562–L694:** responsive menu typography, compact two-column layout, actual button-height measurement, intro/progress visibility policies, and version-label behavior.
-- **L695–L728:** responsive gameplay HUD row. Derive navigation/action widths and margins from viewport width, scale button text and shorten the outer labels when needed, then position the four touch controls without overlap.
-- **L729–L731:** finish the layout pass and re-center modal panels.
-- **L732–L737 — `_layout_centered_panels()`:** recenter modals.
-- **L738–L759 — `_make_panel()`:** shared panel depth, radius, border and spacing.
-- **L760–L774 — `_make_label()`:** shared label layout and typography.
-- **L775–L824 — `_make_button()`:** shared button theme and touch-target baseline.
-- **L825–L832 — `_animate_button()`:** short press/hover scale animation.
-- **L833–L859 — `_show_menu()` / `_on_start_pressed()`:** return to menu and continue journey.
-- **L860–L901 — `_start_level()`:** initialize a clean chamber and clear pending reset state.
-- **L902–L922 — `_on_record_pressed()`:** start/finish recording and action guard.
-- **L923–L947 — `_on_latch_switch_b_pressed()`:** toggle Switch B only with the required settled echo and player proximity.
-- **L948–L999 — `_finish_recording()`:** duration, Switch A endpoint and single/ordered relay validation; failed relay route schedules automatic reset.
-- **L1000–L1003 — `_add_record_sample()`:** capture route samples.
-- **L1004–L1007 — `_track_passes_waypoint()`:** line-segment relay crossing check.
-- **L1008–L1046 — relay linked-state helpers:** compute beacon linked state.
-- **L1047–L1063 — `_track_passes_waypoints_in_order()`:** enforce arbitrary-length relay sequences.
-- **L1064–L1098 — `_track_waypoint_progress()`:** derive partial route progress for replay/visual state.
-- **L1099–L1111 — `_update_player()`:** movement and playfield clamping.
-- **L1112–L1126 — `_update_echo()`:** playback/linger behavior.
-- **L1127–L1130 — `_room_requires_relay()`:** identify rooms using route checkpoints.
-- **L1131–L1162 — `_schedule_room_reset()`:** clear failed take, block input, show cause and schedule same-room restart.
-- **L1163–L1174 — `_check_sentinel_collision()`:** cancel interrupted takes and trigger a full-room reset.
-- **L1175–L1194 — `_check_memory_shard_collection()`:** pickup feedback and persistence.
-- **L1195–L1211 — `_update_timed_gate()`:** countdown and retry handling.
-- **L1212–L1253 — `_check_puzzle_state()`:** Switch A/B, gate and exit evaluation.
-- **L1254–L1276 — `_complete_level()`:** unlock/save campaign completion once.
-- **L1277–L1311:** next/replay/restart/pause actions and navigation.
-- **L1312–L1343:** Help and chapter selection, chapter buttons and menu progress.
-- **L1344–L1377 — `_update_hud()`:** current room hint, echo state, recording/relay/timer/status controls.
-- **L1378–L1390:** load campaign and preferences.
-- **L1391–L1396 — `_save_settings()`:** persist control settings independently from campaign progress.
-- **L1397–L1402 — `_save_progress()`:** persist campaign and collected shards.
-- **L1403–L1423 — `_draw()` / `_draw_menu_art()`:** procedural screen/menu background.
-- **L1424–L1430 — `_get_gate_timer_ratio()`:** clamped remaining-time fraction for the timed gate.
-- **L1431–L1510 — `_draw_room()`:** playfield, objectives, route, relay, shard and sentinel rendering.
-- **L1511–L1530 — `_draw_echo_waypoint()`:** relay marker visuals and labels.
-- **L1531–L1549 — `_draw_memory_shard()`:** violet shard rendering.
-- **L1550–L1560 — `_draw_switch()`:** active/inactive switch rendering.
-- **L1561–L1574 — `_draw_gate()`:** gate/barrier visualization.
-- **L1575–L1583 — `_draw_portal()`:** portal animation/state.
-- **L1584–L1596 — `_draw_robot()`:** procedural robot body.
-- **L1597–L1605 — `_draw_joystick()`:** virtual joystick visual.
-- **L1606–L1614 — `_draw_track_path()`:** echo/recorded trail rendering.
+- **L1–L22:** constants, room bounds and preloaded dependencies.
+- **L24–L56:** screen/campaign state, player/echo/recording/gate/sentinel/reset state.
+- **L58–L91:** menu, HUD, modal, Options, Memory Archive, failure and primary controls.
+- **L94–L103 — `_notification()`:** viewport-resize reflow and lifecycle focus-out.
+- **L104–L118 — `_pause_for_lifecycle()`:** pause safely without interrupting a failure-reset transition.
+- **L119–L130 — `_ready()`:** load state, build UI, apply responsive layout and show menu.
+- **L131–L179 — `_process()`:** reset countdown, player/echo/sentinel/gate updates and puzzle evaluation.
+- **L180–L218 — `_input()`:** keyboard latch shortcut, touch/mouse joystick and input guards.
+- **L219–L231 — `_is_joystick_area()`:** proportional joystick zones and protected bottom buttons.
+- **L232–L243:** joystick update and procedural stars.
+- **L244–L281:** interface/menu construction.
+- **L282–L306 — `_build_game_hud()`:** gameplay header, status and action controls.
+- **L307–L424:** completion, Help, chapter selector and Memory Archive panel construction.
+- **L425–L430 — `_open_memory_archive()`:** refresh and open archive.
+- **L431–L523:** Options, speed normalization, joystick handedness and Archive state.
+- **L524–L561 — `_build_failure_panel()`:** reset/failure card.
+- **L562–L731 — `_layout_responsive_ui()`:** compact menu with measured button heights; intro hidden below 340 units; progress hidden below 280; width-constrained bottom gameplay action row; dynamic compact labels and modal/joystick positioning.
+- **L732–L737 — `_layout_centered_panels()`:** center modals.
+- **L738–L759 — `_make_panel()`; L760–L774 — `_make_label()`; L775–L824 — `_make_button()`; L825–L832 — `_animate_button()`:** shared premium UI construction/press feedback.
+- **L833–L859:** menu navigation and start/continue handling.
+- **L860–L901 — `_start_level()`:** reset and initialize a chamber.
+- **L902–L922 — `_on_record_pressed()`:** recording lifecycle.
+- **L923–L947 — `_on_latch_switch_b_pressed()`:** validate and toggle Switch B.
+- **L948–L1009 — `_finish_recording()`:** validate duration, endpoint, one/ordered relays, and Null Corridor's echo-jammer clearance; jammed routes erase the take and schedule an automatic reset.
+- **L1010–L1013 — `_add_record_sample()`; L1014–L1017 — `_track_passes_waypoint()`:** sample capture and line-segment distance check used for relays and jammer field.
+- **L1018–L1056 — `_is_relay_waypoint_linked()`; L1057–L1073 — `_track_passes_waypoints_in_order()`; L1074–L1108 — `_track_waypoint_progress()`:** linked state, ordered checkpoints and route progress.
+- **L1109–L1136:** player movement and echo playback/linger.
+- **L1137–L1172:** relay-room detection and automatic failure reset.
+- **L1173–L1184 — `_check_sentinel_collision()`:** cancel interrupted takes.
+- **L1185–L1204 — `_check_memory_shard_collection()`:** shard pickup/persistence.
+- **L1205–L1221 — `_update_timed_gate()`; L1222–L1263 — `_check_puzzle_state()`:** timed gate and switch/gate/exit state.
+- **L1264–L1321:** completion, next/replay/restart/pause.
+- **L1322–L1353:** Help, chapter selection, chapter buttons and menu progress.
+- **L1354–L1387 — `_update_hud()`:** gameplay labels, relay/time/status text and control states.
+- **L1388–L1412:** load/save campaign and settings.
+- **L1413–L1433:** screen and menu background drawing.
+- **L1434–L1440 — `_get_gate_timer_ratio()`:** normalized time fraction.
+- **L1441–L1538 — `_draw_room()`:** room background, purple ECHO DEAD ZONE field/rings/label, objectives, relays, memory shard and sentinel; live route turns red when it crosses the jammer.
+- **L1539–L1558 — `_draw_echo_waypoint()`; L1559–L1577 — `_draw_memory_shard()`; L1578–L1588 — `_draw_switch()`:** relay, shard and switch visual helpers.
+- **L1589–L1602 — `_draw_gate()`; L1603–L1611 — `_draw_portal()`; L1612–L1624 — `_draw_robot()`; L1625–L1633 — `_draw_joystick()`; L1634–L1642 — `_draw_track_path()`:** gameplay rendering helpers.
 
 ## 5. Exact line map — supporting scripts and tests
 
@@ -483,18 +482,20 @@ This function index matches the current source blob SHA `f32bec40288de7c5ed62c1c
 - **L28–L31:** Return route duration.
 - **L34–L59:** Resolve position before/after route, interpolate between ordered points, and tolerate near-duplicate timestamps.
 
-### `scripts/data/level_catalog.gd` (342 lines, blob SHA `d1c16361a74e957eb16abcba392403e450e8ba02`)
-- **L1–L3:** RefCounted catalog and purpose.
-- **L4–L152:** First nine room definitions, ending with Latch Protocol's toggle-style Switch B.
-- **L153–L169:** Triune Relay's tenth-room definition, including three ordered relay coordinates and optional Memory Shard lore.
-- **L170–L187:** Fracture Clock's eleventh-room definition, combining three ordered relays and a 4.5-second timed gate.
-- **L188–L205:** Dead Air Protocol's twelfth-room definition, including four ordered relays, a fast sentinel, 6.5-second echo linger, Switch B at x=850, and 1.8-second timed gate.
-- **L208–L219:** Defensive-copy level getter, room-count helper and canonical validation entry points.
-- **L221–L250:** Validate nonempty campaigns, unique/nonblank names, required keys, core Vector2 positions, lore text and echo linger.
-- **L251–L287:** Validate toggle-mode values, timed-gate duration type/range, optional waypoint types/bounds, and spawn/Switch A/Switch B separation.
-- **L289–L304:** Validate Memory Shard and single Relay Beacon spacing from objectives.
-- **L305–L327:** Validate ordered relay arrays, every waypoint's type/bounds/objective separation, and separation between relay markers.
-- **L328–L341:** Validate sentinel patrol keys, height, sweep amplitude and speed.
+### `scripts/data/level_catalog.gd` (382 lines, current blob SHA `b36787a5440912eafb7b800331e890ab3c51d74e`)
+- **L1–L3:** RefCounted catalog header.
+- **L4–L152:** first nine room layouts.
+- **L153–L169:** Triune Relay's three ordered checkpoints.
+- **L170–L187:** Fracture Clock's three relays plus 4.5-second gate.
+- **L188–L205:** Dead Air Protocol's four relays, sentinel, 6.5-second linger and 1.8-second gate.
+- **L206–L224:** Null Corridor's echo-only jammer position/radius, safe upper bypass intent, and its Memory Shard/lore.
+- **L226–L238:** defensive-copy getter, level count and validator entry.
+- **L239–L288:** required schema, unique names/keys, core Vector2 positions, linger, toggle mode, gate-duration range and waypoint data types.
+- **L289–L316:** validate jammer position/radius pairing, numeric radius range 40–180, separation from room anchors, and room-bound coordinates.
+- **L317–L327:** spawn/Switch A/Switch B separation.
+- **L329–L335:** Memory Shard separation from objectives.
+- **L337–L343:** single Relay Beacon type/spacing.
+- **L345 onward:** ordered relay array validation, waypoint types/bounds/spacing and sentinel patrol configuration.
 
 ### `scripts/data/progress_store.gd` (58 lines, blob SHA `c74c684bab3ca4e40b8ea49b995633b795c4974a`)
 - **L1–L5:** Local campaign save boundary and schema version 2.
@@ -509,42 +510,41 @@ This function index matches the current source blob SHA `f32bec40288de7c5ed62c1c
 - **L23–L28:** Persist control settings independently from campaign progress.
 - **L31–L39:** Normalize the requested speed to a supported preset.
 
-### `tests/headless_smoke.gd` (222 lines, blob SHA `f7e7a273bec2e7d079f544b1ed6f2f2f80b3ac0f`)
-- **L1–L12:** Test runner/preloads and isolated temporary save/settings paths.
-- **L15–L25:** Run grouped tests and exit nonzero on assertion failure.
-- **L28–L47:** Timestamp order, interpolation, endpoint hold, preloaded-script identity and copy independence.
-- **L50–L125:** Validate twelve unique rooms, all single-/multi-relay data, named Triune Relay and Fracture Clock, Dead Air Protocol's four relays/active sentinel/6.5-second linger/farther Switch B/1.8-second gate, and malformed-draft validator entry point.
-- **L128–L150:** Submit intentionally invalid room drafts and assert errors for duplicate names, route geometry, sentinel parameters, out-of-bounds/mistyped relays and invalid timed-gate durations.
-- **L152–L156:** Search validator messages by fragment.
-- **L160–L191:** Save/load campaign progress, sanitize shard indices and verify v1 save compatibility.
-- **L194–L215:** Verify settings defaults, preference persistence, handedness and speed normalization.
-- **L217–L220:** Assertion helper.
+### `tests/headless_smoke.gd` (233 lines, current blob SHA `75df36b96e483b5db939297939fe9702226c7399`)
+- **L1–L12:** test runner/preloads and isolated temporary save/settings paths.
+- **L15–L25:** run grouped tests and exit nonzero on failed assertions.
+- **L28–L47:** timestamp order, interpolation, endpoint hold, script identity and copy independence.
+- **L50–L134:** validate thirteen unique rooms, Null Corridor's jammer metadata, all single-/multi-relay data, Triune Relay, Fracture Clock and Dead Air Protocol.
+- **L136–L162:** reject malformed drafts, including invalid jammer position/radius, bad route geometry, invalid sentinel/timed-gate parameters and mistyped/out-of-bounds relay points.
+- **L164–L169:** validator-message helper.
+- **L172–L203:** progress save/load, shard normalization and v1 compatibility.
+- **L206–L228:** settings defaults/persistence/normalization.
+- **L229–L233:** assertion helper.
 
-### `tests/game_flow_smoke.gd` (991 lines, current blob SHA `d44d06f1b7eb8d671c373d73140e4866f4f4332f`)
-- **L1–L11:** Integration harness, main scene, relay/level/progress preloads.
-- **L13–L90:** Run lifecycle, recording, reset, campaign, UI and puzzle-flow checks.
-- **L91–L111:** Lifecycle pause preserves recording, clears held joystick input and prevents background time progression.
-- **L112–L129:** Exercise the real frame loop at the exact eight-second recording boundary.
-- **L130–L143:** Too-short stop keeps recording active, creates no echo and explains the remedy.
-- **L144–L174:** Sentinel contact schedules full room reset, cancels an unfinished take, and the helper verifies reset without user input.
-- **L175–L214:** Manual restart clears recording/echo/timers/gate/input and works from paused state.
-- **L215–L240:** Powered portal completion is idempotent and test restores saved progress.
-- **L241–L259:** Chapter list scrollable layout.
-- **L260–L293:** Memory Shard pickup/lore/save persistence.
-- **L294–L325:** Last shard through pickup path and restored-signal reward.
-- **L326–L357:** Archive recovered/unfound lore, reward state and dynamic room count.
-- **L358–L390:** Options, movement-speed presets, and left/right joystick regions.
-- **L391–L453:** Latch Protocol switch button visibility, echo-settled prerequisite, E shortcut and restart cleanup.
-- **L454–L497:** Static Bloom Relay Beacon requirement, invalid route rejection and segment-crossing acceptance; rejection also schedules an auto-reset.
-- **L498–L553:** Chorus Route order validation/linked state; reversed order schedules auto-reset.
-- **L554–L612:** Triune Relay rejects reversed three-relay order, checks full hint, accepts correct sequence and tests auto-reset.
-- **L613–L680:** Fracture Clock rejects bad route with full hint and auto-resets, then checks correct route, 4.5-second gate and crossing.
-- **L681–L770:** Dead Air Protocol validates invalid/valid four-relay sequence, 1.8-second gate/timeout, reset after relay failure and sentinel contact.
-- **L771–L830:** Pulse Lock countdown bar, real-frame countdown, pause freeze, timeout/rearm/retry and crossing.
-- **L831–L850 — `_finish_failure_reset()`:** Advance countdown without input and assert same-room restart clears failed recording/echo, gate and latch state.
-- **L851–L961 — `_test_premium_mobile_ui()`:** minimum touch targets, shared button style, centered modals, compact menu geometry, intro/progress visibility, menu bounds and pairwise non-overlap across five sizes.
-- **L962–L986:** gameplay HUD touch controls are checked at 640×360, 720×360 and 800×320 for horizontal bounds, fixed bottom inset and pairwise non-overlap.
-- **L987–L991:** Assertion helper.
+### `tests/game_flow_smoke.gd` (1038 lines, current blob SHA `8dfaff640af027beba07ea700be5b2971e0e3afa`)
+- **L1–L11:** integration harness and preloads.
+- **L13–L90:** test orchestration and lifecycle/UI/campaign/recording setup.
+- **L92–L111:** lifecycle pause preserves an in-progress recording and blocks background-time advancement.
+- **L113–L144:** eight-second recording cap and too-short feedback.
+- **L145–L175:** sentinel collision cancels a take and automatically resets the current room.
+- **L176–L215:** manual restart clears gameplay state and works while paused.
+- **L216–L241:** portal completion idempotency and saved-progress restoration.
+- **L242–L260:** chapter selector scroll layout.
+- **L261–L294:** Memory Shard pickup/lore/save persistence.
+- **L295–L326:** collect all memories and restore signal reward.
+- **L327–L358:** Memory Archive recovered/unfound UI states and dynamic entry count.
+- **L359–L391:** Options, speed presets and left/right joystick regions.
+- **L392–L454:** Latch Protocol button/E shortcut, settled-echo prerequisite, latch state and restart cleanup.
+- **L455–L498:** Static Bloom Relay Beacon accepts a segment crossing, rejects a skipped checkpoint and auto-resets the failed take.
+- **L499–L554:** Chorus Route accepts ordered relays and rejects reversed order.
+- **L555–L613:** Triune Relay rejects invalid three-relay order and accepts the valid route.
+- **L614–L681:** Fracture Clock's invalid/valid route, 4.5-second timer and crossing.
+- **L682–L771:** Dead Air Protocol's invalid/valid four-relay sequence, 1.8-second gate, timeout and sentinel interruption.
+- **L772–L815 — `_test_echo_jammer_route()`:** Null Corridor rejects a straight route that intersects the jammer, checks the ECHO JAMMED reset, then accepts an upper curved bypass.
+- **L818–L877:** Pulse Lock countdown/retry/timeout/crossing.
+- **L878–L897 — `_finish_failure_reset()`:** verify failure timer advances without input and returns to a clean same-room state.
+- **L898–L1033 — `_test_premium_mobile_ui()`:** touch-target sizing, responsive compact menu, five short viewport sizes, gameplay HUD button overlap checks, centered panels and joystick regions.
+- **L1034–L1038:** assertion helper.
 
 ### `project.godot` (44 lines, blob SHA `e8242ef990cbeecfe7972c65a7bb93d2bf2cbad3`)
 - **L1–L10:** Project metadata, app icon, main scene and feature declarations.
@@ -580,12 +580,11 @@ This function index matches the current source blob SHA `f32bec40288de7c5ed62c1c
 
 ## 6. Current verification status — be precise
 
-- **Latest completed Godot CI for current game code:** [run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243) passed on both Godot 4.4.0 and 4.7.2 at commit `d64199633af306574298e3ce5972630ff3379b88`. Both matrix jobs passed project import/parse, `tests/headless_smoke.gd`, and `tests/game_flow_smoke.gd`.
-- **Current verified UI regression fix:** the compact menu now derives its start position from the actual Intro control bounds and clamps the button gap against the progress label. The regression test also resets handedness between wide and compact joystick checks. The source and test maps are recorded in sections 4 and 5.
-- **Android export:** [run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) succeeded at the same code/test commit. It exported the Android preset, validated APK ZIP structure with `unzip -t`, uploaded the workflow artifact and published [ECHOPOST Nightly APK](https://github.com/NinuGaming999/ECHOPOST/releases/tag/nightly). The attached file is `ECHOPOST-android.apk` (approximately 28.6 MB).
-- **Build boundary:** this verifies a valid exported APK archive, not an install or real gameplay session on physical hardware. The build uses a debug signing key and is for direct testing, not a production-signed Google Play release. If Android rejects an update because the debug signature differs, uninstall the old nightly first.
-- **Current source/test hashes:** `scripts/game.gd` = `2e5cb7c0ad2c509164d7d1bb8275963cbd2b5d71` (1547 lines); `tests/game_flow_smoke.gd` = `cb300c635d4d4212ce2254b6041f3c5cb8f045f2` (919 lines); `scripts/data/level_catalog.gd` = `d1c16361a74e957eb16abcba392403e450e8ba02` (342 lines); `tests/headless_smoke.gd` = `f7e7a273bec2e7d079f544b1ed6f2f2f80b3ac0f` (222 lines); `project.godot` = `e8242ef990cbeecfe7972c65a7bb93d2bf2cbad3` (44 lines); `export_presets.cfg` = `6c2e8278c715c8eb5e9b98d8ec4b3731d217bea4` (67 lines); `.github/workflows/android-apk.yml` = `2f741311fe04afafc3ea7259f18ab4913a39104d` (148 lines).
-- **Device QA:** not performed here. Still install the APK on a real Android device, play through all twelve rooms, verify saves survive relaunch, and exercise touch controls plus app background/foreground pause/resume. Visual quality, safe areas, battery/low-end GPU performance, and the fairness of the 1.8-second Dead Air Protocol and 3.5-second Pulse Lock gates need hands-on testing.
+- **Latest completed Godot CI for current code/test commit:** [run 40550158187](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40550158187) passed both Godot 4.4.0 and 4.7.2. Import/parse, data smoke tests and gameplay-flow tests all passed, including Null Corridor's invalid route rejection, automatic reset and safe curved bypass.
+- **Latest Android APK export:** [run 40550158280](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40550158280) succeeded at code/test commit `0fa845518310f1d022af98bbc219a96c58a5d48b`. The APK was exported, checked with `unzip -t`, uploaded as an Actions artifact and published to the [ECHOPOST Nightly Release](https://github.com/NinuGaming999/ECHOPOST/releases/tag/nightly). Direct download: [ECHOPOST-android.apk](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk) (28,596,012 bytes).
+- **Current code/test hashes:** `scripts/game.gd` = `e207974c69a601907bf1a4793f46ed103d849b7f` (1642 lines); `tests/game_flow_smoke.gd` = `8dfaff640af027beba07ea700be5b2971e0e3afa` (1038 lines); `scripts/data/level_catalog.gd` = `b36787a5440912eafb7b800331e890ab3c51d74e` (382 lines); `tests/headless_smoke.gd` = `75df36b96e483b5db939297939fe9702226c7399` (233 lines); `project.godot` = `e8242ef990cbeecfe7972c65a7bb93d2bf2cbad3` (44 lines); `export_presets.cfg` = `6c2e8278c715c8eb5e9b98d8ec4b3731d217bea4` (67 lines); `.github/workflows/android-apk.yml` = `2f741311fe04afafc3ea7259f18ab4913a39104d` (148 lines).
+- **Device QA:** not performed here. Still install the APK on an actual Android device, play through all thirteen rooms, verify saves survive relaunch, and exercise touch controls plus background/foreground pause/resume. Specifically inspect the jammer's contrast and route-preview feedback on a phone. Safe-area behavior, battery/low-end GPU performance and gate difficulty remain hands-on tasks.
+- **Release boundary:** the APK is debug-signed for direct testing, not a protected production signing key or Google Play-ready build. Export success does not mean it has been installed or play-tested on hardware.
 
 ### Commands to run in the repository root on Windows
 ```powershell
@@ -608,7 +607,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 4. **Procedural placeholder visuals:** no authored robot animations, environmental tilesets, VFX or transition animations.
 5. **No sound:** recording, rejected route, sentinel hits, gate opening and portal have text/visual feedback only. No SFX, music, mixer, or audio options exist.
 6. **Pause behavior needs real device QA:** lifecycle logic and timer freeze are headlessly tested, but actual Android app-switch lifecycle/focus behavior are unverified. The player must tap RESUME after returning.
-7. **Mechanic coverage:** one recording slot and the two-switch gate remain core; Dead Air Protocol now requires four ordered relays while a sentinel can interrupt recording and a short gate timer pressures the exit run. Moving platforms, checkpoints, multi-echo puzzles and deeper combinations remain future work.
+7. **Mechanic coverage:** one recording slot and the two-switch gate remain core; Dead Air Protocol requires four ordered relays while a sentinel can interrupt recording and a short gate timer pressures the exit run; Null Corridor adds an echo-only jammer and a safe curved bypass. Moving platforms, multi-echo puzzles and deeper combinations remain future work.
 8. **Recording edge cases:** the minimum is now `MIN_RECORD_SECONDS = 0.7` at `scripts/game.gd:L16`; a too-short stop deliberately keeps recording active and tells the player to continue. Verify that this interaction is understandable on touch.
 9. **Hazard edge cases:** sentinel contact now cancels the current take and schedules a full same-room restart. Confirm the 0.85-second failure card is readable and the reset feels immediate rather than sluggish in a live playthrough.
 10. **Save migration/preferences:** schema version 2 persists Memory Shard indices and version-1 campaign progress remains loadable; speed/handedness use a separate v1 settings file. Future-version behavior and cloud saves are not designed.
@@ -663,7 +662,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 ### P3 — Build a real campaign / refactor safely
 - [ ] Create a reusable room scene/controller separation and richer authored-room schema.
-- [ ] Continue from twelve layouts toward 20 authored chambers; add fresh mechanics beyond route geometry, patrol timing, relay order and timed gates.
+- [ ] Continue from thirteen layouts toward 20 authored chambers; add fresh mechanics beyond route geometry, patrol timing, relay order and timed gates.
 - [ ] Add checkpoint/lore fragments and a cohesive Act I ending.
 - [ ] Replace procedural placeholder art with original coherent art/audio, while keeping clarity and low-cost rendering on mobile.
 
@@ -671,7 +670,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Configure Android package ID `com.ninugaming.echopost`, app version `0.1.0`, app icon, tracked Android export preset and arm64-v8a target.
 - [x] Automate debug APK export, ZIP integrity checking, workflow artifact upload and nightly GitHub Release publication. [Android APK run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) succeeded.\n- [x] Confirm the latest mobile-layout-fix APK exported and refreshed the nightly release from commit `662d1ce3736513d2afc11ffad49e390694d53ef5`: [Android APK run 40546560892](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560892).
 - [ ] Configure protected production signing and complete privacy/storefront disclosures before any public store release.
-- [ ] Install the debug APK on a real Android device and verify lifecycle, controls, saves and all twelve rooms.
+- [ ] Install the debug APK on a real Android device and verify lifecycle, controls, saves and all thirteen rooms.
 - [ ] Run release QA and a closed beta before public distribution.
 - [ ] Only later design online sharing with route bounds validation, upload limits, moderation/reporting, privacy and backend cost controls.
 
@@ -681,7 +680,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 2. Check the most recent CI run before modifying code. A workflow run for a commit older than the code currently on `main` does not verify the current code.
 3. Choose **one focused improvement** at a time. Make changes in `main` only as permitted by the user/project workflow, and don't claim the project is finished.
 4. Test changes with Godot CI or available local Godot. Distinguish passed tests, tests not run, and manual device checks.
-5. Refresh every affected line number after changes. Section 4 is keyed to `scripts/game.gd` blob SHA `f32bec40288de7c5ed62c1cec697adc97db4923a`; section 5 records supporting-script, Android export, workflow and test blob SHAs. The current gameplay-test blob is `d44d06f1b7eb8d671c373d73140e4866f4f4332f`. If any of those hashes differ after edits, regenerate the corresponding section.
+5. Refresh every affected line number after changes. Section 4 is keyed to `scripts/game.gd` blob SHA `e207974c69a601907bf1a4793f46ed103d849b7f`; section 5 records the current catalog, test, Android export and workflow blobs. The current gameplay-test blob is `8dfaff640af027beba07ea700be5b2971e0e3afa`. If any of those hashes differ after edits, regenerate the corresponding section.
 6. Update `PROJECT_PROGRESS.md` in the same development pass as source changes. Record the new commit(s), source hashes/line references, CI URL/result and what the next session should do.
 7. Keep this game offline-capable and dependency-light. Never add network accounts, telemetry, uploads, payment or ads as an incidental code change.
 8. Claim APK export only when CI confirms the export and archive-integrity check; claim installation/device verification only after the APK has actually been installed and tested on hardware.
