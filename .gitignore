@@ -2,7 +2,8 @@
 .godot/
 .import/
 export.cfg
-export_presets.cfg
+
+# Keep export_presets.cfg tracked: CI uses it to build Android APKs.
 
 # Exported builds
 build/
