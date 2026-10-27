@@ -599,7 +599,12 @@ func _layout_responsive_ui() -> void:
 			centered_button.position.x = center_x - centered_button.size.x * 0.5
 		if compact_height:
 			var compact_button_names := ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]
-			var compact_top := maxf(size.y * 0.43, size.y * 0.165 + 48.0 + 16.0)
+			var compact_top := size.y * 0.43
+			var compact_intro := menu_root.get_node_or_null("Intro") as Control
+			if compact_intro != null:
+				# Calculate from the actual intro bounds rather than duplicated hard-coded
+				# text dimensions, so the controls remain separated across Godot versions.
+				compact_top = maxf(compact_top, compact_intro.position.y + compact_intro.size.y + 20.0)
 			var compact_gap := clampf(size.y * 0.083, 44.0, 50.0)
 			for i in range(compact_button_names.size()):
 				var compact_button := menu_root.get_node_or_null(compact_button_names[i]) as Button
