@@ -889,7 +889,15 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	var options := game.get("menu_root").get_node("OptionsButton") as Button
 	_check(title.position.x >= 0.0 and title.size.x <= game.size.x, "Menu typography should fit a narrower landscape viewport.")
 	_check(start.position.y > intro.position.y + intro.size.y, "Compact menu navigation should start below the intro text.")
-	_check(options.position.y + options.size.y <= progress.position.y, "Compact menu controls should finish before the progress line.")
+	_check(
+		options.position.y + options.size.y <= progress.position.y,
+		"Compact menu controls should finish before the progress line (options bottom %.1f, progress y %.1f, start y %.1f, intro bottom %.1f)." % [
+			options.position.y + options.size.y,
+			progress.position.y,
+			start.position.y,
+			intro.position.y + intro.size.y
+		]
+	)
 	_check(is_equal_approx(record.position.y, game.size.y - 66.0), "Bottom gameplay controls should stay inside a compact-height viewport.")
 	_check(menu_button.position.x + menu_button.size.x < record.position.x, "Compact menu and record touch targets must not overlap.")
 	_check(record.position.x + record.size.x < latch.position.x, "Compact record and latch targets must not overlap.")
