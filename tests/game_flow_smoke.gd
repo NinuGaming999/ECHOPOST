@@ -927,7 +927,7 @@ func _test_premium_mobile_ui(game: Control) -> void:
 		for j in range(i + 1, ultra_buttons.size()):
 			var first_rect := Rect2(ultra_buttons[i].position, ultra_buttons[i].size)
 			var second_rect := Rect2(ultra_buttons[j].position, ultra_buttons[j].size)
-			_check(not first_rect.intersects(second_rect), "Ultra-compact menu buttons must not overlap each other.")
+			_check(not first_rect.intersects(second_rect), "Ultra-compact menu overlap: %s %s vs %s %s." % [ultra_names[i], str(first_rect), ultra_names[j], str(second_rect)])
 	game.size = Vector2(1280, 720)
 	game.call("_layout_responsive_ui")
 	game.call("_set_left_handed_controls", previous_handedness)
