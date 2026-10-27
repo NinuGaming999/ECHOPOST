@@ -48,7 +48,7 @@ func _test_echo_track() -> void:
 
 
 func _test_level_catalog() -> void:
-	_check(LevelCatalog.LEVELS.size() >= 12, "The early campaign should contain at least twelve chambers.")
+	_check(LevelCatalog.LEVELS.size() >= 13, "The campaign should contain at least thirteen chambers after the echo-jammer lesson.")
 	_check(LevelCatalog.validate_levels().is_empty(), "The campaign catalog should pass its own level-data validator.")
 	var names_seen: Dictionary = {}
 	var relay_room_found := false
@@ -60,6 +60,7 @@ func _test_level_catalog() -> void:
 	var fracture_clock_room_found := false
 	var dead_air_room_found := false
 	var four_relay_hunt_found := false
+	var echo_jammer_room_found := false
 	for index in range(LevelCatalog.LEVELS.size()):
 		var level: Dictionary = LevelCatalog.get_level(index)
 		var level_name := str(level.get("name", ""))
@@ -77,6 +78,11 @@ func _test_level_catalog() -> void:
 			_check(bool(level.get("hazard", false)), "Dead Air Protocol should keep its active sentinel.")
 			_check(is_equal_approx(float(level.get("gate_open_seconds", 0.0)), 1.8), "Dead Air Protocol should use a 1.8-second gate window.")
 			_check(is_equal_approx(float(level.get("linger", 0.0)), 6.5), "Dead Air Protocol should use its shorter 6.5-second echo linger.")
+		if level_name == "Null Corridor":
+			echo_jammer_room_found = true
+			_check(level.get("echo_jammer") is Vector2, "Null Corridor should define an echo-only jammer position.")
+			_check(is_equal_approx(float(level.get("echo_jammer_radius", 0.0)), 105.0), "Null Corridor should expose a clear 105-unit echo dead zone.")
+			_check(str(level.get("hint", "")).contains("ECHO DEAD ZONE"), "Null Corridor's hint should explain the jammer rule.")
 		_check(not level_name.is_empty(), "Every chamber needs a non-empty name.")
 		_check(not names_seen.has(level_name), "Chamber names must be unique: %s" % level_name)
 		names_seen[level_name] = true
@@ -119,6 +125,7 @@ func _test_level_catalog() -> void:
 	_check(fracture_clock_room_found, "The campaign should retain Fracture Clock as the three-relay timed-gate lesson.")
 	_check(dead_air_room_found, "The campaign should include the named Dead Air Protocol challenge.")
 	_check(four_relay_hunt_found, "The campaign should combine four ordered relays, an active sentinel, and a timed gate.")
+	_check(echo_jammer_room_found, "The campaign should include Null Corridor as a named echo-jammer challenge.")
 	var original_name := str(LevelCatalog.LEVELS[0]["name"])
 	var isolated_copy: Dictionary = LevelCatalog.get_level(0)
 	isolated_copy["name"] = "Changed only in this test copy"
@@ -136,6 +143,8 @@ func _test_level_validator_rejects_bad_drafts() -> void:
 	malformed_level["hazard_speed"] = -1.0
 	malformed_level["echo_waypoint"] = Vector2(-20, 220)
 	malformed_level["echo_waypoints"] = [Vector2(-20, 220), "not a point"]
+	malformed_level["echo_jammer"] = "not a Vector2"
+	malformed_level["echo_jammer_radius"] = 20.0
 	malformed_level["gate_open_seconds"] = -1.0
 	var draft_levels: Array[Dictionary] = [original_level, malformed_level]
 	var errors: PackedStringArray = LevelCatalog.validate_level_list(draft_levels)
@@ -147,6 +156,8 @@ func _test_level_validator_rejects_bad_drafts() -> void:
 	_check(_has_error(errors, "echo_waypoint is outside the playable room"), "Validator should reject a relay beacon outside room bounds.")
 	_check(_has_error(errors, "echo_waypoints[0] is outside the playable room"), "Validator should reject an ordered relay outside room bounds.")
 	_check(_has_error(errors, "echo_waypoints[1] must be a Vector2"), "Validator should reject malformed waypoint types.")
+	_check(_has_error(errors, "echo_jammer must be a Vector2"), "Validator should reject malformed jammer positions.")
+	_check(_has_error(errors, "echo_jammer_radius must be between 40 and 180 units"), "Validator should reject invalid jammer radii.")
 	_check(_has_error(errors, "gate_open_seconds must be between 1 and 15 seconds"), "Validator should reject invalid timed-gate durations.")
 
 
