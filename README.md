@@ -1,12 +1,12 @@
 # ECHOPOST
 
-[![Godot checks](https://github.com/NinuGaming999/ECHOPOST/actions/workflows/godot-checks.yml/badge.svg)](https://github.com/NinuGaming999/ECHOPOST/actions/workflows/godot-checks.yml)
+[![Godot checks](https://github.com/NinuGaming999/ECHOPOST/actions/workflows/godot-checks.yml/badge.svg)](https://github.com/NinuGaming999/ECHOPOST/actions/workflows/godot-checks.yml) [![Android APK](https://github.com/NinuGaming999/ECHOPOST/actions/workflows/android-apk.yml/badge.svg)](https://github.com/NinuGaming999/ECHOPOST/actions/workflows/android-apk.yml)
 
 **Every player leaves a ghost.** ECHOPOST is a mobile-first 2D puzzle adventure about recording your movement and using its echo to solve rooms you cannot solve alone.
 
 This repository is the long-term home of the full game. The current source implements an early playable slice: keyboard/touch movement, recording/playback echoes with endpoint and Relay Beacon validation, an amber live route preview, pressure switches, hold/toggle/timed gates, exits, twelve chamber layouts, roaming sentinels, optional Memory Shards with lore fragments, scrollable chapter selection, chapter unlocks, versioned local save data, and procedural graphics so it runs without external art assets.
 
-> **Development status:** Early development. Automated Godot CI parses the project and runs smoke tests on every push and pull request. Production art/audio, broader accessibility options, online echo sharing, and Android release packaging remain future work.
+> **Development status:** Early development. Automated Godot CI parses the project and runs smoke tests on every push and pull request. Android APK builds are automated, but the game still needs real-device QA and production art/audio. Online echo sharing and broader accessibility options remain future work.
 
 ## Run the game
 
@@ -41,6 +41,7 @@ Later rooms introduce roaming sentinels and longer diagonal routes. A sentinel h
 ```text
 ECHOPOST/
 ├── project.godot
+├── export_presets.cfg
 ├── scenes/main.tscn
 ├── scripts/game.gd
 ├── scripts/core/echo_track.gd
@@ -51,6 +52,7 @@ ECHOPOST/
 ├── tests/headless_smoke.gd
 ├── tests/game_flow_smoke.gd
 ├── .github/workflows/godot-checks.yml
+├── .github/workflows/android-apk.yml
 ├── docs/GAME_DESIGN.md
 ├── docs/ROADMAP.md
 ├── docs/BUILD_STATUS.md
@@ -71,9 +73,22 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 On Windows, run `RUN_TESTS.bat`. The data tests cover echo-track timing/interpolation, campaign validation, and save/load boundaries. The data smoke tests also verify that control preferences save independently from campaign progress and validate timed-gate/ordered-relay room data. The gameplay integration test verifies recording limits, short-recording feedback, automatic full-room resets after sentinel contact and failed relay routes, reset-state cleanup, responsive/premium UI sizing and anchoring, compact 960×540 menu reflow and non-overlapping bottom touch controls, idempotent portal completion with save restoration, chapter/archive/options layouts, Memory Shard lore persistence, single/two-/three-/four-relay routes, linked-state feedback, timed-gate countdown/timeout/retry/crossing, Fracture Clock, and Dead Air Protocol, plus lifecycle pause. GitHub Actions installs Godot and runs these tests on each push and pull request. See `PROJECT_PROGRESS.md` for the exact source map, known gaps, recent CI results, and next tasks.
 
-## Android
+## Android APK
 
-The project is configured for a landscape 1280×720 viewport and the Compatibility renderer. Install matching Godot export templates and configure the Android SDK/JDK in Editor Settings before adding an Android export preset. Set a unique application ID and signing settings before producing a release build. Verify touch controls on real devices before publishing.
+An automated GitHub Actions workflow builds an installable Android APK on every push to `main` and publishes the latest development build as the **ECHOPOST Nightly APK** prerelease.
+
+**[Download the latest ECHOPOST APK from GitHub Releases](https://github.com/NinuGaming999/ECHOPOST/releases/tag/nightly)**
+
+The APK is a **debug-signed development build for direct device testing**, not a production-signed Google Play release. The preset targets 64-bit ARM Android devices and uses landscape orientation. Because the nightly signing key is for testing, uninstall an older nightly build first if Android refuses to update it.
+
+To create a versioned GitHub release, push a version tag after reviewing the build, for example:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The Android workflow builds the APK and attaches it to that versioned release. Before publishing to Google Play, configure and protect a dedicated release keystore, create a production-signed build, and test the app on real devices.
 
 ## Saves
 
