@@ -23,7 +23,8 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Current main controller source blob for the exact line map below:** `9a1018f65cfb5e2e389c491563545e62f453c927` (1591 lines)  \n**Latest ultra-compact menu fix commit:** `662d1ce3736513d2afc11ffad49e390694d53ef5`  \n**Compact-menu regression-diagnostics commit:** `6465c6317a51cdaf47580f48e1ea84c2e8e61d6f`  
+**Current main controller source blob for the exact line map below:** `9a1018f65cfb5e2e389c491563545e62f453c927` (1591 lines)  
+**Latest ultra-compact menu fix commit:** `662d1ce3736513d2afc11ffad49e390694d53ef5`  \n**Compact-menu regression-diagnostics commit:** `6465c6317a51cdaf47580f48e1ea84c2e8e61d6f`  
 **Compact-menu layout implementation commit:** `0f09dba86c6c01ecc74c967f063a52b5859b2a4d`  
 **Mobile-layout regression test/setup correction commit:** `d64199633af306574298e3ce5972630ff3379b88`  
 **Android ETC2/ASTC export fix commit:** `e713071219c15d514e0552c099437c265e22b4e2`  
