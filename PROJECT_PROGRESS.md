@@ -637,8 +637,10 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Update this progress file, current source/test blob hashes, and exact line maps for Triune Relay, Fracture Clock and Dead Air Protocol.
 - [x] Record automatic same-room reset behavior for sentinel deaths and failed relay routes; add countdown/reset-state regression assertions and viewport/touch UI checks.
 - [x] Add responsive HUD/modal reflow, larger primary touch targets and consistent premium button/panel styling.
-- [x] Verify current main game code after the compact-menu/joystick regression fix: [Godot CI run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243) passed Godot 4.4.0 and 4.7.2 import/parse, data smoke tests and game-flow tests.\n- [x] Fix the 800×360 menu overlap caused by theme-enforced Button minimum heights; [Godot CI run 40546560749](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560749) passed both Godot versions at commit `662d1ce3736513d2afc11ffad49e390694d53ef5`.
+- [x] Verify current main game code after the compact-menu/joystick regression fix: [Godot CI run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243) passed Godot 4.4.0 and 4.7.2 import/parse, data smoke tests and game-flow tests.
+- [x] Fix the 800×360 menu overlap caused by theme-enforced Button minimum heights; [Godot CI run 40546560749](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560749) passed both Godot versions at commit `662d1ce3736513d2afc11ffad49e390694d53ef5`.
 - [x] Extend compact-menu coverage to five viewports and prevent the 640-wide gameplay HUD row from overlapping; [Godot run 40548485659](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40548485659) passed on Godot 4.4.0/4.7.2, and [APK run 40548485495](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40548485495) exported the source/test commit.
+- [x] Add Null Corridor, validate jammer metadata and route rejection, and test an accepted curved bypass; [Godot run 40550158187](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40550158187) and [APK run 40550158280](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40550158280) both passed for the feature commit.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
 
 ### P1 — Core mechanic test coverage
@@ -662,13 +664,14 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 ### P3 — Build a real campaign / refactor safely
 - [ ] Create a reusable room scene/controller separation and richer authored-room schema.
-- [ ] Continue from thirteen layouts toward 20 authored chambers; add fresh mechanics beyond route geometry, patrol timing, relay order and timed gates.
+- [ ] Continue from thirteen layouts toward 20 authored chambers; add fresh mechanics beyond route geometry, patrol timing, relay order, timed gates and the echo-only jammer.
 - [ ] Add checkpoint/lore fragments and a cohesive Act I ending.
 - [ ] Replace procedural placeholder art with original coherent art/audio, while keeping clarity and low-cost rendering on mobile.
 
 ### P4 — Export and release preparation
 - [x] Configure Android package ID `com.ninugaming.echopost`, app version `0.1.0`, app icon, tracked Android export preset and arm64-v8a target.
-- [x] Automate debug APK export, ZIP integrity checking, workflow artifact upload and nightly GitHub Release publication. [Android APK run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) succeeded.\n- [x] Confirm the latest mobile-layout-fix APK exported and refreshed the nightly release from commit `662d1ce3736513d2afc11ffad49e390694d53ef5`: [Android APK run 40546560892](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560892).
+- [x] Automate debug APK export, ZIP integrity checking, workflow artifact upload and nightly GitHub Release publication. [Android APK run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) succeeded.
+- [x] Confirm the latest mobile-layout-fix APK exported and refreshed the nightly release from commit `662d1ce3736513d2afc11ffad49e390694d53ef5`: [Android APK run 40546560892](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560892).
 - [ ] Configure protected production signing and complete privacy/storefront disclosures before any public store release.
 - [ ] Install the debug APK on a real Android device and verify lifecycle, controls, saves and all thirteen rooms.
 - [ ] Run release QA and a closed beta before public distribution.
