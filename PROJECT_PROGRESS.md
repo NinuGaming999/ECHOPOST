@@ -23,7 +23,7 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Current main controller source blob for the exact line map below:** `2e5cb7c0ad2c509164d7d1bb8275963cbd2b5d71` (1547 lines)  
+**Current main controller source blob for the exact line map below:** `9a1018f65cfb5e2e389c491563545e62f453c927` (1591 lines)  \n**Latest ultra-compact menu fix commit:** `662d1ce3736513d2afc11ffad49e390694d53ef5`  \n**Compact-menu regression-diagnostics commit:** `6465c6317a51cdaf47580f48e1ea84c2e8e61d6f`  
 **Compact-menu layout implementation commit:** `0f09dba86c6c01ecc74c967f063a52b5859b2a4d`  
 **Mobile-layout regression test/setup correction commit:** `d64199633af306574298e3ce5972630ff3379b88`  
 **Android ETC2/ASTC export fix commit:** `e713071219c15d514e0552c099437c265e22b4e2`  
@@ -83,15 +83,16 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 
 ## 2. Latest work in this development pass
 
-### October 27, 2026 — Ultra-compact landscape menu reflow
+### October 27, 2026 — Ultra-compact landscape menu reflow and cross-version sizing fix
 
-**Scope:** address a mobile layout gap for short landscape viewports (for example, an 800×360 logical viewport). The previous compact menu retained a single vertical column, which could push its last navigation button below the visible area on short phones.
+**Scope:** make every menu action usable on very short landscape viewports, including an 800×360 logical viewport, and correct a Godot 4.4-specific regression caused by theme-enforced button minimum heights.
 
-- `scripts/game.gd`: `_layout_responsive_ui()` now switches to a two-column, three-row menu when viewport height is below 420 design units. The five navigation actions retain 42-unit touch heights, remain within the horizontal viewport, and sit above the progress indicator. Title, tagline and intro typography also compress for this layout.
+- `scripts/game.gd:L562–L708`: when viewport height is below 420 design units, the menu switches to two columns and three rows. Instead of assuming requested button height is the final height, the layout measures the actual theme-constrained height of each button and calculates row positions from the tallest button in each row. This prevents overlap across Godot versions and keeps the buttons above the progress indicator at 800×360. Title, tagline and intro typography compress for the short layout.
 - The small-build version label is hidden to free space and explicitly shown again after resizing to a taller viewport.
-- `tests/game_flow_smoke.gd`: adds an 800×360 regression case that checks all five buttons stay within the viewport, remain above the progress line, retain at least 40 units of height, and do not overlap each other.
-- Source layout commit: [`ae8d5326e04de874bca10792dd2ea7d8ce4159c4`](https://github.com/NinuGaming999/ECHOPOST/commit/ae8d5326e04de874bca10792dd2ea7d8ce4159c4). Regression-test commit: [`78010845b900a065eb57b12c8c4b7aa4c3135198`](https://github.com/NinuGaming999/ECHOPOST/commit/78010845b900a065eb57b12c8c4b7aa4c3135198).
-- **Verification boundary:** regression assertions are committed, but no passing CI result has been confirmed for these two commits yet. Do not describe this change as tested until the Godot 4.4.0 and 4.7.2 workflow completes successfully.
+- `tests/game_flow_smoke.gd:L911–L930`: the 800×360 regression checks viewport bounds, space above the progress line, usable minimum height, and button-to-button non-overlap. Overlap failures now include both button names and measured rectangles.
+- Earlier layout/test commits: [`ae8d5326e04de874bca10792dd2ea7d8ce4159c4`](https://github.com/NinuGaming999/ECHOPOST/commit/ae8d5326e04de874bca10792dd2ea7d8ce4159c4) and [`78010845b900a065eb57b12c8c4b7aa4c3135198`](https://github.com/NinuGaming999/ECHOPOST/commit/78010845b900a065eb57b12c8c4b7aa4c3135198). Diagnosable regression assertion: [`6465c6317a51cdaf47580f48e1ea84c2e8e61d6f`](https://github.com/NinuGaming999/ECHOPOST/commit/6465c6317a51cdaf47580f48e1ea84c2e8e61d6f). Final measured-row implementation: [`662d1ce3736513d2afc11ffad49e390694d53ef5`](https://github.com/NinuGaming999/ECHOPOST/commit/662d1ce3736513d2afc11ffad49e390694d53ef5).
+- **Verification:** [Godot CI run 40546560749](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560749) passed project import/parse, data smoke tests and gameplay-flow smoke tests on both Godot 4.4.0 and 4.7.2 at commit `662d1ce3736513d2afc11ffad49e390694d53ef5`.
+- **Android export:** [Android APK run 40546560892](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560892) succeeded on the same commit. It exported the APK, passed archive integrity validation, uploaded the Actions artifact and refreshed the [ECHOPOST Nightly Release](https://github.com/NinuGaming999/ECHOPOST/releases/tag/nightly). The APK is still debug-signed and has not been tested on a physical Android device.
 
 ### October 27, 2026 — Android export recovery and mobile-layout CI failures fixed
 
@@ -405,46 +406,64 @@ This change is covered by an automated headless integration test. It is **not ye
 
 ## 4. Exact source line map — `scripts/game.gd`
 
-This function index matches the current source blob SHA `2e5cb7c0ad2c509164d7d1bb8275963cbd2b5d71` (1547 lines). Older line references in historical feature notes refer to the source revision at that time.
+This function index matches the current source blob SHA `9a1018f65cfb5e2e389c491563545e62f453c927` (1591 lines). Older line references in historical feature notes refer to the source revision at that time.
 
-- **L1–L5:** Script header and movement, recording, and reset-transition constants.
-- **L7–L23:** Playfield bounds and preloaded echo/level/progress/settings dependencies.
-- **L25–L55:** Campaign state, echo/recording data, gate/sentinel state and pending-reset fields.
-- **L58–L91:** Menu/HUD, options/archive/failure panels, labels and gameplay controls.
-- **L94–L103 — `_notification()`:** Defer responsive layout after viewport resize and pause after lifecycle focus-out.
-- **L104–L118 — `_pause_for_lifecycle()`:** Pause active gameplay without interrupting a failure-reset sequence.
-- **L119–L130 — `_ready()`:** Load saves/preferences, build UI, apply responsive layout, show menu.
-- **L131–L179 — `_process()`:** Countdown/restart handling; stop frame evaluation when sentinel contact starts a reset.
-- **L180–L218 — `_input()`:** Keyboard latch shortcut, touch/mouse joystick handling and movement events; input is ignored during reset.
-- **L219–L231 — `_is_joystick_area()`:** Proportional left/right joystick zones and protected button regions.
-- **L232–L243:** Joystick movement normalization and deterministic star decoration.
-- **L244–L254 — `_build_interface()`:** Build the screen panels and menu.
-- **L255–L281 — `_build_menu()`:** Create the responsive main-menu controls and progress/status labels.
-- **L282–L306 — `_build_game_hud()`:** Header/status and pause/record/latch/restart/menu controls.
-- **L307–L430:** Completion, Help, chapter select, Memory Archive and Options panels.
-- **L431–L523:** Options actions, settings persistence and archive status.
-- **L524–L561 — `_build_failure_panel()`:** Failure reason/detail card and shrinking reset indicator.
-- **L562–L664 — `_layout_responsive_ui()`:** Resize menu typography; calculate compact stack from actual Intro bounds; constrain button gaps to the progress line; reflow the HUD/action row; keep touch targets within the viewport.
-- **L665–L670 — `_layout_centered_panels()`:** Recenter modals after viewport changes.
-- **L671–L707 — `_make_panel()` / `_make_label()`:** Shared panel depth/radius/border and typography construction.
-- **L708–L765 — `_make_button()` / `_animate_button()`:** Shared button states, hover/press tweens and animation pivots.
-- **L766–L792 — `_show_menu()` / `_on_start_pressed()`:** Cancel pending reset and navigate from menu.
-- **L793–L834 — `_start_level()`:** Initialize a clean chamber and clear pending reset state.
-- **L835–L880:** Recording and latch actions, including guards during a reset.
-- **L881–L932 — `_finish_recording()`:** Validate duration, Switch A endpoint and single/ordered relay requirements; failed relay routes schedule reset.
-- **L933–L1031:** Track samples, relay linked state, ordered waypoint progress and segment-crossing tests.
-- **L1032–L1059:** Player/echo movement, linger behavior and relay-room detection.
-- **L1060–L1063 — `_room_requires_relay()`:** Identify rooms with required relay checkpoints.
-- **L1064–L1095 — `_schedule_room_reset()`:** Clear failed take, block input, show reason, and schedule a same-room restart.
-- **L1096–L1107 — `_check_sentinel_collision()`:** Sentinel contact cancels the take and triggers a full room reset.
-- **L1108–L1144:** Memory Shard collection and timed-gate retry/crossing logic.
-- **L1145–L1186 — `_check_puzzle_state()`:** Evaluate switches, latch state, gate and portal.
-- **L1187–L1276:** Completion/save, pause, chapter navigation and menu progress.
-- **L1277–L1310 — `_update_hud()`:** Refresh status/button captions and disable record while reset is pending.
-- **L1311–L1335:** Local campaign/settings load and save.
-- **L1336–L1363:** Background, menu art and gate-timer ratio.
-- **L1364–L1443 — `_draw_room()`:** Draw room, switches, gate, portal, relays, shard, sentinel, echo trail and joystick hint.
-- **L1444–L1546:** Procedural relay, shard, switch, gate, portal, robot, joystick and route drawing.
+- **L1–L22:** Script header, movement/recording/reset constants, room bounds and preloaded dependencies.
+- **L24–L56:** Screen/campaign state, player and echo state, recording/gate/sentinel fields and failure-reset state.
+- **L58–L91:** Menu, HUD, modal, Options, Memory Archive, failure, and primary control references.
+- **L94–L103 — `_notification()`:** defer responsive layout after viewport resize and pause after lifecycle focus-out.
+- **L104–L118 — `_pause_for_lifecycle()`:** pause active gameplay without interrupting an in-progress failure-reset transition.
+- **L119–L130 — `_ready()`:** load saves/preferences, build UI, apply responsive layout, show menu.
+- **L131–L179 — `_process()`:** failure countdown/restart, player/echo/hazard updates and puzzle evaluation.
+- **L180–L218 — `_input()`:** keyboard latch shortcut, touch/mouse joystick handling, and ignored input during reset.
+- **L219–L231 — `_is_joystick_area()`:** proportional left/right joystick zones and protected bottom-control regions.
+- **L232–L243:** joystick normalization and deterministic star decoration.
+- **L244–L281 — `_build_interface()` / `_build_menu()`:** build panels and main-menu controls.
+- **L282–L306 — `_build_game_hud()`:** gameplay header/status, pause/record/latch/restart/menu controls.
+- **L307–L424:** completion, Help, chapter selection and Memory Archive panel creation.
+- **L425–L430 — `_open_memory_archive()`:** refresh archive content and open it.
+- **L431–L523:** Options construction/actions, movement-speed normalization, left-handed control persistence and archive state.
+- **L524–L561 — `_build_failure_panel()`:** failure reason/details and shrinking reset indicator.
+- **L562–L708 — `_layout_responsive_ui()`:** resize menu typography and HUD/action controls; for viewports below 420 units high, use a two-column menu and compute each row from actual theme-enforced button heights to avoid overlap; recenter controls and modal panels after viewport changes.
+- **L709–L714 — `_layout_centered_panels()`:** recenter modals.
+- **L715–L736 — `_make_panel()`:** shared panel depth, radius, border and spacing.
+- **L737–L751 — `_make_label()`:** shared label layout and typography.
+- **L752–L801 — `_make_button()`:** shared button theme and touch-target baseline.
+- **L802–L809 — `_animate_button()`:** short press/hover scale animation.
+- **L810–L836 — `_show_menu()` / `_on_start_pressed()`:** return to menu and continue journey.
+- **L837–L878 — `_start_level()`:** initialize a clean chamber and clear pending reset state.
+- **L879–L899 — `_on_record_pressed()`:** start/finish recording and action guard.
+- **L900–L924 — `_on_latch_switch_b_pressed()`:** toggle Switch B only with the required settled echo and player proximity.
+- **L925–L976 — `_finish_recording()`:** duration, Switch A endpoint and single/ordered relay validation; failed relay route schedules an automatic reset.
+- **L977–L980 — `_add_record_sample()`:** capture route samples.
+- **L981–L1023 — `_track_passes_waypoint()` / `_is_relay_waypoint_linked()`:** relay segment crossing and linked-state checks.
+- **L1024–L1040 — `_track_passes_waypoints_in_order()`:** enforce arbitrary-length relay sequences.
+- **L1041–L1075 — `_track_waypoint_progress()`:** derive partial route progress for replay/visual state.
+- **L1076–L1088 — `_update_player()`:** movement and playfield clamping.
+- **L1089–L1103 — `_update_echo()`:** playback/linger behavior.
+- **L1104–L1107 — `_room_requires_relay()`:** identify rooms using route checkpoints.
+- **L1108–L1139 — `_schedule_room_reset()`:** clear failed take, block input, show cause and schedule same-room restart.
+- **L1140–L1151 — `_check_sentinel_collision()`:** cancel interrupted takes and trigger a full-room reset.
+- **L1152–L1171 — `_check_memory_shard_collection()`:** pickup feedback and persistence.
+- **L1172–L1188 — `_update_timed_gate()`:** countdown and retry handling.
+- **L1189–L1230 — `_check_puzzle_state()`:** Switch A/B, gate and exit evaluation.
+- **L1231–L1253 — `_complete_level()`:** unlock/save campaign completion once.
+- **L1254–L1288:** next/replay/restart/pause actions.
+- **L1289–L1320:** Help and chapter selection, chapter buttons and menu progress.
+- **L1321–L1354 — `_update_hud()`:** current room hint, echo state, recording/relay/timer/status controls.
+- **L1355–L1373:** load campaign and preferences.
+- **L1374–L1379 — `_save_progress()`:** persist campaign and collected shards.
+- **L1380–L1400 — `_draw()` / `_draw_menu_art()`:** procedural screen/menu background.
+- **L1401–L1407 — `_get_gate_timer_ratio()`:** clamped remaining-time fraction for the timed gate.
+- **L1408–L1487 — `_draw_room()`:** playfield, objectives, route, relay, shard and sentinel rendering.
+- **L1488–L1507 — `_draw_echo_waypoint()`:** relay marker visuals and labels.
+- **L1508–L1526 — `_draw_memory_shard()`:** violet shard rendering.
+- **L1527–L1537 — `_draw_switch()`:** active/inactive switch rendering.
+- **L1538–L1551 — `_draw_gate()`:** gate/barrier visualization.
+- **L1552–L1560 — `_draw_portal()`:** portal animation/state.
+- **L1561–L1573 — `_draw_robot()`:** procedural robot body.
+- **L1574–L1582 — `_draw_joystick()`:** virtual joystick visual.
+- **L1583–L1591 — `_draw_track_path()`:** echo/recorded trail rendering.
 
 ## 5. Exact line map — supporting scripts and tests
 
@@ -493,32 +512,30 @@ This function index matches the current source blob SHA `2e5cb7c0ad2c509164d7d1b
 - **L194–L215:** Verify settings defaults, preference persistence, handedness and speed normalization.
 - **L217–L220:** Assertion helper.
 
-### `tests/game_flow_smoke.gd` (919 lines, current blob SHA `cb300c635d4d4212ce2254b6041f3c5cb8f045f2`)
-- **L1–L10:** Integration harness, main scene, relay/level/progress preloads.
-- **L13–L88:** Run the UI/reset tests and complete puzzle-flow suite.
-- **L91–L110:** Lifecycle pause preserves recording and freezes recording/gate time.
-- **L112–L128:** Exercise the real frame loop at the exact eight-second recording boundary.
-- **L130–L142:** Too-short stop keeps recording active, creates no echo and explains the remedy.
+### `tests/game_flow_smoke.gd` (940 lines, current blob SHA `84f80463165bf9eeea8e95c21312e22da5c5222e`)
+- **L1–L11:** Integration harness, main scene, relay/level/progress preloads.
+- **L13–L90:** Run lifecycle, recording, reset, campaign, UI and puzzle-flow checks.
+- **L91–L111:** Lifecycle pause preserves recording, clears held joystick input and prevents background time progression.
+- **L112–L129:** Exercise the real frame loop at the exact eight-second recording boundary.
+- **L130–L143:** Too-short stop keeps recording active, creates no echo and explains the remedy.
 - **L144–L174:** Sentinel contact schedules full room reset, cancels an unfinished take, and the helper verifies reset without user input.
-- **L175–L214:** Manual restart clears active recording/echo/timers/gate/input and works from paused state.
+- **L175–L214:** Manual restart clears recording/echo/timers/gate/input and works from paused state.
 - **L215–L240:** Powered portal completion is idempotent and test restores saved progress.
 - **L241–L259:** Chapter list scrollable layout.
 - **L260–L293:** Memory Shard pickup/lore/save persistence.
 - **L294–L325:** Last shard through pickup path and restored-signal reward.
 - **L326–L357:** Archive recovered/unfound lore, reward state and dynamic room count.
-- **L358–L390:** Options, movement speed presets, and left/right joystick regions.
+- **L358–L390:** Options, movement-speed presets, and left/right joystick regions.
 - **L391–L453:** Latch Protocol switch button visibility, echo-settled prerequisite, E shortcut and restart cleanup.
-- **L454–L497:** Static Bloom single Relay Beacon requirement, invalid route rejection and segment-crossing acceptance; the rejection now auto-resets the room.
-- **L498–L553:** Chorus Route route-order validation and linked state; reverse order schedules auto-reset.
+- **L454–L497:** Static Bloom single Relay Beacon requirement, invalid route rejection and segment-crossing acceptance; rejection also schedules an auto-reset.
+- **L498–L553:** Chorus Route order validation/linked state; reversed order schedules auto-reset.
 - **L554–L612:** Triune Relay rejects reversed three-relay order, checks full hint, accepts correct sequence and tests auto-reset.
-- **L613–L680:** Fracture Clock rejects bad route with complete hint and auto-resets, then validates a correct route, 4.5-second gate and crossing.
-- **L681–L770:** Dead Air Protocol validates invalid/valid four-relay sequence, 1.8-second gate/timeout, plus full room reset on relay failure and sentinel contact.
-- **L771–L830:** Pulse Lock start/countdown bar, real-frame countdown, pause freeze, timeout/rearm/retry and crossing.
-- **L831–L850 — `_finish_failure_reset()`:** Advance countdown without input and assert the same room returns with failed recording/echo, gate and latch cleared.
-- **L851–L912 — `_test_premium_mobile_ui()`:** Touch-target sizing, shared button style, wide/compact viewport reflow, menu fit, control spacing, centered animation pivots and proportional joystick zones. The compact check explicitly resets handedness before checking the left joystick and includes measured positions when the menu stack fails to fit.
-- **L915–L919:** Assertion helper.
-
-
+- **L613–L680:** Fracture Clock rejects bad route with full hint and auto-resets, then checks correct route, 4.5-second gate and crossing.
+- **L681–L770:** Dead Air Protocol validates invalid/valid four-relay sequence, 1.8-second gate/timeout, reset after relay failure and sentinel contact.
+- **L771–L830:** Pulse Lock countdown bar, real-frame countdown, pause freeze, timeout/rearm/retry and crossing.
+- **L831–L850 — `_finish_failure_reset()`:** Advance countdown without input and assert same-room restart clears failed recording/echo, gate and latch state.
+- **L851–L935 — `_test_premium_mobile_ui()`:** Touch-target sizing, shared button style, wide/compact viewport reflow, menu fit, control spacing, centered animation pivots and proportional joystick zones. Lines 911–930 exercise an 800×360 layout; checks include bounds, progress-line clearance and non-overlap, with measured rectangles in failure output.
+- **L936–L940:** Assertion helper.
 
 ### `project.godot` (44 lines, blob SHA `e8242ef990cbeecfe7972c65a7bb93d2bf2cbad3`)
 - **L1–L10:** Project metadata, app icon, main scene and feature declarations.
@@ -612,7 +629,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Update this progress file, current source/test blob hashes, and exact line maps for Triune Relay, Fracture Clock and Dead Air Protocol.
 - [x] Record automatic same-room reset behavior for sentinel deaths and failed relay routes; add countdown/reset-state regression assertions and viewport/touch UI checks.
 - [x] Add responsive HUD/modal reflow, larger primary touch targets and consistent premium button/panel styling.
-- [x] Verify current main game code after the compact-menu/joystick regression fix: [Godot CI run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243) passed Godot 4.4.0 and 4.7.2 import/parse, data smoke tests and game-flow tests.
+- [x] Verify current main game code after the compact-menu/joystick regression fix: [Godot CI run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243) passed Godot 4.4.0 and 4.7.2 import/parse, data smoke tests and game-flow tests.\n- [x] Fix the 800×360 menu overlap caused by theme-enforced Button minimum heights; [Godot CI run 40546560749](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560749) passed both Godot versions at commit `662d1ce3736513d2afc11ffad49e390694d53ef5`.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
 
 ### P1 — Core mechanic test coverage
@@ -642,7 +659,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 ### P4 — Export and release preparation
 - [x] Configure Android package ID `com.ninugaming.echopost`, app version `0.1.0`, app icon, tracked Android export preset and arm64-v8a target.
-- [x] Automate debug APK export, ZIP integrity checking, workflow artifact upload and nightly GitHub Release publication. [Android APK run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) succeeded.
+- [x] Automate debug APK export, ZIP integrity checking, workflow artifact upload and nightly GitHub Release publication. [Android APK run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) succeeded.\n- [x] Confirm the latest mobile-layout-fix APK exported and refreshed the nightly release from commit `662d1ce3736513d2afc11ffad49e390694d53ef5`: [Android APK run 40546560892](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560892).
 - [ ] Configure protected production signing and complete privacy/storefront disclosures before any public store release.
 - [ ] Install the debug APK on a real Android device and verify lifecycle, controls, saves and all twelve rooms.
 - [ ] Run release QA and a closed beta before public distribution.
@@ -654,7 +671,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 2. Check the most recent CI run before modifying code. A workflow run for a commit older than the code currently on `main` does not verify the current code.
 3. Choose **one focused improvement** at a time. Make changes in `main` only as permitted by the user/project workflow, and don't claim the project is finished.
 4. Test changes with Godot CI or available local Godot. Distinguish passed tests, tests not run, and manual device checks.
-5. Refresh every affected line number after changes. Section 4 is keyed to `scripts/game.gd` blob SHA `2e5cb7c0ad2c509164d7d1bb8275963cbd2b5d71`; section 5 records current supporting-script, Android export, workflow and test blob SHAs. If any of those hashes differ after edits, regenerate the corresponding section.
+5. Refresh every affected line number after changes. Section 4 is keyed to `scripts/game.gd` blob SHA `9a1018f65cfb5e2e389c491563545e62f453c927`; section 5 records supporting-script, Android export, workflow and test blob SHAs. The current gameplay-test blob is `84f80463165bf9eeea8e95c21312e22da5c5222e`. If any of those hashes differ after edits, regenerate the corresponding section.
 6. Update `PROJECT_PROGRESS.md` in the same development pass as source changes. Record the new commit(s), source hashes/line references, CI URL/result and what the next session should do.
 7. Keep this game offline-capable and dependency-light. Never add network accounts, telemetry, uploads, payment or ads as an incidental code change.
 8. Claim APK export only when CI confirms the export and archive-integrity check; claim installation/device verification only after the APK has actually been installed and tested on hardware.
