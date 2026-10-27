@@ -83,6 +83,16 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 
 ## 2. Latest work in this development pass
 
+### October 27, 2026 — Ultra-compact landscape menu reflow
+
+**Scope:** address a mobile layout gap for short landscape viewports (for example, an 800×360 logical viewport). The previous compact menu retained a single vertical column, which could push its last navigation button below the visible area on short phones.
+
+- `scripts/game.gd`: `_layout_responsive_ui()` now switches to a two-column, three-row menu when viewport height is below 420 design units. The five navigation actions retain 42-unit touch heights, remain within the horizontal viewport, and sit above the progress indicator. Title, tagline and intro typography also compress for this layout.
+- The small-build version label is hidden to free space and explicitly shown again after resizing to a taller viewport.
+- `tests/game_flow_smoke.gd`: adds an 800×360 regression case that checks all five buttons stay within the viewport, remain above the progress line, retain at least 40 units of height, and do not overlap each other.
+- Source commit: [`fb6fea8677ba828901d4513bc18a0059e60d7161`](https://github.com/NinuGaming999/ECHOPOST/commit/fb6fea8677ba828901d4513bc18a0059e60d7161). Regression-test commit: [`a760a8c5f8fc7cb2d65f09c41f18f38e52012ddf`](https://github.com/NinuGaming999/ECHOPOST/commit/a760a8c5f8fc7cb2d65f09c41f18f38e52012ddf).
+- **Verification boundary:** regression assertions are committed, but no passing CI result has been confirmed for these two commits yet. Do not describe this change as tested until the Godot 4.4.0 and 4.7.2 workflow completes successfully.
+
 ### October 27, 2026 — Android export recovery and mobile-layout CI failures fixed
 
 **Scope:** diagnosis and correction of the Android export configuration error and the responsive-menu regression tests. These are focused reliability fixes; they do not mark the game as finished.
