@@ -930,7 +930,6 @@ func _test_premium_mobile_ui(game: Control) -> void:
 			_check(not first_rect.intersects(second_rect), "Ultra-compact menu buttons must not overlap each other.")
 	game.size = Vector2(1280, 720)
 	game.call("_layout_responsive_ui")
-	game.call("_layout_responsive_ui")
 	game.call("_set_left_handed_controls", previous_handedness)
 	game.call("_show_menu")
 
