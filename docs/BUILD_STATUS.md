@@ -7,7 +7,7 @@
 ## Implemented in this source
 
 - Standalone Godot project entry point and original SVG icon.
-- Main menu, scrollable chapter select, scrollable Memory Archive, instructions, pause, completion, retry, and continue flows. Shared button styling now includes subtle press/hover animation, brighter borders and depth; modal panels re-center after viewport resize. Viewports below 420 design units high use a two-column menu so all five navigation actions remain visible; an 800×360 regression test checks button bounds and overlap.
+- Main menu, scrollable chapter select, scrollable Memory Archive, instructions, pause, completion, retry, and continue flows. Shared button styling now includes subtle press/hover animation, brighter borders and depth; modal panels re-center after viewport resize. Viewports below 420 design units high use a two-column menu so all five navigation actions remain visible. The layout measures each button's actual theme-enforced minimum height before positioning rows; the 800×360 regression checks bounds, progress-line clearance and non-overlap.
 - Keyboard movement and an on-screen joystick that also supports mouse testing. Primary recording/latch controls and bottom menu/restart actions use larger touch targets; joystick hit-zone checks use viewport proportions for either handedness.
 - Options panel with slow/normal/fast movement presets and a left-handed joystick option; these preferences persist in a separate settings file, independent from campaign saves.
 - Latch Protocol's toggle Switch B is functional: a dedicated on-screen button and keyboard E activate it only when the player is near B and the echo has finished playback and settled on A; the latched state remains active after leaving the switch and resets on room restart.
@@ -32,8 +32,8 @@
 
 ## Verification status
 
-- **Godot CI:** [run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243) passed on both Godot 4.4.0 and 4.7.2 for the current game source/test commit `d64199633af306574298e3ce5972630ff3379b88`. Both versions passed project import/parse, data-layer smoke tests and gameplay-flow smoke tests.
-- **Android APK export:** [run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) successfully exported the Android debug APK, validated its ZIP structure, uploaded the Actions artifact and published [ECHOPOST Nightly APK](https://github.com/NinuGaming999/ECHOPOST/releases/tag/nightly). The attached file is `ECHOPOST-android.apk` (about 28.6 MB).
+- **Latest Godot CI:** [run 40546560749](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560749) passed on both Godot 4.4.0 and 4.7.2 at source/test commit `662d1ce3736513d2afc11ffad49e390694d53ef5`. Both versions passed project import/parse, data-layer smoke tests and gameplay-flow smoke tests, including the 800×360 compact-menu regression after correcting theme-derived button heights.
+- **Latest Android APK export:** [run 40546560892](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560892) succeeded on that same commit. The APK export step and ZIP integrity check passed, an Actions artifact was uploaded, and the [ECHOPOST Nightly APK release](https://github.com/NinuGaming999/ECHOPOST/releases/tag/nightly) was refreshed. Current direct download: [ECHOPOST-android.apk](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk) (about 28.6 MB).
 - **What has not been verified:** the APK has not been installed or play-tested on a physical Android device during this pass. Real-device lifecycle, touch reach, safe areas, saves after relaunch, performance and gate difficulty remain open QA items.
 - **Release signing:** current APK uses a debug signing key for direct testing, not a protected production keystore or Google Play-ready release.
 
