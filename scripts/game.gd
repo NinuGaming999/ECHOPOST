@@ -606,6 +606,11 @@ func _layout_responsive_ui() -> void:
 				# text dimensions, so the controls remain separated across Godot versions.
 				compact_top = maxf(compact_top, compact_intro.position.y + compact_intro.size.y + 20.0)
 			var compact_gap := clampf(size.y * 0.083, 44.0, 50.0)
+			if progress != null and compact_button_names.size() > 1:
+				# Keep the entire stack above the progress line even if this engine
+				# version reports a larger minimum height for the intro label.
+				var available_gap := (progress.position.y - compact_top - 44.0 - 8.0) / float(compact_button_names.size() - 1)
+				compact_gap = minf(compact_gap, maxf(30.0, available_gap))
 			for i in range(compact_button_names.size()):
 				var compact_button := menu_root.get_node_or_null(compact_button_names[i]) as Button
 				if compact_button != null:
