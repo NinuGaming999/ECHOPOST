@@ -877,8 +877,9 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	game.set("left_handed_controls", true)
 	_check(bool(game.call("_is_joystick_area", Vector2(1400, 700))), "The right joystick area should adapt in left-handed mode.")
 
-	# Compact landscape phones need reduced menu typography, a tighter menu stack,
-	# a non-overlapping bottom action row and touch-zone protection around buttons.
+	# Compact-landscape checks need explicit handedness setup: this test previously
+	# carried the wide-viewport left-handed value into the following left-side check.
+	game.set("left_handed_controls", false)
 	game.size = Vector2(960, 540)
 	game.call("_layout_responsive_ui")
 	var title := game.get("menu_root").get_node("Title") as Label
