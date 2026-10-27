@@ -622,9 +622,12 @@ func _layout_responsive_ui() -> void:
 					if ultra_button == null:
 						continue
 					var column := i % 2
-					var row_index := i / 2
-					ultra_button.size = Vector2((size.x - 48.0) * 0.5, 42.0)
-					ultra_button.position = Vector2(16.0 + float(column) * (ultra_button.size.x + 16.0), ultra_top + float(row_index) * ultra_gap)
+					# Cast explicitly: integer division has differed across Godot versions.
+					# Every pair must share a row, otherwise the staggered buttons overlap.
+					var row_index := floori(float(i) / 2.0)
+					var column_width := (size.x - 48.0) * 0.5
+					ultra_button.size = Vector2(column_width, 44.0)
+					ultra_button.position = Vector2(16.0 + float(column) * (column_width + 16.0), ultra_top + float(row_index) * ultra_gap)
 					ultra_button.pivot_offset = ultra_button.size * 0.5
 				if progress != null:
 					progress.position.y = size.y - 24.0
