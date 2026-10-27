@@ -202,6 +202,24 @@ const LEVELS: Array[Dictionary] = [
 		"hazard_amplitude": 350.0,
 		"hazard_speed": 2.05,
 		"accent": Color(1.0, 0.32, 0.42)
+	},
+	{
+		"name": "Null Corridor",
+		"subtitle": "THE ECHO CANNOT CROSS THE BLACKOUT",
+		"hint": "Record a curved route around the glowing ECHO DEAD ZONE, then finish on SWITCH A. The real robot can cross the blackout safely; only your recorded echo is disrupted.",
+		"spawn": Vector2(150, 500),
+		"plate_a": Vector2(920, 500),
+		"plate_b": Vector2(1060, 220),
+		"echo_jammer": Vector2(520, 470),
+		"echo_jammer_radius": 105.0,
+		"memory_shard": Vector2(730, 220),
+		"shard_lore": "The blackout was installed to stop copied routes. The original couriers learned to bend their paths around silence.",
+		"linger": 9.5,
+		"hazard": false,
+		"hazard_y": 365.0,
+		"hazard_amplitude": 0.0,
+		"hazard_speed": 0.0,
+		"accent": Color(0.72, 0.43, 1.0)
 	}
 ]
 
@@ -268,7 +286,29 @@ static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 					errors.append("%s gate_open_seconds must be between 1 and 15 seconds." % prefix)
 		if level.has("echo_waypoints") and not (level["echo_waypoints"] is Array):
 			errors.append("%s echo_waypoints must be an Array of Vector2 positions." % prefix)
-		for point_key in ["spawn", "plate_a", "plate_b", "memory_shard", "echo_waypoint"]:
+		if level.has("echo_jammer") and not (level["echo_jammer"] is Vector2):
+			errors.append("%s echo_jammer must be a Vector2." % prefix)
+		if level.has("echo_jammer_radius") and not level.has("echo_jammer"):
+			errors.append("%s echo_jammer_radius requires an echo_jammer position." % prefix)
+		if level.has("echo_jammer"):
+			if not level.has("echo_jammer_radius"):
+				errors.append("%s echo_jammer requires echo_jammer_radius." % prefix)
+			else:
+				var raw_jammer_radius: Variant = level["echo_jammer_radius"]
+				if not (raw_jammer_radius is int or raw_jammer_radius is float):
+					errors.append("%s echo_jammer_radius must be numeric." % prefix)
+				else:
+					var jammer_radius := float(raw_jammer_radius)
+					if jammer_radius < 40.0 or jammer_radius > 180.0:
+						errors.append("%s echo_jammer_radius must be between 40 and 180 units." % prefix)
+					if level["echo_jammer"] is Vector2:
+						var jammer_position: Vector2 = level["echo_jammer"]
+						for anchor_key in ["spawn", "plate_a", "plate_b", "memory_shard"]:
+							if level.has(anchor_key) and level[anchor_key] is Vector2:
+								var anchor_position: Vector2 = level[anchor_key]
+								if jammer_position.distance_to(anchor_position) < jammer_radius + 40.0:
+									errors.append("%s echo jammer must be separated from %s." % [prefix, anchor_key])
+		for point_key in ["spawn", "plate_a", "plate_b", "memory_shard", "echo_waypoint", "echo_jammer"]:
 			if level.has(point_key) and level[point_key] is Vector2:
 				var point: Vector2 = level[point_key]
 				if point.x < 63.0 or point.x > 1217.0 or point.y < 140.0 or point.y > 597.0:
