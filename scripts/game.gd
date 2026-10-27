@@ -985,6 +985,16 @@ func _finish_recording() -> void:
 			status_message = "ROUTE REJECTED — pass through the RELAY BEACON before finishing on SWITCH A."
 			_schedule_room_reset("RELAY BEACON MISSED", status_message)
 			return
+	if level_data.has("echo_jammer"):
+		var jammer_position: Vector2 = level_data["echo_jammer"]
+		var jammer_radius := float(level_data.get("echo_jammer_radius", 100.0))
+		if _track_passes_waypoint(recording_track, jammer_position, jammer_radius):
+			echo_visible = false
+			echo_playing = false
+			echo_track.clear()
+			status_message = "ECHO DEAD ZONE — the recorded route crossed the blackout. Reroute around it."
+			_schedule_room_reset("ECHO JAMMED", status_message)
+			return
 	echo_track = recording_track.copy_track()
 	echo_playing = echo_track.samples.size() > 1
 	echo_visible = echo_playing
@@ -1438,6 +1448,17 @@ func _draw_room() -> void:
 	for y in range(int(ROOM_TOP + 20), int(ROOM_BOTTOM), 40):
 		draw_line(Vector2(ROOM_LEFT + 4, y), Vector2(ROOM_RIGHT - 4, y), Color(0.13, 0.23, 0.31, 0.35), 1.0)
 
+	if level_data.has("echo_jammer"):
+		var jammer_position: Vector2 = level_data["echo_jammer"]
+		var jammer_radius := float(level_data.get("echo_jammer_radius", 100.0))
+		draw_circle(jammer_position, jammer_radius, Color(0.035, 0.035, 0.13, 0.88))
+		draw_arc(jammer_position, jammer_radius, 0.0, TAU, 72, Color(0.76, 0.36, 1.0, 0.96), 4.0, true)
+		draw_arc(jammer_position, jammer_radius * 0.72, 0.0, TAU, 64, Color(0.39, 0.22, 0.72, 0.78), 2.0, true)
+		draw_circle(jammer_position, 18.0, Color(0.68, 0.28, 0.96, 0.95))
+		draw_line(jammer_position + Vector2(-12.0, 0.0), jammer_position + Vector2(12.0, 0.0), Color(0.95, 0.85, 1.0, 0.95), 3.0)
+		draw_line(jammer_position + Vector2(0.0, -12.0), jammer_position + Vector2(0.0, 12.0), Color(0.95, 0.85, 1.0, 0.95), 3.0)
+		draw_string(ThemeDB.fallback_font, Vector2(jammer_position.x - jammer_radius - 10.0, jammer_position.y - jammer_radius - 9.0), "ECHO DEAD ZONE", HORIZONTAL_ALIGNMENT_CENTER, jammer_radius * 2.0 + 20.0, 13, Color(0.86, 0.67, 1.0, 0.95))
+
 	_draw_switch(level_data["plate_a"], "A", Color(0.23, 0.83, 1.0), echo_visible and echo_position.distance_to(level_data["plate_a"]) < 43.0)
 	var switch_b_active := player_position.distance_to(level_data["plate_b"]) < 43.0
 	if str(level_data.get("plate_b_mode", "hold")) == "toggle":
@@ -1473,7 +1494,14 @@ func _draw_room() -> void:
 
 	# Show the player's route as it is being recorded, so the ghost mechanic feels tangible.
 	if is_recording and not recording_track.samples.is_empty():
-		_draw_track_path(recording_track, Color(1.0, 0.69, 0.31, 0.62), 3.5)
+		var live_route_tint := Color(1.0, 0.69, 0.31, 0.62)
+		if level_data.has("echo_jammer") and _track_passes_waypoint(
+			recording_track,
+			level_data["echo_jammer"],
+			float(level_data.get("echo_jammer_radius", 100.0))
+		):
+			live_route_tint = Color(1.0, 0.28, 0.43, 0.88)
+		_draw_track_path(recording_track, live_route_tint, 3.5)
 		var route_start: Vector2 = recording_track.samples.front()["p"]
 		draw_circle(route_start, 12.0, Color(1.0, 0.69, 0.31, 0.12))
 		draw_arc(route_start, 12.0, 0.0, TAU, 32, Color(1.0, 0.76, 0.40, 0.92), 2.0, true)
