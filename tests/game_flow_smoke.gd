@@ -31,6 +31,7 @@ func _run_tests() -> void:
 	_test_three_ordered_echo_waypoints(game)
 	_test_relay_timer_combo(game)
 	_test_dead_air_protocol(game)
+	_test_echo_jammer_route(game)
 	_test_timed_gate_requires_crossing(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
