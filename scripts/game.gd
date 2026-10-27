@@ -618,6 +618,10 @@ func _layout_responsive_ui() -> void:
 					compact_button.size.y = 44.0
 		var version_label := menu_root.get_node_or_null("Version") as Control
 		if version_label != null:
+			if size.y < 420.0:
+				version_label.hide()
+			else:
+				version_label.show()
 			version_label.position.y = size.y - 24.0
 	if is_instance_valid(game_hud):
 		if is_instance_valid(level_title_label):
