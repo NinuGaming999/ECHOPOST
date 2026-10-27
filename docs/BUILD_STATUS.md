@@ -7,7 +7,7 @@
 ## Implemented in this source
 
 - Standalone Godot project entry point and original SVG icon.
-- Main menu, scrollable chapter select, scrollable Memory Archive, instructions, pause, completion, retry, and continue flows. Shared button styling now includes subtle press/hover animation, brighter borders and depth; modal panels re-center after viewport resize.
+- Main menu, scrollable chapter select, scrollable Memory Archive, instructions, pause, completion, retry, and continue flows. Shared button styling now includes subtle press/hover animation, brighter borders and depth; modal panels re-center after viewport resize. Viewports below 420 design units high use a two-column menu so all five navigation actions remain visible; an 800×360 regression test checks button bounds and overlap.
 - Keyboard movement and an on-screen joystick that also supports mouse testing. Primary recording/latch controls and bottom menu/restart actions use larger touch targets; joystick hit-zone checks use viewport proportions for either handedness.
 - Options panel with slow/normal/fast movement presets and a left-handed joystick option; these preferences persist in a separate settings file, independent from campaign saves.
 - Latch Protocol's toggle Switch B is functional: a dedicated on-screen button and keyboard E activate it only when the player is near B and the echo has finished playback and settled on A; the latched state remains active after leaving the switch and resets on room restart.
