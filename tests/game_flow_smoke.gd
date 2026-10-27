@@ -907,7 +907,29 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	_check(bool(game.call("_is_joystick_area", Vector2(170, 480))), "The compact left joystick zone should avoid the menu button.")
 	game.set("left_handed_controls", true)
 	_check(bool(game.call("_is_joystick_area", Vector2(780, 480))), "The compact right joystick zone should avoid the restart button.")
+
+	# Extra-short landscape phones need a two-column menu; a single column cannot
+	# fit the full navigation stack above the progress indicator at 360px height.
+	game.set("left_handed_controls", false)
+	game.size = Vector2(800, 360)
+	game.call("_layout_responsive_ui")
+	var ultra_menu: Control = game.get("menu_root")
+	var ultra_progress := ultra_menu.get_node("Progress") as Label
+	var ultra_names := ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]
+	var ultra_buttons: Array[Button] = []
+	for button_name in ultra_names:
+		var ultra_button := ultra_menu.get_node(button_name) as Button
+		ultra_buttons.append(ultra_button)
+		_check(ultra_button.position.x >= 0.0 and ultra_button.position.x + ultra_button.size.x <= game.size.x, "Ultra-compact menu buttons must remain inside the viewport.")
+		_check(ultra_button.position.y + ultra_button.size.y <= ultra_progress.position.y, "Ultra-compact menu buttons must remain above the progress line.")
+		_check(ultra_button.size.y >= 40.0, "Ultra-compact menu buttons must retain usable touch height.")
+	for i in range(ultra_buttons.size()):
+		for j in range(i + 1, ultra_buttons.size()):
+			var first_rect := Rect2(ultra_buttons[i].position, ultra_buttons[i].size)
+			var second_rect := Rect2(ultra_buttons[j].position, ultra_buttons[j].size)
+			_check(not first_rect.intersects(second_rect), "Ultra-compact menu buttons must not overlap each other.")
 	game.size = Vector2(1280, 720)
+	game.call("_layout_responsive_ui")
 	game.call("_layout_responsive_ui")
 	game.call("_set_left_handed_controls", previous_handedness)
 	game.call("_show_menu")
