@@ -599,23 +599,50 @@ func _layout_responsive_ui() -> void:
 			centered_button.position.x = center_x - centered_button.size.x * 0.5
 		if compact_height:
 			var compact_button_names := ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]
-			var compact_top := size.y * 0.43
-			var compact_intro := menu_root.get_node_or_null("Intro") as Control
-			if compact_intro != null:
-				# Calculate from the actual intro bounds rather than duplicated hard-coded
-				# text dimensions, so the controls remain separated across Godot versions.
-				compact_top = maxf(compact_top, compact_intro.position.y + compact_intro.size.y + 20.0)
-			var compact_gap := clampf(size.y * 0.083, 44.0, 50.0)
-			if progress != null and compact_button_names.size() > 1:
-				# Keep the entire stack above the progress line even if this engine
-				# version reports a larger minimum height for the intro label.
-				var available_gap := (progress.position.y - compact_top - 44.0 - 8.0) / float(compact_button_names.size() - 1)
-				compact_gap = minf(compact_gap, maxf(30.0, available_gap))
-			for i in range(compact_button_names.size()):
-				var compact_button := menu_root.get_node_or_null(compact_button_names[i]) as Button
-				if compact_button != null:
-					compact_button.position.y = compact_top + float(i) * compact_gap
-					compact_button.size.y = 44.0
+			if size.y < 420.0:
+				# Very short landscape phones cannot fit a single-column menu without
+				# hiding controls. Reflow into two columns with touch-sized buttons.
+				var ultra_title := menu_root.get_node_or_null("Title") as Label
+				if ultra_title != null:
+					ultra_title.position.y = 8.0
+					ultra_title.size.y = 46.0
+					ultra_title.add_theme_font_size_override("font_size", clampi(roundi(42.0 * width_scale), 30, 42))
+				if tagline != null:
+					tagline.position.y = 52.0
+					tagline.size.y = 28.0
+					tagline.add_theme_font_size_override("font_size", clampi(roundi(15.0 * width_scale), 11, 15))
+				if intro != null:
+					intro.position.y = 80.0
+					intro.size.y = 42.0
+					intro.add_theme_font_size_override("font_size", clampi(roundi(13.0 * width_scale), 10, 13))
+				var ultra_top := 136.0
+				var ultra_gap := 50.0
+				for i in range(compact_button_names.size()):
+					var ultra_button := menu_root.get_node_or_null(compact_button_names[i]) as Button
+					if ultra_button == null:
+						continue
+					var column := i % 2
+					var row_index := i / 2
+					ultra_button.size = Vector2((size.x - 48.0) * 0.5, 42.0)
+					ultra_button.position = Vector2(16.0 + float(column) * (ultra_button.size.x + 16.0), ultra_top + float(row_index) * ultra_gap)
+					ultra_button.pivot_offset = ultra_button.size * 0.5
+				if progress != null:
+					progress.position.y = size.y - 24.0
+					progress.size.y = 20.0
+			else:
+				var compact_top := size.y * 0.43
+				if intro != null:
+					# Use the actual intro bounds to avoid overlap across Godot versions.
+					compact_top = maxf(compact_top, intro.position.y + intro.size.y + 20.0)
+				var compact_gap := clampf(size.y * 0.083, 44.0, 50.0)
+				if progress != null and compact_button_names.size() > 1:
+					var available_gap := (progress.position.y - compact_top - 44.0 - 8.0) / float(compact_button_names.size() - 1)
+					compact_gap = minf(compact_gap, maxf(30.0, available_gap))
+				for i in range(compact_button_names.size()):
+					var compact_button := menu_root.get_node_or_null(compact_button_names[i]) as Button
+					if compact_button != null:
+						compact_button.position.y = compact_top + float(i) * compact_gap
+						compact_button.size.y = 44.0
 		var version_label := menu_root.get_node_or_null("Version") as Control
 		if version_label != null:
 			if size.y < 420.0:
