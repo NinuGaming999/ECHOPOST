@@ -697,24 +697,33 @@ func _layout_responsive_ui() -> void:
 		var latch_control := game_hud.get_node_or_null("LatchSwitchBButton") as Button
 		var reset_control := game_hud.get_node_or_null("ResetButton") as Button
 		var bottom_y := size.y - 66.0
-		var nav_width := clampf(size.x * 0.105, 112.0, 150.0)
-		var action_width := clampf(size.x * 0.21, 205.0, 270.0)
-		var action_gap := clampf(size.x * 0.015, 10.0, 18.0)
-		var side_margin := maxf(18.0, size.x * 0.025)
+		# Make the bottom action row fit on narrow landscape devices instead of
+		# letting fixed minimum widths overlap the menu and restart controls.
+		var nav_width := clampf(size.x * 0.14, 92.0, 150.0)
+		var action_gap := clampf(size.x * 0.015, 8.0, 18.0)
+		var side_margin := maxf(12.0, size.x * 0.025)
+		var max_action_width := size.x * 0.5 - side_margin - nav_width - action_gap * 0.5 - 8.0
+		var action_width := minf(clampf(size.x * 0.27, 120.0, 270.0), max_action_width)
 		if bottom_menu_control != null:
 			bottom_menu_control.size.x = nav_width
+			bottom_menu_control.text = "MENU" if nav_width < 112.0 else "MAIN MENU"
+			bottom_menu_control.add_theme_font_size_override("font_size", clampi(roundi(nav_width * 0.115), 10, 13))
 			bottom_menu_control.pivot_offset = bottom_menu_control.size * 0.5
 			bottom_menu_control.position = Vector2(side_margin, bottom_y)
 		if record_control != null:
 			record_control.size.x = action_width
+			record_control.add_theme_font_size_override("font_size", clampi(roundi(action_width * 0.085), 10, 17))
 			record_control.pivot_offset = record_control.size * 0.5
 			record_control.position = Vector2(center_x - action_width - action_gap * 0.5, bottom_y)
 		if latch_control != null:
 			latch_control.size.x = action_width
+			latch_control.add_theme_font_size_override("font_size", clampi(roundi(action_width * 0.075), 10, 15))
 			latch_control.pivot_offset = latch_control.size * 0.5
 			latch_control.position = Vector2(center_x + action_gap * 0.5, bottom_y)
 		if reset_control != null:
 			reset_control.size.x = nav_width
+			reset_control.text = "RESTART" if nav_width < 112.0 else "RESTART ROOM"
+			reset_control.add_theme_font_size_override("font_size", clampi(roundi(nav_width * 0.115), 10, 13))
 			reset_control.pivot_offset = reset_control.size * 0.5
 			reset_control.position = Vector2(size.x - side_margin - nav_width, bottom_y)
 	_layout_centered_panels()
