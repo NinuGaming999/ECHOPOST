@@ -586,9 +586,12 @@ func _layout_responsive_ui() -> void:
 			intro.size.y = 48.0 if compact_height else 58.0
 			intro.position = Vector2(center_x - intro.size.x * 0.5, 165.0 if compact_height else 280.0)
 			intro.add_theme_font_size_override("font_size", clampi(roundi(18.0 * width_scale), 13, 18))
+			# Keep the short-screen menu from sacrificing button space to a paragraph.
+			intro.visible = size.y >= 340.0
 		var progress := menu_root.get_node_or_null("Progress") as Label
 		if progress != null:
 			progress.size.x = minf(800.0, size.x - 32.0)
+			progress.visible = size.y >= 280.0
 			progress.position = Vector2(center_x - progress.size.x * 0.5, size.y - 60.0 if compact_height else 619.0)
 		for button_name in ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]:
 			var centered_button := menu_root.get_node_or_null(button_name) as Button
@@ -616,6 +619,17 @@ func _layout_responsive_ui() -> void:
 					intro.size.y = 42.0
 					intro.add_theme_font_size_override("font_size", clampi(roundi(13.0 * width_scale), 10, 13))
 				var ultra_top := 136.0
+				if size.y < 340.0:
+					# On extra-short landscape screens, reclaim the intro's vertical space.
+					if ultra_title != null:
+						ultra_title.position.y = 4.0
+						ultra_title.size.y = 38.0
+						ultra_title.add_theme_font_size_override("font_size", clampi(roundi(34.0 * width_scale), 26, 34))
+					if tagline != null:
+						tagline.position.y = 42.0
+						tagline.size.y = 22.0
+						tagline.add_theme_font_size_override("font_size", clampi(roundi(12.0 * width_scale), 10, 12))
+					ultra_top = 74.0
 				var column_width := (size.x - 48.0) * 0.5
 				var row_heights: Array[float] = [0.0, 0.0, 0.0]
 				for i in range(compact_button_names.size()):
