@@ -23,7 +23,10 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Main controller source blob for the exact line map below:** `2bbfb07c528b73e128aaf795cebee146075c28ed` (1537 lines)  
+**Current main controller source blob for the exact line map below:** `2e5cb7c0ad2c509164d7d1bb8275963cbd2b5d71` (1547 lines)  
+**Compact-menu layout implementation commit:** `0f09dba86c6c01ecc74c967f063a52b5859b2a4d`  
+**Mobile-layout regression test/setup correction commit:** `d64199633af306574298e3ce5972630ff3379b88`  
+**Android ETC2/ASTC export fix commit:** `e713071219c15d514e0552c099437c265e22b4e2`  
 **Triune Relay level-data commit:** `48aa2ccd090f7cda6b74c8d8a9a0bbdd016d9e3d`  
 **Initial ten-room schema-test commit (before Fracture Clock):** `76cc6722aea77edc5bba938aa36318271645afc2`  
 **Three-relay gameplay test commit:** `9f08fae5aa9a7a8588a01cae3dcad86cad03ca55`  
@@ -80,6 +83,17 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 
 ## 2. Latest work in this development pass
 
+### October 27, 2026 — Android export recovery and mobile-layout CI failures fixed
+
+**Scope:** diagnosis and correction of the Android export configuration error and the responsive-menu regression tests. These are focused reliability fixes; they do not mark the game as finished.
+
+- **Android export root cause:** Godot's Android exporter required ETC2/ASTC texture import. Added `textures/vram_compression/import_etc2_astc=true` to `project.godot` (current blob SHA `e8242ef990cbeecfe7972c65a7bb93d2bf2cbad3`, 44 lines). The export preset is tracked in `export_presets.cfg` (SHA `6c2e8278c715c8eb5e9b98d8ec4b3731d217bea4`, 67 lines). The package ID is `com.ninugaming.echopost`; the preset targets arm64-v8a.
+- **Compact menu root cause:** the compact menu layout used a fixed top position that did not reliably respect the actual Intro control bounds across Godot versions and could push the last button down into the progress line. `scripts/game.gd:L562–L664` now derives the initial stack position from the actual Intro bounds and reduces inter-button spacing when needed to fit the progress line. Source change: `0f09dba86c6c01ecc74c967f063a52b5859b2a4d`.
+- **Touch-zone test setup root cause:** the wide-view test enabled left-handed joystick mode and accidentally carried that state into the following compact left-side assertion. `tests/game_flow_smoke.gd:L851–L912` now explicitly resets handedness before compact left-zone checks, then tests the right-zone case separately. The compact menu assertion includes measured positions in its failure message for easier diagnosis. Test commit: `d64199633af306574298e3ce5972630ff3379b88`.
+- **Verification:** [Godot CI run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243) passed all import/parse, data smoke and game-flow smoke steps on both Godot 4.4.0 and 4.7.2 at source/test commit `d64199633af306574298e3ce5972630ff3379b88`.
+- **Android export:** [Android APK run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) completed successfully for that same source/test commit. Godot exported the APK, `unzip -t` validated the package, and GitHub Actions uploaded/published `ECHOPOST-android.apk` to the [ECHOPOST Nightly Release](https://github.com/NinuGaming999/ECHOPOST/releases/tag/nightly) (about 28.6 MB).
+- **Important boundary:** this confirms export and APK archive integrity, **not** installation or gameplay on a physical phone. The APK is a debug-signed testing build, not a production-signed Google Play release. Do not mark real-device QA complete until installation, touch controls, lifecycle pause/resume, saving and all twelve rooms have been checked on hardware.
+
 ### Automatic room resets and premium, responsive touch UI
 **Current feature pass. Changed:** `scripts/game.gd`, `tests/game_flow_smoke.gd`, README, design, roadmap and build-status docs.
 
@@ -91,7 +105,7 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 - `tests/game_flow_smoke.gd:L851–L903` checks mobile touch heights, viewport-driven anchoring, compact 960×540 menu layout, non-overlapping actions, centered animation pivots and left/right joystick regions.
 - Initial reset commit: `ecc3243707091262f791fc700f1abf3d79e43ff0`; latest controller commit: `e2f9b9a0adc876aca3a9527ebea2e95bcbcdf389` (blob `2bbfb07c528b73e128aaf795cebee146075c28ed`, 1537 lines). Latest mobile/reset test commit: `a12b494c2a3b65d454edaf6837cff4fcc06b408f` (blob `c20bf9e555759d5815001b4bef36e9e1583e81f1`, 910 lines). Earlier implementation commits: `02687b13b3aae614acd4125cdb2d0dd2d19b6b5e`, `0d22550fd4518548b5243b565d5a074c566f1cda`, `453beb8e486c63c08502829aa8cc0304968db2f4`, `60b10923fe6196fa26edab18642ea240ee6f167d`, and `81b18268e58f196432ea4c8a7fa47fedeccb2b98`.
 - README/design/roadmap/build-status doc commits: `5cfb07bec7396eecc0de548d8fe863b7214ba303`, `522d4b591ec46b6ae7371d060475434b3e2eccf1`, `03e4a4f00d4b2be88c63e7470b50d942fe6bb53f`, and `c3f6a2cb42838b2ad51580b737fad81a80d842d`.
-- **Verification:** the last known fully passing CI baseline is run 210, which predates this feature pass. The GitHub integration available here did not expose the latest push-triggered Actions check result, so the new code/tests are **not yet confirmed CI-green**. The controller was manually inspected for line-flow/return-state consistency, but a Godot editor/runtime is not available in this environment. Real-phone touch layout and visual quality still need manual QA.
+- **Verification note updated on October 27, 2026:** at the time of the original automatic-reset feature note, run 210 was the last known baseline. That statement is now historical and superseded by [Godot CI run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243), which passed the current code/tests on Godot 4.4.0 and 4.7.2. [Android APK run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) also exported and published the debug APK. Physical-device QA remains outstanding.
 
 The automatic reset now treats sentinel death and relay sequence failure as a full room restart rather than leaving the player stranded in a partially failed state. The 0.85-second card is deliberately brief; playtesting should confirm its readability without making repeated failures feel slow.
 
@@ -381,45 +395,46 @@ This change is covered by an automated headless integration test. It is **not ye
 
 ## 4. Exact source line map — `scripts/game.gd`
 
-This function index matches source blob SHA `2bbfb07c528b73e128aaf795cebee146075c28ed` (1537 lines). It is authoritative for the current source. Older code-line references inside historical feature notes refer to the source revision at the time.
+This function index matches the current source blob SHA `2e5cb7c0ad2c509164d7d1bb8275963cbd2b5d71` (1547 lines). Older line references in historical feature notes refer to the source revision at that time.
 
 - **L1–L5:** Script header and movement, recording, and reset-transition constants.
 - **L7–L23:** Playfield bounds and preloaded echo/level/progress/settings dependencies.
 - **L25–L55:** Campaign state, echo/recording data, gate/sentinel state and pending-reset fields.
 - **L58–L91:** Menu/HUD, options/archive/failure panels, labels and gameplay controls.
-- **L94–L102 — `_notification()`:** Defer responsive layout after viewport resize and pause after lifecycle focus-out.
-- **L104–L116 — `_pause_for_lifecycle()`:** Pause active gameplay without interrupting a failure-reset sequence.
-- **L119–L128 — `_ready()`:** Load saves/preferences, build UI, apply responsive layout, show menu.
-- **L131–L180 — `_process()`:** Countdown/restart handling; stop frame evaluation when sentinel contact starts a reset.
+- **L94–L103 — `_notification()`:** Defer responsive layout after viewport resize and pause after lifecycle focus-out.
+- **L104–L118 — `_pause_for_lifecycle()`:** Pause active gameplay without interrupting a failure-reset sequence.
+- **L119–L130 — `_ready()`:** Load saves/preferences, build UI, apply responsive layout, show menu.
+- **L131–L179 — `_process()`:** Countdown/restart handling; stop frame evaluation when sentinel contact starts a reset.
 - **L180–L218 — `_input()`:** Keyboard latch shortcut, touch/mouse joystick handling and movement events; input is ignored during reset.
-- **L219–L231 — `_is_joystick_area()`:** Proportional left/right joystick zones and a protected bottom-action band.
+- **L219–L231 — `_is_joystick_area()`:** Proportional left/right joystick zones and protected button regions.
 - **L232–L243:** Joystick movement normalization and deterministic star decoration.
-- **L244–L281 — `_build_interface()` / `_build_menu()`:** Build screen panels and main menu.
+- **L244–L254 — `_build_interface()`:** Build the screen panels and menu.
+- **L255–L281 — `_build_menu()`:** Create the responsive main-menu controls and progress/status labels.
 - **L282–L306 — `_build_game_hud()`:** Header/status and pause/record/latch/restart/menu controls.
 - **L307–L430:** Completion, Help, chapter select, Memory Archive and Options panels.
 - **L431–L523:** Options actions, settings persistence and archive status.
 - **L524–L561 — `_build_failure_panel()`:** Failure reason/detail card and shrinking reset indicator.
-- **L562–L654 — `_layout_responsive_ui()`:** Center/shrink menu text, compact-height menu stack, resize/reflow bottom actions, keep animation pivots centered and prevent button overlap.
-- **L655–L660 — `_layout_centered_panels()`:** Recenter modals after viewport changes.
-- **L661–L697 — `_make_panel()` / `_make_label()`:** Shared panel depth/radius/border and typography construction.
-- **L698–L755 — `_make_button()` / `_animate_button()`:** Shared rounded/bordered states, subtle hover/press tweens and responsive animation pivots.
-- **L756–L782 — `_show_menu()` / `_on_start_pressed()`:** Cancel pending reset and navigate from menu.
-- **L783–L824 — `_start_level()`:** Initialize a clean chamber and clear pending reset state.
-- **L825–L870 — record/latch actions:** Start/finish route recording or validate toggle switch while guarding input during reset.
-- **L871–L922 — `_finish_recording()`:** Validate duration, Switch A endpoint and single/ordered relay requirements; failed routes in relay rooms schedule reset.
-- **L923–L1021:** Track samples, relay linked state, ordered waypoint progress and segment crossing tests.
-- **L1022–L1049:** Player/echo movement, linger behavior and relay-room detection.
-- **L1050–L1053 — `_room_requires_relay()`:** Identify rooms with required relay checkpoints.
-- **L1054–L1085 — `_schedule_room_reset()`:** Clear failed take, block input, show reason, and schedule a same-room restart.
-- **L1086–L1097 — `_check_sentinel_collision()`:** Sentinel contact cancels the take and triggers a full room reset.
-- **L1098–L1134:** Memory Shard collection and timed-gate retry/crossing logic.
-- **L1135–L1176 — `_check_puzzle_state()`:** Evaluate switches, latch state, gate and portal.
-- **L1177–L1266:** Completion/save, pause, chapter navigation and menu progress.
-- **L1267–L1300 — `_update_hud()`:** Refresh status/button captions and disable record while reset is pending.
-- **L1301–L1325:** Local campaign/settings load and save.
-- **L1326–L1353:** Background, menu art and gate-timer ratio.
-- **L1354–L1433 — `_draw_room()`:** Draw room, switches, gate, portal, relays, shard, sentinel, echo trail and joystick hint.
-- **L1434–L1536:** Procedural relay, shard, switch, gate, portal, robot, joystick and route drawing.
+- **L562–L664 — `_layout_responsive_ui()`:** Resize menu typography; calculate compact stack from actual Intro bounds; constrain button gaps to the progress line; reflow the HUD/action row; keep touch targets within the viewport.
+- **L665–L670 — `_layout_centered_panels()`:** Recenter modals after viewport changes.
+- **L671–L707 — `_make_panel()` / `_make_label()`:** Shared panel depth/radius/border and typography construction.
+- **L708–L765 — `_make_button()` / `_animate_button()`:** Shared button states, hover/press tweens and animation pivots.
+- **L766–L792 — `_show_menu()` / `_on_start_pressed()`:** Cancel pending reset and navigate from menu.
+- **L793–L834 — `_start_level()`:** Initialize a clean chamber and clear pending reset state.
+- **L835–L880:** Recording and latch actions, including guards during a reset.
+- **L881–L932 — `_finish_recording()`:** Validate duration, Switch A endpoint and single/ordered relay requirements; failed relay routes schedule reset.
+- **L933–L1031:** Track samples, relay linked state, ordered waypoint progress and segment-crossing tests.
+- **L1032–L1059:** Player/echo movement, linger behavior and relay-room detection.
+- **L1060–L1063 — `_room_requires_relay()`:** Identify rooms with required relay checkpoints.
+- **L1064–L1095 — `_schedule_room_reset()`:** Clear failed take, block input, show reason, and schedule a same-room restart.
+- **L1096–L1107 — `_check_sentinel_collision()`:** Sentinel contact cancels the take and triggers a full room reset.
+- **L1108–L1144:** Memory Shard collection and timed-gate retry/crossing logic.
+- **L1145–L1186 — `_check_puzzle_state()`:** Evaluate switches, latch state, gate and portal.
+- **L1187–L1276:** Completion/save, pause, chapter navigation and menu progress.
+- **L1277–L1310 — `_update_hud()`:** Refresh status/button captions and disable record while reset is pending.
+- **L1311–L1335:** Local campaign/settings load and save.
+- **L1336–L1363:** Background, menu art and gate-timer ratio.
+- **L1364–L1443 — `_draw_room()`:** Draw room, switches, gate, portal, relays, shard, sentinel, echo trail and joystick hint.
+- **L1444–L1546:** Procedural relay, shard, switch, gate, portal, robot, joystick and route drawing.
 
 ## 5. Exact line map — supporting scripts and tests
 
@@ -468,7 +483,7 @@ This function index matches source blob SHA `2bbfb07c528b73e128aaf795cebee146075
 - **L194–L215:** Verify settings defaults, preference persistence, handedness and speed normalization.
 - **L217–L220:** Assertion helper.
 
-### `tests/game_flow_smoke.gd` (910 lines, blob SHA `c20bf9e555759d5815001b4bef36e9e1583e81f1`)
+### `tests/game_flow_smoke.gd` (919 lines, current blob SHA `cb300c635d4d4212ce2254b6041f3c5cb8f045f2`)
 - **L1–L10:** Integration harness, main scene, relay/level/progress preloads.
 - **L13–L88:** Run the UI/reset tests and complete puzzle-flow suite.
 - **L91–L110:** Lifecycle pause preserves recording and freezes recording/gate time.
@@ -490,20 +505,32 @@ This function index matches source blob SHA `2bbfb07c528b73e128aaf795cebee146075
 - **L681–L770:** Dead Air Protocol validates invalid/valid four-relay sequence, 1.8-second gate/timeout, plus full room reset on relay failure and sentinel contact.
 - **L771–L830:** Pulse Lock start/countdown bar, real-frame countdown, pause freeze, timeout/rearm/retry and crossing.
 - **L831–L850 — `_finish_failure_reset()`:** Advance countdown without input and assert the same room returns with failed recording/echo, gate and latch cleared.
-- **L851–L903 — `_test_premium_mobile_ui()`:** Touch-target sizing, shared button style, wide/compact viewport reflow, menu fit, control spacing, centered animation pivots and proportional joystick zones.
-- **L906–L909:** Assertion helper.
+- **L851–L912 — `_test_premium_mobile_ui()`:** Touch-target sizing, shared button style, wide/compact viewport reflow, menu fit, control spacing, centered animation pivots and proportional joystick zones. The compact check explicitly resets handedness before checking the left joystick and includes measured positions when the menu stack fails to fit.
+- **L915–L919:** Assertion helper.
 
 
+
+### `project.godot` (44 lines, blob SHA `e8242ef990cbeecfe7972c65a7bb93d2bf2cbad3`)
+- **L1–L10:** Project metadata, app icon, main scene and feature declarations.
+- **L12–L18:** 1280×720 viewport/window settings, canvas stretch and landscape orientation.
+- **L20–L25:** Compatibility renderer and ETC2/ASTC texture-import support required by Android export.
+- **L27–L44:** WASD/arrow input map.
+
+### `export_presets.cfg` (67 lines, blob SHA `6c2e8278c715c8eb5e9b98d8ec4b3731d217bea4`)
+- **L1–L18:** Android preset declaration and APK output path `build/ECHOPOST-android.apk`.
+- **L20–L39:** Android export options, arm64-v8a architecture, version `0.1.0`, package ID `com.ninugaming.echopost` and app name.
+- **L40–L67:** Launcher icon fields and Android export option defaults.
+
+### `.github/workflows/android-apk.yml` (148 lines, blob SHA `2f741311fe04afafc3ea7259f18ab4913a39104d`)
+- **L1–L25:** Triggers for main pushes, version tags and manual runs; release write permission; concurrency group.
+- **L27–L58:** Checkout, Java 17, Android SDK packages and Godot 4.7.2 with export templates.
+- **L60–L92:** Headless import, debug signing configuration and Godot Android SDK/JDK editor settings.
+- **L94–L111:** Export debug APK, require a nonempty file, validate archive structure, upload a 30-day workflow artifact.
+- **L113–L148:** Publish/refresh the `nightly` GitHub prerelease from main and publish an attached APK for `v*` tags. Signing is for testing, not production.
 
 ### `scenes/main.tscn` (13 lines)
 - **L1–L3:** Scene resource/script declaration.
 - **L5–L13:** Full-rect Control root bound to `scripts/game.gd`.
-
-### `project.godot` (43 lines)
-- **L1–L10:** Project metadata, icon, main scene and feature declarations.
-- **L12–L18:** 1280×720 viewport/window settings, canvas stretch mode and orientation.
-- **L20–L24:** Compatibility renderer/background configuration.
-- **L26–L43:** WASD/arrow input map.
 
 ### `.github/workflows/godot-checks.yml` (38 lines)
 - **L1–L19:** Push/PR/manual triggers, permissions, runner and Godot 4.4.0/4.7.2 matrix.
@@ -517,17 +544,12 @@ This function index matches source blob SHA `2bbfb07c528b73e128aaf795cebee146075
 
 ## 6. Current verification status — be precise
 
-- **Latest passing code/test run:** [Godot CI run 206](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40412947281) passed on both Godot 4.4.0 and 4.7.2. It includes the twelve-room schema and the final Dead Air Protocol four-relay acceptance/rejection, 1.8-second timeout, farther-switch-distance assertion and sentinel-interruption checks, alongside prior Latch Protocol and timed-gate regressions.
-- **Triune Relay:** wrong order Relay 1 → Relay 3 → Relay 2 → Switch A is rejected; the correct route is accepted and all three markers become linked. Run 157 passed these assertions.
-- **Fracture Clock:** combines the same ordered route mechanic with the timed-gate rule; run 157 passed the integration test and catalog validation. The initial over-specific schema assertion was corrected so a campaign can contain more than one three-relay room.
-- **Timed-gate bar:** run 165 passed checks that the bar ratio starts at 1.0, tracks the timer proportionally after a frame, and reaches zero after timeout.
-- **Relay feedback:** run 173 passed both the two-relay and three-relay rejection-message assertions, including Fracture Clock's invalid-order attempt.
-- **Latch Protocol:** run 179 passed button visibility, echo prerequisite, latch persistence after leaving B, keyboard E, and reset cleanup assertions. Run 185 additionally verifies the echo must finish playback before latching.
-- **Previous verification:** run 140 passed the all-memory restored-signal reward; run 122 passed Pulse Lock countdown, pause freeze, timeout closure, retry latch/re-arm, and portal power after crossing.
-- **Source hashes:** current `scripts/game.gd` blob SHA is `30343671f2d673b8a19de6fb3bc15e784fc01905` (1289 lines); current `scripts/data/level_catalog.gd` blob SHA is `d1c16361a74e957eb16abcba392403e450e8ba02` (342 lines); current `tests/headless_smoke.gd` blob SHA is `f7e7a273bec2e7d079f544b1ed6f2f2f80b3ac0f` (222 lines); current gameplay-test blob SHA is `e8f0f7a705ef144a235fe10ddacbb661973f472a` (824 lines). Sections 4 and 5 are keyed to these current files.
-- **Device QA:** not performed by this assistant. The game has not been manually run in the user's Godot editor or on a physical Android device during this pass.
-- **Android export:** no APK built or attached. Android export preset, package identity, export templates, SDK/JDK, signing and real-device testing remain.
-- **Quality caveat:** automated tests verify logic, not visual clarity or whether the 1.8-second Dead Air Protocol or 3.5-second Pulse Lock crossing feels fair on touch controls. Both need playtesting at slow/normal/fast speeds.
+- **Latest completed Godot CI for current game code:** [run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243) passed on both Godot 4.4.0 and 4.7.2 at commit `d64199633af306574298e3ce5972630ff3379b88`. Both matrix jobs passed project import/parse, `tests/headless_smoke.gd`, and `tests/game_flow_smoke.gd`.
+- **Current verified UI regression fix:** the compact menu now derives its start position from the actual Intro control bounds and clamps the button gap against the progress label. The regression test also resets handedness between wide and compact joystick checks. The source and test maps are recorded in sections 4 and 5.
+- **Android export:** [run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) succeeded at the same code/test commit. It exported the Android preset, validated APK ZIP structure with `unzip -t`, uploaded the workflow artifact and published [ECHOPOST Nightly APK](https://github.com/NinuGaming999/ECHOPOST/releases/tag/nightly). The attached file is `ECHOPOST-android.apk` (approximately 28.6 MB).
+- **Build boundary:** this verifies a valid exported APK archive, not an install or real gameplay session on physical hardware. The build uses a debug signing key and is for direct testing, not a production-signed Google Play release. If Android rejects an update because the debug signature differs, uninstall the old nightly first.
+- **Current source/test hashes:** `scripts/game.gd` = `2e5cb7c0ad2c509164d7d1bb8275963cbd2b5d71` (1547 lines); `tests/game_flow_smoke.gd` = `cb300c635d4d4212ce2254b6041f3c5cb8f045f2` (919 lines); `scripts/data/level_catalog.gd` = `d1c16361a74e957eb16abcba392403e450e8ba02` (342 lines); `tests/headless_smoke.gd` = `f7e7a273bec2e7d079f544b1ed6f2f2f80b3ac0f` (222 lines); `project.godot` = `e8242ef990cbeecfe7972c65a7bb93d2bf2cbad3` (44 lines); `export_presets.cfg` = `6c2e8278c715c8eb5e9b98d8ec4b3731d217bea4` (67 lines); `.github/workflows/android-apk.yml` = `2f741311fe04afafc3ea7259f18ab4913a39104d` (148 lines).
+- **Device QA:** not performed here. Still install the APK on a real Android device, play through all twelve rooms, verify saves survive relaunch, and exercise touch controls plus app background/foreground pause/resume. Visual quality, safe areas, battery/low-end GPU performance, and the fairness of the 1.8-second Dead Air Protocol and 3.5-second Pulse Lock gates need hands-on testing.
 
 ### Commands to run in the repository root on Windows
 ```powershell
@@ -580,7 +602,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Update this progress file, current source/test blob hashes, and exact line maps for Triune Relay, Fracture Clock and Dead Air Protocol.
 - [x] Record automatic same-room reset behavior for sentinel deaths and failed relay routes; add countdown/reset-state regression assertions and viewport/touch UI checks.
 - [x] Add responsive HUD/modal reflow, larger primary touch targets and consistent premium button/panel styling.
-- [ ] Verify the latest push-triggered GitHub Actions run; the latest available passing baseline (run 210) predates this feature pass and is not evidence for the new changes.
+- [x] Verify current main game code after the compact-menu/joystick regression fix: [Godot CI run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243) passed Godot 4.4.0 and 4.7.2 import/parse, data smoke tests and game-flow tests.
 - [ ] Every further code change must update this progress file and refresh affected line maps.
 
 ### P1 — Core mechanic test coverage
@@ -609,9 +631,11 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [ ] Replace procedural placeholder art with original coherent art/audio, while keeping clarity and low-cost rendering on mobile.
 
 ### P4 — Export and release preparation
-- [ ] Configure unique Android package ID, app version, icons, export preset, signing and privacy disclosures.
-- [ ] Build a debug APK, install it and verify lifecycle/controls/saves on a real device.
-- [ ] Run release QA and closed beta before public distribution.
+- [x] Configure Android package ID `com.ninugaming.echopost`, app version `0.1.0`, app icon, tracked Android export preset and arm64-v8a target.
+- [x] Automate debug APK export, ZIP integrity checking, workflow artifact upload and nightly GitHub Release publication. [Android APK run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) succeeded.
+- [ ] Configure protected production signing and complete privacy/storefront disclosures before any public store release.
+- [ ] Install the debug APK on a real Android device and verify lifecycle, controls, saves and all twelve rooms.
+- [ ] Run release QA and a closed beta before public distribution.
 - [ ] Only later design online sharing with route bounds validation, upload limits, moderation/reporting, privacy and backend cost controls.
 
 ## 9. Rules for the next development session
@@ -620,11 +644,11 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 2. Check the most recent CI run before modifying code. A workflow run for a commit older than the code currently on `main` does not verify the current code.
 3. Choose **one focused improvement** at a time. Make changes in `main` only as permitted by the user/project workflow, and don't claim the project is finished.
 4. Test changes with Godot CI or available local Godot. Distinguish passed tests, tests not run, and manual device checks.
-5. Refresh every affected line number after changes. The line map in section 4 is keyed to `scripts/game.gd` blob SHA `2bbfb07c528b73e128aaf795cebee146075c28ed`; section 5 records current supporting-script and test blob SHAs. If any of those blob SHAs differ after edits, regenerate the corresponding section.
+5. Refresh every affected line number after changes. Section 4 is keyed to `scripts/game.gd` blob SHA `2e5cb7c0ad2c509164d7d1bb8275963cbd2b5d71`; section 5 records current supporting-script, Android export, workflow and test blob SHAs. If any of those hashes differ after edits, regenerate the corresponding section.
 6. Update `PROJECT_PROGRESS.md` in the same development pass as source changes. Record the new commit(s), source hashes/line references, CI URL/result and what the next session should do.
 7. Keep this game offline-capable and dependency-light. Never add network accounts, telemetry, uploads, payment or ads as an incidental code change.
-8. Don't produce an APK/release claim unless an actual export and install verification were completed.
+8. Claim APK export only when CI confirms the export and archive-integrity check; claim installation/device verification only after the APK has actually been installed and tested on hardware.
 
 ---
 
-*Handoff note: this file is written to make future work resumable from concrete repository state, not to declare completion. The next session's first action should be checking the newest workflow run, then manually tune Pulse Lock if possible before designing another new mechanic.*
+*Handoff note: this file is written to make future work resumable from concrete repository state, not to declare completion. The next session's first action should be checking the newest CI run and then installing the current nightly APK on an actual Android device for controls, save persistence and lifecycle testing before further feature work.*

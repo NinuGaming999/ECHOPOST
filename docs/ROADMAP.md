@@ -52,11 +52,13 @@ This roadmap is the intended path from the initial project foundation to a relea
 ## Milestone 4 — Mobile QA and release preparation
 
 - [ ] Validate lifecycle pause/resume on physical Android devices and unusual background/foreground transitions.
-- [ ] Test physical Android devices, low-end GPU performance, and battery use.
-- [ ] Tune touch targets, joystick sensitivity, landscape handling, and screen cutouts.
-- [ ] Set package ID, icons, versioning, privacy disclosures, crash reporting policy, and signing.
-- [ ] Set up release builds and a documented QA checklist.
-- [ ] Test a closed beta before public distribution.
+- [ ] Install the current debug APK and test all twelve rooms, touch controls, save persistence and app relaunch on a real Android device.
+- [ ] Test low-end GPU performance, battery use, varied landscape aspect ratios and display cutouts.
+- [ ] Tune touch targets, joystick sensitivity, landscape handling, and screen cutouts based on device tests.
+- [x] Set the Android package ID (`com.ninugaming.echopost`), version (`0.1.0`), app icon and tracked arm64-v8a debug export preset.
+- [x] Automate Android debug APK export, ZIP integrity validation, Actions artifact upload and nightly GitHub Release publication. [Successful export run](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100).
+- [ ] Configure protected production release signing and finalize privacy/storefront disclosures; debug builds are not production releases.
+- [ ] Document the device QA checklist and test a closed beta before public distribution.
 
 ## Milestone 5 — Asynchronous community system (optional, after core game quality)
 
