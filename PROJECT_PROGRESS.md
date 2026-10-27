@@ -126,7 +126,7 @@ The look is currently drawn procedurally in `scripts/game.gd`; the SVG app icon 
 - **Touch-zone test setup root cause:** the wide-view test enabled left-handed joystick mode and accidentally carried that state into the following compact left-side assertion. `tests/game_flow_smoke.gd:L851–L912` now explicitly resets handedness before compact left-zone checks, then tests the right-zone case separately. The compact menu assertion includes measured positions in its failure message for easier diagnosis. Test commit: `d64199633af306574298e3ce5972630ff3379b88`.
 - **Verification:** [Godot CI run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243) passed all import/parse, data smoke and game-flow smoke steps on both Godot 4.4.0 and 4.7.2 at source/test commit `d64199633af306574298e3ce5972630ff3379b88`.
 - **Android export:** [Android APK run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) completed successfully for that same source/test commit. Godot exported the APK, `unzip -t` validated the package, and GitHub Actions uploaded/published `ECHOPOST-android.apk` to the [ECHOPOST Nightly Release](https://github.com/NinuGaming999/ECHOPOST/releases/tag/nightly) (about 28.6 MB).
-- **Important boundary:** this confirms export and APK archive integrity, **not** installation or gameplay on a physical phone. The APK is a debug-signed testing build, not a production-signed Google Play release. Do not mark real-device QA complete until installation, touch controls, lifecycle pause/resume, saving and all twelve rooms have been checked on hardware.
+- **Important boundary:** this confirms export and APK archive integrity, **not** installation or gameplay on a physical phone. The APK is a debug-signed testing build, not a production-signed Google Play release. Do not mark real-device QA complete until installation, touch controls, lifecycle pause/resume, saving and all thirteen rooms have been checked on hardware.
 
 ### Automatic room resets and premium, responsive touch UI
 **Current feature pass. Changed:** `scripts/game.gd`, `tests/game_flow_smoke.gd`, README, design, roadmap and build-status docs.
@@ -219,7 +219,7 @@ This is a combination challenge, not a new primitive mechanic. Its 4.5-second cr
 - Level-data commit: `48aa2ccd090f7cda6b74c8d8a9a0bbdd016d9e3d`; data-test commit: `76cc6722aea77edc5bba938aa36318271645afc2`; gameplay-test commit: `9f08fae5aa9a7a8588a01cae3dcad86cad03ca55`.
 - [Godot CI run 147](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40400099108) passed on both Godot 4.4.0 and 4.7.2, including project import/parse, all data tests, existing gameplay tests, and the new three-relay acceptance/rejection test.
 
-The campaign now has twelve rooms, but it is still an early prototype. Triune Relay is logic-tested; its visual readability and actual touch-control difficulty still need manual playtesting.
+At that milestone the campaign had twelve rooms, but it was still an early prototype. Triune Relay is logic-tested; its visual readability and actual touch-control difficulty still need manual playtesting.
 
 ### All-memory restored-signal reward and dynamic Archive count
 **Changed:** `scripts/game.gd`, `tests/game_flow_smoke.gd`, README and design/build/roadmap documentation.
@@ -232,7 +232,7 @@ The campaign now has twelve rooms, but it is still an early prototype. Triune Re
 - The reward source commit is `dd11471aea0f87399f7a816304daaba3ac68df4b`; the dynamic archive placeholder is `f900f967fa83f618e3615f423a9ef613f85bd71a`; the regression coverage is in `04be8ef22ca631b000d14b541bbce2ca0426b5b8` and `7531407e22c8a8068b4d62df90c190272713668d`.
 - [Godot CI run 140](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40398632047) passed on both Godot 4.4.0 and 4.7.2, including the full final-shard pickup path and Archive status checks.
 
-This is an optional exploration reward, not a paid gate. All twelve rooms remain completable without collecting any Memory Shard.
+This is an optional exploration reward, not a paid gate. At that milestone, all twelve then-existing rooms remained completable without collecting any Memory Shard.
 
 ### Ordered Relay feedback and Pulse Lock timed gate
 **Changed:** `scripts/data/level_catalog.gd`, `scripts/game.gd`, `tests/headless_smoke.gd`, and `tests/game_flow_smoke.gd`, plus README/design/roadmap/build-status documentation.
@@ -603,7 +603,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 1. **Mobile sizing / safe areas:** menu/HUD/modal layout and joystick hit regions now reflow for viewport changes, but the playfield drawing/positions remain designed around 1280×720. Safe areas, display cutouts, very short screens, and real-device button reach are not validated.
 2. **Controller size:** `scripts/game.gd` owns UI construction, gameplay state, input, persistence coordination and drawing. Refactor only incrementally; add tests first so game behavior does not regress.
-3. **Small content set:** twelve room dictionaries and twelve optional Memory Shards now exist, but the core two-switch pattern is still the foundation and there is no full campaign or final narrative ending.
+3. **Small content set:** thirteen room dictionaries and thirteen optional Memory Shards now exist, but the core two-switch pattern is still the foundation and there is no full campaign or final narrative ending.
 4. **Procedural placeholder visuals:** no authored robot animations, environmental tilesets, VFX or transition animations.
 5. **No sound:** recording, rejected route, sentinel hits, gate opening and portal have text/visual feedback only. No SFX, music, mixer, or audio options exist.
 6. **Pause behavior needs real device QA:** lifecycle logic and timer freeze are headlessly tested, but actual Android app-switch lifecycle/focus behavior are unverified. The player must tap RESUME after returning.
