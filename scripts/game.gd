@@ -223,12 +223,10 @@ func _is_joystick_area(point: Vector2) -> bool:
 		return false
 	var bottom_action_band := point.y >= size.y - 76.0
 	if left_handed_controls:
-		# Reserve the whole bottom-right edge band for the restart control; leave a
-		# small safety margin beyond its hitbox so touch targets never compete.
-		return point.x > size.x * 0.77 and not bottom_action_band
-	# Reserve the whole bottom-left edge band for the menu control, with a safety
-	# margin so a near-edge touch cannot begin joystick movement under that button.
-	return point.x < size.x * 0.23 and not bottom_action_band
+		# Keep the right-side joystick clear of the bottom restart target.
+		return point.x > size.x * 0.77 and not (bottom_action_band and point.x > size.x * 0.85)
+	# Keep the left-side joystick clear of the bottom menu target.
+	return point.x < size.x * 0.23 and not (bottom_action_band and point.x < size.x * 0.15)
 
 
 func _update_joystick(point: Vector2) -> void:
