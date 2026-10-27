@@ -769,6 +769,52 @@ func _test_dead_air_protocol(game: Control) -> void:
 
 
 
+func _test_echo_jammer_route(game: Control) -> void:
+	game.call("_start_level", 12)
+	var room: Dictionary = game.get("level_data")
+	_check(str(room.get("name", "")) == "Null Corridor", "The thirteenth chamber should be Null Corridor.")
+	_check(room.get("echo_jammer") is Vector2, "Null Corridor should author an echo-only jammer.")
+	if not room.get("echo_jammer") is Vector2:
+		game.call("_start_level", 0)
+		return
+
+	var spawn: Vector2 = room["spawn"]
+	var plate_a: Vector2 = room["plate_a"]
+	var jammer: Vector2 = room["echo_jammer"]
+	var jammer_radius := float(room.get("echo_jammer_radius", 100.0))
+	var blocked_track = EchoTrackScript.new()
+	blocked_track.add_sample(0.0, spawn)
+	blocked_track.add_sample(3.0, plate_a)
+	_check(bool(game.call("_track_passes_waypoint", blocked_track, jammer, jammer_radius)), "A straight route through Null Corridor should cross the echo dead zone.")
+	game.set("recording_track", blocked_track)
+	game.set("recording_elapsed", 3.0)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(not bool(game.get("echo_visible")), "A recording that crosses the dead zone must not release an echo.")
+	_check(str(game.get("status_message")).contains("ECHO DEAD ZONE"), "A jammed route should explain that the recorded path crossed the blackout.")
+	_check(str(game.get("failure_reset_reason")) == "ECHO JAMMED", "A jammed route should schedule a clear same-room reset.")
+	_finish_failure_reset(game)
+
+	# Bend above the field. None of these segments should enter the jammer radius,
+	# so the echo remains valid even though the straight line between switches is blocked.
+	var safe_track = EchoTrackScript.new()
+	safe_track.add_sample(0.0, spawn)
+	safe_track.add_sample(0.9, Vector2(330, 300))
+	safe_track.add_sample(2.2, Vector2(700, 300))
+	safe_track.add_sample(3.5, plate_a)
+	_check(not bool(game.call("_track_passes_waypoint", safe_track, jammer, jammer_radius)), "A curved route around the dead zone should stay clear.")
+	game.set("recording_track", safe_track)
+	game.set("recording_elapsed", 3.5)
+	game.set("record_sample_accumulator", 0.0)
+	game.set("is_recording", true)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(bool(game.get("echo_visible")) and bool(game.get("echo_playing")), "A route that bends around the jammer should release a working echo.")
+	game.call("_start_level", 0)
+
+
 func _test_timed_gate_requires_crossing(game: Control) -> void:
 	game.call("_start_level", 7)
 	var room: Dictionary = game.get("level_data")
