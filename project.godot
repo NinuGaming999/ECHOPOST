@@ -21,6 +21,7 @@ window/handheld/orientation=0
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/default_filters/use_nearest_mipmap_filter=false
+textures/vram_compression/import_etc2_astc=true
 environment/defaults/default_clear_color=Color(0.0352941, 0.054902, 0.0941176, 1)
 
 [input]
