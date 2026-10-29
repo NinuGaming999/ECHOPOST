@@ -785,9 +785,19 @@ func _layout_responsive_ui() -> void:
 			status_label.position = Vector2(center_x - status_label.size.x * 0.5, size.y - 110.0)
 		var move_tip := game_hud.get_node_or_null("MoveTip") as Label
 		if move_tip != null:
-			move_tip.position.y = size.y - 105.0
-			move_tip.position.x = size.x - move_tip.size.x - 28.0 if left_handed_controls else 34.0
-			move_tip.text = "DRAG RIGHT HALF TO MOVE\nWASD / ARROWS" if left_handed_controls else "DRAG LEFT HALF TO MOVE\nWASD / ARROWS"
+			var hint_margin := maxf(16.0, size.x * 0.025)
+			var hint_nav_diameter := clampf(size.y * 0.16, 54.0, 60.0)
+			var hint_bottom_y := size.y - hint_nav_diameter - 16.0
+			move_tip.size = Vector2(160.0, 28.0 if size.y < 620.0 else 38.0)
+			move_tip.position.x = size.x - hint_margin - move_tip.size.x if left_handed_controls else hint_margin
+			move_tip.position.y = hint_bottom_y - move_tip.size.y - 8.0
+			move_tip.visible = size.y >= 380.0
+			if size.y < 620.0:
+				move_tip.text = "DRAG RIGHT TO MOVE" if left_handed_controls else "DRAG LEFT TO MOVE"
+				move_tip.add_theme_font_size_override("font_size", 10)
+			else:
+				move_tip.text = "MOVE  •  WASD / ARROWS\nDRAG RIGHT HALF TO MOVE" if left_handed_controls else "MOVE  •  WASD / ARROWS\nDRAG LEFT HALF TO MOVE"
+				move_tip.add_theme_font_size_override("font_size", 11)
 		var bottom_menu_control := game_hud.get_node_or_null("MenuButton") as Button
 		var record_control := game_hud.get_node_or_null("RecordButton") as Button
 		var latch_control := game_hud.get_node_or_null("LatchSwitchBButton") as Button
@@ -1029,6 +1039,10 @@ func _start_level(level_index: int) -> void:
 	joystick_touch_index = -1
 	joystick_mouse_active = false
 	joystick_direction = Vector2.ZERO
+	joystick_applied_direction = Vector2.ZERO
+	if is_instance_valid(pause_button):
+		pause_button.text = "Ⅱ"
+		pause_button.tooltip_text = "Pause"
 	level_data = LEVELS[current_level_index]
 	player_position = level_data["spawn"]
 	echo_position = Vector2.ZERO
@@ -1560,7 +1574,7 @@ func _update_hud() -> void:
 		latch_switch_button.visible = toggle_mode
 		latch_switch_button.disabled = screen_state != ScreenState.PLAYING or door_open
 		if door_open and switch_b_latched:
-			latch_switch_button.text = "B\nON"
+			latch_switch_button.text = "B\nLATCHED"
 		elif switch_b_latched:
 			latch_switch_button.text = "B\nRELEASE"
 		else:
