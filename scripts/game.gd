@@ -514,8 +514,10 @@ func _set_left_handed_controls(enabled: bool) -> void:
 	joystick_touch_index = -1
 	joystick_mouse_active = false
 	joystick_direction = Vector2.ZERO
+	joystick_applied_direction = Vector2.ZERO
 	_save_settings()
 	_update_options_panel()
+	_layout_responsive_ui()
 	queue_redraw()
 
 
@@ -1790,7 +1792,8 @@ func _draw_robot(position: Vector2, tint: Color, scale_factor: float) -> void:
 
 func _draw_joystick() -> void:
 	var center := joystick_origin
-	var offset := joystick_direction * 38.0
+	var shown_direction := joystick_direction if joystick_touch_index != -1 or joystick_mouse_active else joystick_applied_direction
+	var offset := shown_direction * 38.0
 	# A broad translucent glass pad and shorter thumb travel are easier to control
 	# and keep the knob visually inside its base at full tilt.
 	draw_circle(center, 62.0, Color(0.025, 0.10, 0.14, 0.54))
