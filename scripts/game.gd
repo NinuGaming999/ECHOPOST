@@ -969,7 +969,10 @@ func _style_game_action_button(button: Button, role: String, diameter: float) ->
 	disabled.border_color = Color(0.23, 0.43, 0.45, 0.42)
 	disabled.set_border_width_all(1)
 	disabled.set_corner_radius_all(roundi(diameter * 0.5))
+	# The old larger minimum would clamp a later size assignment during a resize,
+	# so update both the minimum and rect after setting the new responsive diameter.
 	button.custom_minimum_size = Vector2(diameter, diameter)
+	button.size = Vector2(diameter, diameter)
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
