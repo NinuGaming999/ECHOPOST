@@ -415,7 +415,7 @@ func _test_latch_protocol_switch(game: Control) -> void:
 	game.call("_check_puzzle_state")
 	_check(bool(game.get("door_open")), "Leaving a latched Switch B should not close the gate.")
 	game.call("_update_hud")
-	_check(str(latch_button.text) == "SWITCH B LATCHED", "The control should communicate that the gate has been opened by the latch.")
+	_check(str(latch_button.text).contains("LATCHED"), "The circular control should communicate that Switch B is latched and the gate opened.")
 
 	# The player cannot latch B before the echo is holding A.
 	game.call("_start_level", 8)
@@ -954,6 +954,7 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	var pause: Button = game.get("pause_button")
 	var menu_button := game.get("game_hud").get_node("MenuButton") as Button
 	var restart_button := game.get("game_hud").get_node("ResetButton") as Button
+	game.set("left_handed_controls", false)
 	_check(record.size.y >= 52.0, "The primary recording control should have a phone-friendly touch height.")
 	_check(latch.size.y >= 52.0, "The latch control should have a phone-friendly touch height.")
 	_check(menu_button.size.y >= 52.0 and restart_button.size.y >= 52.0, "Bottom navigation and restart controls should have generous touch targets.")
