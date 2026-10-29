@@ -781,14 +781,16 @@ func _layout_responsive_ui() -> void:
 		if is_instance_valid(level_hint_label):
 			level_hint_label.size.x = maxf(420.0, size.x - 380.0)
 		if is_instance_valid(status_label):
-			status_label.size.x = clampf(size.x - 540.0, 420.0, 740.0)
+			# Keep the status banner inside the central lane, clear of the circular
+			# action cluster even on narrow landscape phones.
+			status_label.size.x = minf(740.0, maxf(220.0, size.x * 0.5))
 			status_label.position = Vector2(center_x - status_label.size.x * 0.5, size.y - 110.0)
 		var move_tip := game_hud.get_node_or_null("MoveTip") as Label
 		if move_tip != null:
 			var hint_margin := maxf(16.0, size.x * 0.025)
 			var hint_nav_diameter := clampf(size.y * 0.16, 54.0, 60.0)
 			var hint_bottom_y := size.y - hint_nav_diameter - 16.0
-			move_tip.size = Vector2(160.0, 28.0 if size.y < 620.0 else 38.0)
+			move_tip.size = Vector2(140.0, 28.0 if size.y < 620.0 else 38.0)
 			move_tip.position.x = size.x - hint_margin - move_tip.size.x if left_handed_controls else hint_margin
 			move_tip.position.y = hint_bottom_y - move_tip.size.y - 8.0
 			move_tip.visible = size.y >= 380.0
