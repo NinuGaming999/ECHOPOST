@@ -1553,6 +1553,25 @@ func _draw_room() -> void:
 	for y in range(int(ROOM_TOP + 20), int(ROOM_BOTTOM), 40):
 		draw_line(Vector2(ROOM_LEFT + 4, y), Vector2(ROOM_RIGHT - 4, y), Color(0.06, 0.33, 0.32, 0.30), 1.0)
 
+	# Circuit-tunnel corner rails echo the logo without filling the playable space.
+	var rail_pulse := 0.18 + (sin(hazard_time * 0.9) + 1.0) * 0.035
+	var rail_color := Color(0.12, 0.84, 0.78, rail_pulse)
+	var rail_dim := Color(0.07, 0.47, 0.49, rail_pulse * 0.62)
+	var rail_segments: Array[PackedVector2Array] = [
+		PackedVector2Array([Vector2(ROOM_LEFT + 14, ROOM_TOP + 62), Vector2(ROOM_LEFT + 14, ROOM_TOP + 23), Vector2(ROOM_LEFT + 66, ROOM_TOP + 23), Vector2(ROOM_LEFT + 80, ROOM_TOP + 35)]),
+		PackedVector2Array([Vector2(ROOM_RIGHT - 14, ROOM_TOP + 62), Vector2(ROOM_RIGHT - 14, ROOM_TOP + 23), Vector2(ROOM_RIGHT - 66, ROOM_TOP + 23), Vector2(ROOM_RIGHT - 80, ROOM_TOP + 35)]),
+		PackedVector2Array([Vector2(ROOM_LEFT + 14, ROOM_BOTTOM - 62), Vector2(ROOM_LEFT + 14, ROOM_BOTTOM - 23), Vector2(ROOM_LEFT + 66, ROOM_BOTTOM - 23), Vector2(ROOM_LEFT + 80, ROOM_BOTTOM - 35)]),
+		PackedVector2Array([Vector2(ROOM_RIGHT - 14, ROOM_BOTTOM - 62), Vector2(ROOM_RIGHT - 14, ROOM_BOTTOM - 23), Vector2(ROOM_RIGHT - 66, ROOM_BOTTOM - 23), Vector2(ROOM_RIGHT - 80, ROOM_BOTTOM - 35)])
+	]
+	for rail_index in range(rail_segments.size()):
+		draw_polyline(rail_segments[rail_index], rail_color if rail_index % 2 == 0 else rail_dim, 1.6, true)
+		var rail_point: Vector2 = rail_segments[rail_index][1]
+		draw_circle(rail_point, 3.0, Color(0.26, 1.0, 0.92, rail_pulse + 0.10))
+	# A restrained cyan sweep gives the playfield a live-signal feel; low opacity
+	# keeps the switches, route and hazards more legible than the decoration.
+	var scan_y := ROOM_TOP + fposmod(hazard_time * 30.0, ROOM_BOTTOM - ROOM_TOP)
+	draw_line(Vector2(ROOM_LEFT + 8, scan_y), Vector2(ROOM_RIGHT - 8, scan_y), Color(0.16, 0.89, 0.82, 0.035), 1.0, true)
+
 	if level_data.has("echo_jammer"):
 		var jammer_position: Vector2 = level_data["echo_jammer"]
 		var jammer_radius := float(level_data.get("echo_jammer_radius", 100.0))
