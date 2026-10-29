@@ -619,6 +619,7 @@ func _layout_responsive_ui() -> void:
 		if intro != null:
 			intro.size.x = minf(780.0, size.x - 64.0)
 			if size.y >= 620.0:
+				intro.text = "Record your movement. Let your echo hold the past\nwhile you find a way into the future."
 				intro.size.y = 58.0
 				intro.position = Vector2(center_x - intro.size.x * 0.5, 272.0)
 				intro.add_theme_font_size_override("font_size", clampi(roundi(17.0 * width_scale), 13, 17))
