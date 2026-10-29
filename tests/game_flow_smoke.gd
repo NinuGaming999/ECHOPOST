@@ -20,6 +20,7 @@ func _run_tests() -> void:
 	await process_frame
 
 	_test_chapter_select_layout(game)
+	_test_touch_joystick_comfort(game)
 	_test_premium_mobile_ui(game)
 	_test_memory_shard_collection(game)
 	_test_all_memories_restore_signal(game)
@@ -895,6 +896,57 @@ func _finish_failure_reset(game: Control) -> void:
 	_check(str(game.get("status_message")).begins_with("ROOM RESET"), "The restarted room should confirm that automatic recovery completed.")
 
 
+func _test_touch_joystick_comfort(game: Control) -> void:
+	var previous_size := game.size
+	var previous_handedness := bool(game.get("left_handed_controls"))
+	game.size = Vector2(1280, 720)
+	game.set("left_handed_controls", false)
+	_check(bool(game.call("_is_joystick_area", Vector2(500, 380))), "Floating movement should start anywhere in the left-side playfield, not only at the corner.")
+	_check(not bool(game.call("_is_joystick_area", Vector2(700, 380))), "The center gutter should remain clear between left/right touch movement zones.")
+	_check(not bool(game.call("_is_joystick_area", Vector2(500, 80))), "The top HUD must not accidentally start movement.")
+	_check(not bool(game.call("_is_joystick_area", Vector2(500, 690))), "The bottom action row must remain excluded from movement touch zones.")
+	game.set("left_handed_controls", true)
+	_check(bool(game.call("_is_joystick_area", Vector2(800, 380))), "Left-handed mode should move the floating movement zone to the right half.")
+	_check(not bool(game.call("_is_joystick_area", Vector2(500, 380))), "Left-handed mode should stop movement pickup on the left half.")
+
+	var dead_input: Vector2 = game.call("_shape_touch_stick", Vector2(4.0, 2.0))
+	_check(dead_input == Vector2.ZERO, "Tiny finger jitter should be swallowed by the radial dead zone.")
+	var precision_input: Vector2 = game.call("_shape_touch_stick", Vector2(22.0, 0.0))
+	_check(precision_input.x > 0.0 and precision_input.x < 1.0, "Short thumb drags should provide proportional precision movement.")
+	var full_input: Vector2 = game.call("_shape_touch_stick", Vector2(100.0, 0.0))
+	_check(is_equal_approx(full_input.x, 1.0), "Long thumb drags should cap at full movement without losing direction.")
+	var diagonal_input: Vector2 = game.call("_shape_touch_stick", Vector2(100.0, 100.0))
+	_check(is_equal_approx(diagonal_input.length(), 1.0), "Diagonal joystick input should be normalized so diagonal travel is not faster.")
+
+	# Input accelerates gently and settles quickly when the thumb is released.
+	game.set("player_position", Vector2(160.0, 365.0))
+	game.set("joystick_mouse_active", false)
+	game.set("joystick_touch_index", 2)
+	game.set("joystick_direction", Vector2.RIGHT)
+	game.set("joystick_applied_direction", Vector2.ZERO)
+	var start_position: Vector2 = game.get("player_position")
+	game.call("_update_player", 0.02)
+	var eased_input: Vector2 = game.get("joystick_applied_direction")
+	_check(eased_input.x > 0.0 and eased_input.x < 1.0, "Touch movement should ramp in smoothly rather than jump instantly to full speed.")
+	_check((game.get("player_position") as Vector2).x > start_position.x, "Smoothed touch input should still move the player immediately.")
+	var prior_release_strength := eased_input.length()
+	game.set("joystick_direction", Vector2.ZERO)
+	game.set("joystick_touch_index", -1)
+	game.call("_update_player", 0.02)
+	var release_strength: Vector2 = game.get("joystick_applied_direction")
+	_check(release_strength.length() < prior_release_strength and release_strength.length() > 0.0, "Releasing the thumb should ease movement to a stop.")
+	for _frame in range(24):
+		game.call("_update_player", 0.02)
+	_check(game.get("joystick_applied_direction") == Vector2.ZERO, "Touch movement should settle fully instead of leaving drift.")
+	game.set("joystick_direction", Vector2.ZERO)
+	game.set("joystick_applied_direction", Vector2.ZERO)
+	game.set("joystick_touch_index", -1)
+	game.set("joystick_mouse_active", false)
+	game.set("left_handed_controls", previous_handedness)
+	game.size = previous_size
+	game.call("_layout_responsive_ui")
+
+
 func _test_premium_mobile_ui(game: Control) -> void:
 	var previous_handedness := bool(game.get("left_handed_controls"))
 	var record: Button = game.get("record_button")
@@ -951,9 +1003,9 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	_check(latch.position.x + latch.size.x < restart_button.position.x, "Compact latch and restart targets must not overlap.")
 	_check(restart_button.position.x + restart_button.size.x <= game.size.x, "Compact restart control should remain inside the right edge.")
 	_check(record.pivot_offset.is_equal_approx(record.size * 0.5) and restart_button.pivot_offset.is_equal_approx(restart_button.size * 0.5), "Compact touch controls should keep centered press animations.")
-	_check(bool(game.call("_is_joystick_area", Vector2(170, 480))), "The compact left joystick zone should avoid the menu button.")
+	_check(bool(game.call("_is_joystick_area", Vector2(170, 450))), "The compact left joystick zone should avoid the menu button.")
 	game.set("left_handed_controls", true)
-	_check(bool(game.call("_is_joystick_area", Vector2(780, 480))), "The compact right joystick zone should avoid the restart button.")
+	_check(bool(game.call("_is_joystick_area", Vector2(780, 450))), "The compact right joystick zone should avoid the restart button.")
 
 	# Extra-short landscape phones need a two-column menu; a single column cannot
 	# fit the full navigation stack above the progress indicator at 360px height.
