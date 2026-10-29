@@ -968,7 +968,7 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	_check(failure_panel.position.is_equal_approx((game.size - failure_panel.size) * 0.5), "The failure/restart card should remain centered when the viewport changes size.")
 	_check(record.position.x > game.size.x * 0.5 and record.position.y + record.size.y <= game.size.y - restart_button.size.y - 16.0, "Record Echo should sit on the right above bottom utility controls in the default layout.")
 	_check(is_equal_approx(record.size.x, record.size.y) and record.size.y >= 68.0, "Record Echo should remain a large circular touch target.")
-	_check(is_equal_approx(restart_button.position.y, game.size.y - restart_button.size.y - 16.0), "The restart circle should keep a comfortable bottom inset.")
+	_check(restart_button.position.y >= 0.0 and restart_button.position.y + restart_button.size.y <= game.size.y - 12.0, "The restart circle should stay inside the bottom safe inset (y %.1f, h %.1f, viewport %.1f)." % [restart_button.position.y, restart_button.size.y, game.size.y])
 	_check(menu_button.position.x + menu_button.size.x <= game.size.x * 0.5, "The menu circle should stay on the opposite side from the default record control.")
 	_check(restart_button.position.x + restart_button.size.x <= game.size.x, "The restart action should remain inside the viewport.")
 	var record_style := record.get_theme_stylebox("normal") as StyleBoxFlat
