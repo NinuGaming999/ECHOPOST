@@ -6,8 +6,8 @@
 
 ## Implemented in this source
 
-- Standalone Godot project entry point and original SVG icon.
-- Main menu, scrollable chapter select, scrollable Memory Archive, instructions, pause, completion, retry, and continue flows. Shared button styling now includes subtle press/hover animation, brighter borders and depth; modal panels re-center after viewport resize. Viewports below 420 design units high use a two-column menu whose rows respect theme-enforced button heights; below 340 it hides the intro, and below 280 it hides the progress label. Regression tests cover 800×360, 640×360, 800×320, 800×280 and 800×260. The bottom gameplay HUD row now sizes actions to the viewport and shortens its outer labels when needed; tests verify non-overlap at 640×360, 720×360 and 800×320.
+- Standalone Godot project entry point; the supplied ECHO logo is used in the main menu, project icon and Android launcher, with a matching geometric SVG identity asset.
+- Main menu, scrollable chapter select, scrollable Memory Archive, instructions, pause, completion, retry and continue flows. UI uses near-black navy surfaces, fine teal/cyan edges, restrained glow and a geometric tunnel backdrop to match the supplied ECHO logo. The logo appears on full-height menus; compact layouts hide it before reflow and restore the full title/intro/button layout as the viewport grows. Menus below 620 design units high use the tested two-column layout; the intro becomes a single line and hides below 340, while progress hides below 280. Regression coverage includes logo visibility/restoration, ten viewport sizes and non-overlapping gameplay controls.
 - Keyboard movement and an on-screen joystick that also supports mouse testing. Primary recording/latch controls and bottom menu/restart actions use larger touch targets; joystick hit-zone checks use viewport proportions for either handedness.
 - Options panel with slow/normal/fast movement presets and a left-handed joystick option; these preferences persist in a separate settings file, independent from campaign saves.
 - Latch Protocol's toggle Switch B is functional: a dedicated on-screen button and keyboard E activate it only when the player is near B and the echo has finished playback and settled on A; the latched state remains active after leaving the switch and resets on room restart.
@@ -32,10 +32,10 @@
 
 ## Verification status
 
-- **Latest Godot CI:** [run 40550158187](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40550158187) passed on Godot 4.4.0 and 4.7.2 at source/test commit `0fa845518310f1d022af98bbc219a96c58a5d48b`. Both versions passed project import/parse, data-layer smoke tests and the full gameplay-flow suite, including Null Corridor's blocked route, automatic reset, and safe curved bypass.
-- **Latest Android APK export:** [run 40550158280](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40550158280) succeeded on the same commit. Godot exported the APK, archive integrity validation passed, an Actions artifact was uploaded, and the [ECHOPOST Nightly APK release](https://github.com/NinuGaming999/ECHOPOST/releases/tag/nightly) was refreshed. Current direct download: [ECHOPOST-android.apk](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk) (28,596,012 bytes, about 28.6 MB).
-- **What has not been verified:** the APK has not been installed or play-tested on a physical Android device during this pass. Real-device lifecycle, touch reach, safe areas, saves after relaunch, performance, jammer readability and gate difficulty remain open QA items.
-- **Release signing:** current APK uses a debug signing key for direct testing, not a protected production keystore or Google Play-ready release.
+- **Latest completed Godot CI for the current controller/test blobs:** [run 40847792076](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40847792076) passed project import/parse, data smoke tests and gameplay-flow smoke tests on Godot 4.4.0 and 4.7.2. Verified controller blob: `78e07dad4309adf7c6cda4e0b27040d216458922`; gameplay-test blob: `abedab51d3bfbe0ffd1cbee314367fdfd9a7eeb9`.
+- **Android export:** [run 40847792545](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40847792545) succeeded for that controller/test version. The Android preset is now being updated to use the supplied logo for its launcher icon; the workflow triggered by that export-preset change must verify the new launcher asset.
+- **Device QA:** not performed here. Install the refreshed APK on physical Android hardware, inspect the logo and cyan palette at device resolution, play through all thirteen rooms, verify save persistence, touch reach, safe areas and background/foreground pause/resume.
+- **Release boundary:** nightly APKs are debug-signed and suitable for direct testing, not production signing or Google Play distribution.
 
 ## Next work items
 
