@@ -996,7 +996,7 @@ func _test_premium_mobile_ui(game: Control) -> void:
 		var compact_progress := ultra_menu.get_node("Progress") as Label
 		var compact_intro := ultra_menu.get_node("Intro") as Label
 		var compact_logo := ultra_menu.get_node("Logo") as TextureRect
-		var expected_intro_visible := compact_size.y >= 620.0 or (compact_size.y < 600.0 and compact_size.y >= 340.0)
+		var expected_intro_visible := compact_size.y >= 340.0
 		_check(compact_intro.visible == expected_intro_visible, "Compact menu intro visibility must adapt to available height.")
 		_check(compact_logo.visible == (compact_size.y >= 620.0), "The supplied brand logo should show on the full-height menu and hide before compact reflow.")
 		_check(compact_logo.texture != null, "The supplied logo texture must be loaded into the menu.")
