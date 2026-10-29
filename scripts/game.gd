@@ -668,12 +668,13 @@ func _layout_responsive_ui() -> void:
 					tagline.size.y = 28.0
 					tagline.add_theme_font_size_override("font_size", clampi(roundi(15.0 * width_scale), 11, 15))
 				if intro != null:
+					# A single compact line preserves the hint without colliding with the first row.
+					intro.text = "Record your route. Let your echo hold the past."
 					intro.position.y = 80.0
-					intro.size.y = 42.0
-					intro.add_theme_font_size_override("font_size", clampi(roundi(13.0 * width_scale), 10, 13))
+					intro.size.y = 34.0
+					intro.add_theme_font_size_override("font_size", clampi(roundi(12.0 * width_scale), 10, 12))
+					intro.visible = size.y >= 340.0
 				var ultra_top := 136.0
-				if intro != null and intro.visible:
-					ultra_top = maxf(ultra_top, intro.position.y + intro.size.y + 18.0)
 				if size.y < 340.0:
 					# On extra-short landscape screens, reclaim the intro's vertical space.
 					if ultra_title != null:
