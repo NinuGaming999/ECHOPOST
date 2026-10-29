@@ -31,8 +31,8 @@
 **Matching SVG identity icon:** `assets/echopost_icon.svg` (67 lines; blob `0eaae23f67fc11c19a101c2eec6ef3a88f06a543`)  
 **Current project-settings blob:** `aaf2ca779d5ca128ec5d41b25f33102d883e045c` (44 lines; project icon uses the supplied ECHO logo)  
 **Current Android export-preset blob:** `a0ba9ce2ea2711d37ebcd025df7897435cbbdc01` (67 lines; launcher icon uses the supplied logo and splash background matches the theme)  
-**Latest completed Godot CI for current controller/test blobs:** [run 40847792076](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40847792076) passed on Godot 4.4.0 and 4.7.2.  
-**Android launcher icon verification:** fresh Android workflow for preset commit `0fcc55bbe46ff51c04eb3a1534b311807950c6b0`: [run 40848654337](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40848654337).
+**Latest completed Godot CI for current controller/test blobs:** [run 40848778896](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40848778896) passed on Godot 4.4.0 and 4.7.2.  
+**Android launcher icon verification:** [run 40848778926](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40848778926) succeeded; the supplied ECHO logo exported as the Android launcher icon and the nightly APK was refreshed. [Direct APK](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk).
 **Android ETC2/ASTC export fix commit:** `e713071219c15d514e0552c099437c265e22b4e2`  
 **Triune Relay level-data commit:** `48aa2ccd090f7cda6b74c8d8a9a0bbdd016d9e3d`  
 **Initial ten-room schema-test commit (before Fracture Clock):** `76cc6722aea77edc5bba938aa36318271645afc2`  
@@ -96,7 +96,7 @@ The menu identity uses the supplied ECHO logo and a matching cyan geometric SVG 
 - `assets/echopost_logo.jpg`: the supplied ECHO logo is used on the main menu, as `project.godot` icon, and in the Android `launcher_icons/main_192x192` field.
 - `assets/echopost_icon.svg`: the matching editable vector identity uses dark navy, an angular glowing cyan corridor, an orbiting route and sphere.
 - `project.godot`: deep navy default background and the supplied logo as the project icon (blob `aaf2ca779d5ca128ec5d41b25f33102d883e045c`).
-- `export_presets.cfg`: main Android launcher icon is `res://assets/echopost_logo.jpg`; the splash background is near-black navy (blob `a0ba9ce2ea2711d37ebcd025df7897435cbbdc01`). The Android workflow for this preset revision must complete to verify the icon exports.
+- `export_presets.cfg`: main Android launcher icon is `res://assets/echopost_logo.jpg`; the splash background is near-black navy (blob `a0ba9ce2ea2711d37ebcd025df7897435cbbdc01`). Android run 40848778926 (https://github.com/NinuGaming999/ECHOPOST/actions/runs/40848778926) successfully exported this preset and published the logo-icon nightly APK.
 - `scripts/game.gd`: the menu backdrop is a low-contrast geometric tunnel/orbit instead of floating robot figures. Panels/buttons use dark navy glass surfaces, thin teal/cyan borders and restrained glow; playfield grid/border are dark teal; route and echo traces are cyan/teal. Jammed recordings remain red and the Null Corridor jammer remains violet for puzzle clarity.
 - Responsive menu behavior: logo is visible at 620 design units or taller; below that it hides before two-column reflow. The intro becomes one line and hides below 340; progress hides below 280. Full-height layouts restore the original two-line intro and normal button positions when resized back. Logo load/visibility and ten viewport sizes are regression-tested.
 - **Godot verification:** [run 40847792076](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40847792076) passed on Godot 4.4.0 and 4.7.2 for controller blob `78e07dad4309adf7c6cda4e0b27040d216458922` and test blob `abedab51d3bfbe0ffd1cbee314367fdfd9a7eeb9`.
@@ -627,11 +627,10 @@ This map matches controller blob SHA `78e07dad4309adf7c6cda4e0b27040d216458922` 
 
 ## 6. Current verification status — be precise
 
-- **Latest completed Godot CI for controller/test blobs:** [run 40847792076](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40847792076) passed on Godot 4.4.0 and 4.7.2, including logo load/visibility, intro restoration and ten compact/full viewport sizes. Controller blob `78e07dad4309adf7c6cda4e0b27040d216458922`; gameplay-test blob `abedab51d3bfbe0ffd1cbee314367fdfd9a7eeb9`.
-- **Android launcher icon update:** the supplied logo now drives `project.godot` icon and Android `launcher_icons/main_192x192`; the new preset is blob `a0ba9ce2ea2711d37ebcd025df7897435cbbdc01`. Check [the Android workflow](https://github.com/NinuGaming999/ECHOPOST/actions/workflows/android-apk.yml) for the export corresponding to this preset revision.
-- **Device QA:** outstanding—install the updated APK on a real device and inspect logo, cyan contrast, touch reach, safe areas, save persistence and background/foreground pause/resume across all thirteen chambers.
-- **Release boundary:** nightly APKs are debug-signed test builds, not production-signed store releases.
-
+- **Latest completed Godot CI:** [run 40848778896](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40848778896) passed on Godot 4.4.0 and 4.7.2, including project import/parse, data tests, Null Corridor gameplay, logo load/visibility, intro restoration and ten compact/full viewport sizes. Controller blob `78e07dad4309adf7c6cda4e0b27040d216458922`; gameplay-test blob `abedab51d3bfbe0ffd1cbee314367fdfd9a7eeb9`.
+- **Latest Android APK export:** [run 40848778926](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40848778926) succeeded on commit `e184d8446d449aa36c14a97f9e8843a6783dfa6a`. The supplied ECHO logo is used as project and Android launcher icon, Godot exported the APK, archive integrity validation passed, an Actions artifact uploaded and [ECHOPOST Nightly APK](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk) refreshed (29,030,396 bytes).
+- **Device QA:** still outstanding. Install the refreshed APK on a real Android device; inspect logo legibility, cyan contrast, safe areas, touch reach, all thirteen rooms, saved progress after relaunch and background/foreground pause/resume.
+- **Release boundary:** nightly APK is debug-signed for testing, not a production-signed Google Play release.
 ### Commands to run in the repository root on Windows
 ```powershell
 git pull origin main
