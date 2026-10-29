@@ -116,8 +116,9 @@ func _pause_for_lifecycle() -> void:
 	joystick_mouse_active = false
 	joystick_direction = Vector2.ZERO
 	joystick_applied_direction = Vector2.ZERO
-	pause_button.text = "RESUME"
-	status_message = "Paused automatically because ECHOPOST lost focus. Press RESUME to continue."
+	pause_button.text = "▶"
+	pause_button.tooltip_text = "Resume"
+	status_message = "Paused automatically because ECHOPOST lost focus. Tap PLAY to continue."
 	_update_hud()
 	queue_redraw()
 
@@ -315,18 +316,28 @@ func _build_game_hud() -> void:
 	level_title_label = _make_label(game_hud, "LevelTitle", Vector2(34, 15), Vector2(570, 36), "01  /  THE FIRST ECHO", 22, Color(0.88, 0.95, 1.0), HORIZONTAL_ALIGNMENT_LEFT)
 	level_hint_label = _make_label(game_hud, "LevelHint", Vector2(35, 52), Vector2(900, 44), "Record a route that ends on Switch A.", 15, Color(0.55, 0.70, 0.82), HORIZONTAL_ALIGNMENT_LEFT)
 	echo_status_label = _make_label(game_hud, "EchoStatus", Vector2(805, 17), Vector2(300, 28), "ECHO: NOT RECORDED", 14, Color(0.42, 0.83, 1.0), HORIZONTAL_ALIGNMENT_RIGHT)
-	pause_button = _make_button(game_hud, "PauseButton", Vector2(1110, 12), Vector2(136, 48), "PAUSE", Color(0.12, 0.22, 0.34), Color(0.17, 0.34, 0.48), 14)
+	pause_button = _make_button(game_hud, "PauseButton", Vector2(1110, 12), Vector2(56, 56), "Ⅱ", Color(0.02, 0.12, 0.16), Color(0.04, 0.31, 0.32), 20)
+	_style_game_action_button(pause_button, "pause", 56.0)
+	pause_button.tooltip_text = "Pause / resume"
 	pause_button.pressed.connect(_on_pause_pressed)
 
 	status_label = _make_label(game_hud, "Status", Vector2(270, 610), Vector2(740, 38), "Find the switches.", 15, Color(0.74, 0.84, 0.93), HORIZONTAL_ALIGNMENT_CENTER)
-	record_button = _make_button(game_hud, "RecordButton", Vector2(380, 654), Vector2(270, 54), "RECORD ECHO", Color(0.03, 0.47, 0.62), Color(0.04, 0.65, 0.80), 17)
+	record_button = _make_button(game_hud, "RecordButton", Vector2(1080, 390), Vector2(94, 94), "●\nREC", Color(0.03, 0.47, 0.62), Color(0.04, 0.65, 0.80), 14)
+	_style_game_action_button(record_button, "record", 94.0)
+	record_button.tooltip_text = "Record a route, then stop and send the echo"
 	record_button.pressed.connect(_on_record_pressed)
-	latch_switch_button = _make_button(game_hud, "LatchSwitchBButton", Vector2(680, 654), Vector2(270, 54), "LATCH SWITCH B", Color(0.34, 0.25, 0.10), Color(0.52, 0.37, 0.13), 15)
+	latch_switch_button = _make_button(game_hud, "LatchSwitchBButton", Vector2(980, 410), Vector2(72, 72), "B\nLATCH", Color(0.34, 0.25, 0.10), Color(0.52, 0.37, 0.13), 12)
+	_style_game_action_button(latch_switch_button, "latch", 72.0)
+	latch_switch_button.tooltip_text = "Latch or release Switch B"
 	latch_switch_button.pressed.connect(_on_latch_switch_b_pressed)
 	latch_switch_button.hide()
-	var reset_button := _make_button(game_hud, "ResetButton", Vector2(1000, 654), Vector2(145, 54), "RESTART ROOM", Color(0.22, 0.18, 0.31), Color(0.32, 0.23, 0.44), 13)
+	var reset_button := _make_button(game_hud, "ResetButton", Vector2(1200, 654), Vector2(56, 56), "↻", Color(0.22, 0.18, 0.31), Color(0.32, 0.23, 0.44), 22)
+	_style_game_action_button(reset_button, "secondary", 56.0)
+	reset_button.tooltip_text = "Restart this chamber"
 	reset_button.pressed.connect(_on_reset_pressed)
-	var menu_button := _make_button(game_hud, "MenuButton", Vector2(34, 654), Vector2(145, 54), "MAIN MENU", Color(0.12, 0.22, 0.34), Color(0.17, 0.34, 0.48), 13)
+	var menu_button := _make_button(game_hud, "MenuButton", Vector2(24, 654), Vector2(56, 56), "⌂", Color(0.12, 0.22, 0.34), Color(0.17, 0.34, 0.48), 22)
+	_style_game_action_button(menu_button, "secondary", 56.0)
+	menu_button.tooltip_text = "Return to main menu"
 	menu_button.pressed.connect(_show_menu)
 	_make_label(game_hud, "MoveTip", Vector2(34, 615), Vector2(230, 38), "MOVE  •  WASD / ARROWS\nTOUCH  •  LEFT JOYSTICK", 11, Color(0.43, 0.58, 0.70), HORIZONTAL_ALIGNMENT_LEFT)
 
@@ -781,36 +792,41 @@ func _layout_responsive_ui() -> void:
 		var record_control := game_hud.get_node_or_null("RecordButton") as Button
 		var latch_control := game_hud.get_node_or_null("LatchSwitchBButton") as Button
 		var reset_control := game_hud.get_node_or_null("ResetButton") as Button
-		var bottom_y := size.y - 66.0
-		# Make the bottom action row fit on narrow landscape devices instead of
-		# letting fixed minimum widths overlap the menu and restart controls.
-		var nav_width := clampf(size.x * 0.14, 92.0, 150.0)
-		var action_gap := clampf(size.x * 0.015, 8.0, 18.0)
-		var side_margin := maxf(12.0, size.x * 0.025)
-		var max_action_width := size.x * 0.5 - side_margin - nav_width - action_gap * 0.5 - 8.0
-		var action_width := minf(clampf(size.x * 0.27, 120.0, 270.0), max_action_width)
+		# Menu/reset stay small and out of the way; the primary echo action lives
+		# beside the movement zone, on the opposite side for one-thumb comfort.
+		var nav_diameter := clampf(size.y * 0.16, 54.0, 60.0)
+		var side_margin := maxf(16.0, size.x * 0.025)
+		var bottom_y := size.y - nav_diameter - 16.0
+		var record_diameter := clampf(size.y * 0.13, 68.0, 96.0)
+		var latch_diameter := clampf(record_diameter * 0.76, 52.0, 72.0)
+		var record_y := clampf(size.y * 0.59, 112.0, maxf(112.0, size.y - record_diameter - 82.0))
+		var record_x := side_margin if left_handed_controls else size.x - side_margin - record_diameter
+		if is_instance_valid(pause_button):
+			pause_button.size = Vector2(nav_diameter, nav_diameter)
+			pause_button.pivot_offset = pause_button.size * 0.5
+			pause_button.position = Vector2(size.x - side_margin - nav_diameter, 12.0)
+			_style_game_action_button(pause_button, "pause", nav_diameter)
 		if bottom_menu_control != null:
-			bottom_menu_control.size.x = nav_width
-			bottom_menu_control.text = "MENU" if nav_width < 112.0 else "MAIN MENU"
-			bottom_menu_control.add_theme_font_size_override("font_size", clampi(roundi(nav_width * 0.115), 10, 13))
+			bottom_menu_control.size = Vector2(nav_diameter, nav_diameter)
 			bottom_menu_control.pivot_offset = bottom_menu_control.size * 0.5
 			bottom_menu_control.position = Vector2(side_margin, bottom_y)
-		if record_control != null:
-			record_control.size.x = action_width
-			record_control.add_theme_font_size_override("font_size", clampi(roundi(action_width * 0.085), 10, 17))
-			record_control.pivot_offset = record_control.size * 0.5
-			record_control.position = Vector2(center_x - action_width - action_gap * 0.5, bottom_y)
-		if latch_control != null:
-			latch_control.size.x = action_width
-			latch_control.add_theme_font_size_override("font_size", clampi(roundi(action_width * 0.075), 10, 15))
-			latch_control.pivot_offset = latch_control.size * 0.5
-			latch_control.position = Vector2(center_x + action_gap * 0.5, bottom_y)
+			_style_game_action_button(bottom_menu_control, "secondary", nav_diameter)
 		if reset_control != null:
-			reset_control.size.x = nav_width
-			reset_control.text = "RESTART" if nav_width < 112.0 else "RESTART ROOM"
-			reset_control.add_theme_font_size_override("font_size", clampi(roundi(nav_width * 0.115), 10, 13))
+			reset_control.size = Vector2(nav_diameter, nav_diameter)
 			reset_control.pivot_offset = reset_control.size * 0.5
-			reset_control.position = Vector2(size.x - side_margin - nav_width, bottom_y)
+			reset_control.position = Vector2(size.x - side_margin - nav_diameter, bottom_y)
+			_style_game_action_button(reset_control, "secondary", nav_diameter)
+		if record_control != null:
+			record_control.size = Vector2(record_diameter, record_diameter)
+			record_control.position = Vector2(record_x, record_y)
+			record_control.pivot_offset = record_control.size * 0.5
+			_style_game_action_button(record_control, "record", record_diameter)
+		if latch_control != null:
+			latch_control.size = Vector2(latch_diameter, latch_diameter)
+			var latch_x := record_x + record_diameter + 10.0 if left_handed_controls else record_x - latch_diameter - 10.0
+			latch_control.position = Vector2(latch_x, record_y + (record_diameter - latch_diameter) * 0.5)
+			latch_control.pivot_offset = latch_control.size * 0.5
+			_style_game_action_button(latch_control, "latch", latch_diameter)
 	_layout_centered_panels()
 
 
@@ -915,6 +931,55 @@ func _make_button(parent: Control, button_name: String, button_position: Vector2
 	button.button_up.connect(_animate_button.bind(button, 1.0))
 	parent.add_child(button)
 	return button
+
+
+func _style_game_action_button(button: Button, role: String, diameter: float) -> void:
+	# In-game actions use floating translucent glass controls rather than menu-like
+	# rectangles. Recompute the round radius as the viewport changes size.
+	var primary := role == "record"
+	var is_latch := role == "latch"
+	var fill := Color(0.015, 0.22, 0.24, 0.48) if primary else Color(0.012, 0.10, 0.15, 0.40)
+	var hover_fill := Color(0.025, 0.47, 0.46, 0.67) if primary else Color(0.03, 0.28, 0.34, 0.62)
+	var border := Color(0.30, 1.0, 0.88, 0.91) if primary else Color(0.22, 0.82, 0.86, 0.74)
+	if is_latch:
+		fill = Color(0.17, 0.14, 0.08, 0.46)
+		hover_fill = Color(0.40, 0.30, 0.10, 0.67)
+		border = Color(1.0, 0.78, 0.38, 0.84)
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = fill
+	normal.border_color = border
+	normal.set_border_width_all(2 if primary else 1)
+	normal.set_corner_radius_all(roundi(diameter * 0.5))
+	normal.shadow_color = Color(0.0, 0.82, 0.74, 0.16 if primary else 0.08)
+	normal.shadow_size = 12 if primary else 7
+	var hover := StyleBoxFlat.new()
+	hover.bg_color = hover_fill
+	hover.border_color = Color(0.72, 1.0, 0.96, 0.98)
+	hover.set_border_width_all(2)
+	hover.set_corner_radius_all(roundi(diameter * 0.5))
+	hover.shadow_color = Color(0.01, 0.92, 0.81, 0.25)
+	hover.shadow_size = 14
+	var pressed := StyleBoxFlat.new()
+	pressed.bg_color = Color(0.04, 0.52, 0.50, 0.78) if primary else Color(0.04, 0.26, 0.30, 0.76)
+	pressed.border_color = Color(0.82, 1.0, 0.97, 1.0)
+	pressed.set_border_width_all(2)
+	pressed.set_corner_radius_all(roundi(diameter * 0.5))
+	var disabled := StyleBoxFlat.new()
+	disabled.bg_color = Color(0.035, 0.10, 0.12, 0.30)
+	disabled.border_color = Color(0.23, 0.43, 0.45, 0.42)
+	disabled.set_border_width_all(1)
+	disabled.set_corner_radius_all(roundi(diameter * 0.5))
+	button.custom_minimum_size = Vector2(diameter, diameter)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_color_override("font_color", Color(0.84, 1.0, 0.97, 0.97))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(0.62, 1.0, 0.94, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.48, 0.65, 0.65, 0.74))
+	button.add_theme_font_size_override("font_size", 14 if primary else (12 if is_latch else 20))
+	button.focus_mode = Control.FOCUS_NONE
 
 
 func _animate_button(button: Button, scale_target: float) -> void:
@@ -1416,11 +1481,14 @@ func _on_pause_pressed() -> void:
 		joystick_touch_index = -1
 		joystick_mouse_active = false
 		joystick_direction = Vector2.ZERO
-		pause_button.text = "RESUME"
-		status_message = "Paused. Press RESUME to continue."
+		joystick_applied_direction = Vector2.ZERO
+		pause_button.text = "▶"
+		pause_button.tooltip_text = "Resume"
+		status_message = "Paused. Tap PLAY to continue."
 	elif screen_state == ScreenState.PAUSED:
 		screen_state = ScreenState.PLAYING
-		pause_button.text = "PAUSE"
+		pause_button.text = "Ⅱ"
+		pause_button.tooltip_text = "Pause"
 		status_message = "Back in the chamber."
 	_update_hud()
 	queue_redraw()
@@ -1467,10 +1535,12 @@ func _update_hud() -> void:
 	level_hint_label.text = str(level_data["subtitle"])
 	status_label.text = status_message
 	if is_recording:
-		record_button.text = "STOP & SEND ECHO  •  %ds" % int(ceil(MAX_RECORD_SECONDS - recording_elapsed))
+		record_button.text = "■\n%d s" % int(ceil(MAX_RECORD_SECONDS - recording_elapsed))
+		record_button.tooltip_text = "Stop and send the recorded echo"
 		echo_status_label.text = "ECHO: RECORDING"
 	else:
-		record_button.text = "RECORD ECHO"
+		record_button.text = "●\nREC"
+		record_button.tooltip_text = "Record a route, then stop and send the echo"
 		if door_open and gate_open_timer > 0.0:
 			echo_status_label.text = "GATE: %.1fs TO CROSS" % gate_open_timer
 		elif echo_playing:
@@ -1487,9 +1557,11 @@ func _update_hud() -> void:
 		latch_switch_button.visible = toggle_mode
 		latch_switch_button.disabled = screen_state != ScreenState.PLAYING or door_open
 		if door_open and switch_b_latched:
-			latch_switch_button.text = "SWITCH B LATCHED"
+			latch_switch_button.text = "B\nON"
+		elif switch_b_latched:
+			latch_switch_button.text = "B\nRELEASE"
 		else:
-			latch_switch_button.text = "RELEASE SWITCH B" if switch_b_latched else "LATCH SWITCH B"
+			latch_switch_button.text = "B\nLATCH"
 
 
 func _load_progress() -> void:
