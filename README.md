@@ -25,7 +25,8 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 - **Pause:** freeze or resume play.
 - **Options:** choose slow/normal/fast movement and put the virtual joystick on the right for left-handed play.
 - **Latch Switch B / E:** in Latch Protocol, stand near Switch B after the echo holds A, then tap LATCH SWITCH B or press E. The switch stays latched when you leave it.
-- **Touch:** use the on-screen virtual joystick and buttons.
+- **Touch movement:** touch and drag anywhere on the left side of the playfield to move (right side when left-handed mode is enabled). A floating, dead-zone joystick gives fine control with short drags and eases in/out so movement does not snap or drift. The top HUD, center gutter and bottom action row are protected from movement input.
+- **Touch actions:** use the large bottom Record Echo / Restart / Menu controls; Pause stays in the top corner.
 
 ## Visual identity
 
