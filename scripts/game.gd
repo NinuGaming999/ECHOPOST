@@ -258,25 +258,36 @@ func _build_menu() -> void:
 	menu_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(menu_root)
 
-	var title := _make_label(menu_root, "Title", Vector2(100, 135), Vector2(1080, 100), "ECHOPOST", 70, Color(0.86, 0.97, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
-	title.add_theme_color_override("font_shadow_color", Color(0.1, 0.7, 1.0, 0.55))
-	title.add_theme_constant_override("shadow_offset_x", 0)
-	title.add_theme_constant_override("shadow_offset_y", 4)
-	_make_label(menu_root, "Tagline", Vector2(180, 235), Vector2(920, 42), "EVERY PLAYER LEAVES A GHOST", 22, Color(0.39, 0.85, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
-	_make_label(menu_root, "Intro", Vector2(250, 280), Vector2(780, 58), "Record your movement. Let your echo hold the past\nwhile you find a way into the future.", 18, Color(0.70, 0.78, 0.88), HORIZONTAL_ALIGNMENT_CENTER)
+	# Use the logo supplied for the project as the actual menu brand asset.
+	var logo := TextureRect.new()
+	logo.name = "Logo"
+	logo.texture = load("res://assets/echopost_logo.jpg") as Texture2D
+	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	logo.position = Vector2(553, 7)
+	logo.size = Vector2(174, 174)
+	menu_root.add_child(logo)
 
-	start_button = _make_button(menu_root, "StartButton", Vector2(475, 348), Vector2(330, 54), "CONTINUE JOURNEY", Color(0.06, 0.45, 0.62), Color(0.08, 0.61, 0.78), 20)
+	var title := _make_label(menu_root, "Title", Vector2(100, 184), Vector2(1080, 44), "ECHOPOST", 36, Color(0.82, 1.0, 0.96), HORIZONTAL_ALIGNMENT_CENTER)
+	title.add_theme_color_override("font_shadow_color", Color(0.04, 0.93, 0.80, 0.48))
+	title.add_theme_constant_override("shadow_offset_x", 0)
+	title.add_theme_constant_override("shadow_offset_y", 3)
+	_make_label(menu_root, "Tagline", Vector2(180, 232), Vector2(920, 36), "EVERY PLAYER LEAVES A GHOST", 20, Color(0.34, 0.96, 0.88), HORIZONTAL_ALIGNMENT_CENTER)
+	_make_label(menu_root, "Intro", Vector2(250, 272), Vector2(780, 58), "Record your movement. Let your echo hold the past\nwhile you find a way into the future.", 17, Color(0.65, 0.80, 0.83), HORIZONTAL_ALIGNMENT_CENTER)
+
+	start_button = _make_button(menu_root, "StartButton", Vector2(475, 340), Vector2(330, 54), "CONTINUE JOURNEY", Color(0.02, 0.28, 0.29), Color(0.02, 0.42, 0.39), 19)
 	start_button.pressed.connect(_on_start_pressed)
-	var chapters := _make_button(menu_root, "ChaptersButton", Vector2(475, 409), Vector2(330, 50), "CHAPTER SELECT", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 17)
+	var chapters := _make_button(menu_root, "ChaptersButton", Vector2(475, 400), Vector2(330, 50), "CHAPTER SELECT", Color(0.01, 0.075, 0.09), Color(0.02, 0.19, 0.19), 16)
 	chapters.pressed.connect(_open_level_select)
-	var help := _make_button(menu_root, "HowToPlayButton", Vector2(475, 466), Vector2(330, 48), "HOW TO PLAY", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 17)
+	var help := _make_button(menu_root, "HowToPlayButton", Vector2(475, 456), Vector2(330, 48), "HOW TO PLAY", Color(0.01, 0.075, 0.09), Color(0.02, 0.19, 0.19), 16)
 	help.pressed.connect(_open_help)
-	var archive := _make_button(menu_root, "MemoryArchiveButton", Vector2(475, 520), Vector2(330, 42), "MEMORY ARCHIVE", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 15)
+	var archive := _make_button(menu_root, "MemoryArchiveButton", Vector2(475, 510), Vector2(330, 42), "MEMORY ARCHIVE", Color(0.012, 0.065, 0.075), Color(0.035, 0.16, 0.17), 15)
 	archive.pressed.connect(_open_memory_archive)
-	var options := _make_button(menu_root, "OptionsButton", Vector2(475, 567), Vector2(330, 42), "OPTIONS", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 16)
+	var options := _make_button(menu_root, "OptionsButton", Vector2(475, 558), Vector2(330, 42), "OPTIONS", Color(0.01, 0.075, 0.09), Color(0.02, 0.19, 0.19), 15)
 	options.pressed.connect(_open_options)
-	menu_progress_label = _make_label(menu_root, "Progress", Vector2(240, 619), Vector2(800, 28), "CHAMBERS DISCOVERED: 1 / 6   •   MEMORIES: 0 / 6", 14, Color(0.49, 0.61, 0.73), HORIZONTAL_ALIGNMENT_CENTER)
-	_make_label(menu_root, "Version", Vector2(22, 688), Vector2(260, 22), "ECHOPOST  •  EARLY DEVELOPMENT BUILD", 10, Color(0.30, 0.42, 0.55), HORIZONTAL_ALIGNMENT_LEFT)
+	menu_progress_label = _make_label(menu_root, "Progress", Vector2(240, 619), Vector2(800, 28), "CHAMBERS DISCOVERED: 1 / 6   •   MEMORIES: 0 / 6", 13, Color(0.31, 0.61, 0.61), HORIZONTAL_ALIGNMENT_CENTER)
+	_make_label(menu_root, "Version", Vector2(22, 688), Vector2(260, 22), "ECHOPOST  •  EARLY DEVELOPMENT BUILD", 10, Color(0.19, 0.40, 0.40), HORIZONTAL_ALIGNMENT_LEFT)
 
 
 func _build_game_hud() -> void:
@@ -568,26 +579,60 @@ func _layout_responsive_ui() -> void:
 	var compact_height := size.y < 620.0
 	var width_scale := clampf(size.x / 1280.0, 0.70, 1.0)
 	if is_instance_valid(menu_root):
+		var logo := menu_root.get_node_or_null("Logo") as TextureRect
 		var title := menu_root.get_node_or_null("Title") as Label
+		if logo != null:
+			logo.visible = size.y >= 620.0
+			var logo_side := 174.0 if size.y >= 620.0 else 140.0
+			logo.size = Vector2.ONE * logo_side
+			logo.position = Vector2(center_x - logo_side * 0.5, 7.0 if size.y >= 620.0 else 4.0)
 		if title != null:
 			title.size.x = minf(1080.0, size.x - 32.0)
-			title.size.y = 62.0 if compact_height else 100.0
-			title.position = Vector2(center_x - title.size.x * 0.5, 48.0 if compact_height else 135.0)
-			title.add_theme_font_size_override("font_size", clampi(roundi(70.0 * width_scale), 38, 70))
+			if size.y >= 620.0:
+				title.size.y = 44.0
+				title.position = Vector2(center_x - title.size.x * 0.5, 184.0)
+				title.add_theme_font_size_override("font_size", clampi(roundi(36.0 * width_scale), 25, 36))
+			elif size.y >= 600.0:
+				title.size.y = 34.0
+				title.position = Vector2(center_x - title.size.x * 0.5, 146.0)
+				title.add_theme_font_size_override("font_size", clampi(roundi(28.0 * width_scale), 23, 28))
+			else:
+				title.size.y = 62.0
+				title.position = Vector2(center_x - title.size.x * 0.5, 48.0)
+				title.add_theme_font_size_override("font_size", clampi(roundi(42.0 * width_scale), 30, 42))
 		var tagline := menu_root.get_node_or_null("Tagline") as Label
 		if tagline != null:
 			tagline.size.x = minf(920.0, size.x - 40.0)
-			tagline.size.y = 36.0 if compact_height else 42.0
-			tagline.position = Vector2(center_x - tagline.size.x * 0.5, 121.0 if compact_height else 235.0)
-			tagline.add_theme_font_size_override("font_size", clampi(roundi(22.0 * width_scale), 14, 22))
+			if size.y >= 620.0:
+				tagline.size.y = 36.0
+				tagline.position = Vector2(center_x - tagline.size.x * 0.5, 232.0)
+				tagline.add_theme_font_size_override("font_size", clampi(roundi(20.0 * width_scale), 15, 20))
+			elif size.y >= 600.0:
+				tagline.size.y = 28.0
+				tagline.position = Vector2(center_x - tagline.size.x * 0.5, 181.0)
+				tagline.add_theme_font_size_override("font_size", clampi(roundi(15.0 * width_scale), 12, 15))
+			else:
+				tagline.size.y = 36.0
+				tagline.position = Vector2(center_x - tagline.size.x * 0.5, 121.0)
+				tagline.add_theme_font_size_override("font_size", clampi(roundi(22.0 * width_scale), 14, 22))
 		var intro := menu_root.get_node_or_null("Intro") as Label
 		if intro != null:
 			intro.size.x = minf(780.0, size.x - 64.0)
-			intro.size.y = 48.0 if compact_height else 58.0
-			intro.position = Vector2(center_x - intro.size.x * 0.5, 165.0 if compact_height else 280.0)
-			intro.add_theme_font_size_override("font_size", clampi(roundi(18.0 * width_scale), 13, 18))
-			# Keep the short-screen menu from sacrificing button space to a paragraph.
-			intro.visible = size.y >= 340.0
+			if size.y >= 620.0:
+				intro.size.y = 58.0
+				intro.position = Vector2(center_x - intro.size.x * 0.5, 272.0)
+				intro.add_theme_font_size_override("font_size", clampi(roundi(17.0 * width_scale), 13, 17))
+				intro.visible = true
+			elif size.y >= 600.0:
+				intro.size.y = 40.0
+				intro.position = Vector2(center_x - intro.size.x * 0.5, 211.0)
+				intro.add_theme_font_size_override("font_size", clampi(roundi(13.0 * width_scale), 10, 13))
+				intro.visible = false
+			else:
+				intro.size.y = 48.0
+				intro.position = Vector2(center_x - intro.size.x * 0.5, 165.0)
+				intro.add_theme_font_size_override("font_size", clampi(roundi(18.0 * width_scale), 13, 18))
+				intro.visible = size.y >= 340.0
 		var progress := menu_root.get_node_or_null("Progress") as Label
 		if progress != null:
 			progress.size.x = minf(800.0, size.x - 32.0)
@@ -602,7 +647,7 @@ func _layout_responsive_ui() -> void:
 			centered_button.position.x = center_x - centered_button.size.x * 0.5
 		if compact_height:
 			var compact_button_names := ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]
-			if size.y < 420.0:
+			if size.y < 600.0:
 				# Very short landscape phones cannot fit a single-column menu without
 				# hiding controls. Reflow into two columns with touch-sized buttons.
 				var ultra_title := menu_root.get_node_or_null("Title") as Label
@@ -658,13 +703,21 @@ func _layout_responsive_ui() -> void:
 					progress.size.y = 20.0
 			else:
 				var compact_top := size.y * 0.43
-				if intro != null:
-					# Use the actual intro bounds to avoid overlap across Godot versions.
+				if intro != null and intro.visible:
+					# Use the actual visible intro bounds to avoid overlapping its text.
 					compact_top = maxf(compact_top, intro.position.y + intro.size.y + 20.0)
-				var compact_gap := clampf(size.y * 0.083, 44.0, 50.0)
+				elif tagline != null:
+					compact_top = maxf(compact_top, tagline.position.y + tagline.size.y + 18.0)
+				var measured_button_height := 44.0
+				for button_name in compact_button_names:
+					var measured_button := menu_root.get_node_or_null(button_name) as Button
+					if measured_button != null:
+						measured_button.size.y = 44.0
+						measured_button_height = maxf(measured_button_height, measured_button.size.y)
+				var compact_gap := maxf(clampf(size.y * 0.083, 44.0, 50.0), measured_button_height + 4.0)
 				if progress != null and compact_button_names.size() > 1:
-					var available_gap := (progress.position.y - compact_top - 44.0 - 8.0) / float(compact_button_names.size() - 1)
-					compact_gap = minf(compact_gap, maxf(30.0, available_gap))
+					var available_gap := (progress.position.y - compact_top - measured_button_height - 8.0) / float(compact_button_names.size() - 1)
+					compact_gap = minf(compact_gap, available_gap)
 				for i in range(compact_button_names.size()):
 					var compact_button := menu_root.get_node_or_null(compact_button_names[i]) as Button
 					if compact_button != null:
@@ -742,11 +795,11 @@ func _make_panel(panel_name: String, panel_position: Vector2, panel_size: Vector
 	panel.size = panel_size
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.035, 0.055, 0.09, 0.985)
-	style.border_color = Color(0.22, 0.61, 0.78, 0.92)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(20)
-	style.shadow_color = Color(0.0, 0.015, 0.04, 0.48)
+	style.bg_color = Color(0.004, 0.022, 0.032, 0.992)
+	style.border_color = Color(0.10, 0.84, 0.77, 0.86)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(18)
+	style.shadow_color = Color(0.0, 0.52, 0.48, 0.18)
 	style.shadow_size = 18
 	style.content_margin_left = 12
 	style.content_margin_right = 12
@@ -782,34 +835,44 @@ func _make_button(parent: Control, button_name: String, button_position: Vector2
 	button.text = button_text
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", font_size)
-	button.add_theme_color_override("font_color", Color(0.92, 0.97, 1.0))
-	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	button.add_theme_color_override("font_pressed_color", Color(0.83, 0.95, 1.0))
-	button.add_theme_color_override("font_disabled_color", Color(0.42, 0.50, 0.60))
+	button.add_theme_color_override("font_color", Color(0.78, 1.0, 0.96))
+	button.add_theme_color_override("font_hover_color", Color(0.98, 1.0, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(0.49, 1.0, 0.91))
+	button.add_theme_color_override("font_disabled_color", Color(0.30, 0.49, 0.50))
+	var primary_button := button_name in ["StartButton", "RecordButton", "NextLevelButton"]
+	var archive_button := button_name == "MemoryArchiveButton"
+	var normal_fill := Color(0.016, 0.22, 0.21, 0.99) if primary_button else Color(0.006, 0.044, 0.055, 0.99)
+	var hover_fill := Color(0.025, 0.36, 0.32, 0.99) if primary_button else Color(0.014, 0.15, 0.16, 0.99)
+	if archive_button:
+		normal_fill = Color(0.055, 0.035, 0.11, 0.99)
+		hover_fill = Color(0.12, 0.06, 0.20, 0.99)
+	var edge_color := Color(0.20, 0.98, 0.85, 0.84) if primary_button else Color(0.09, 0.60, 0.61, 0.63)
+	if archive_button:
+		edge_color = Color(0.46, 0.35, 0.92, 0.72)
 	var normal := StyleBoxFlat.new()
-	normal.bg_color = normal_color
-	normal.border_color = Color(0.40, 0.67, 0.79, 0.40)
-	normal.set_border_width_all(1)
-	normal.set_corner_radius_all(14)
-	normal.shadow_color = Color(0.0, 0.01, 0.03, 0.24)
-	normal.shadow_size = 5
+	normal.bg_color = normal_fill
+	normal.border_color = edge_color
+	normal.set_border_width_all(2 if primary_button else 1)
+	normal.set_corner_radius_all(13)
+	normal.shadow_color = Color(0.0, 0.44, 0.42, 0.13)
+	normal.shadow_size = 8 if primary_button else 4
 	var hover := StyleBoxFlat.new()
-	hover.bg_color = hover_color
-	hover.border_color = Color(0.43, 0.86, 1.0, 0.92)
-	hover.set_border_width_all(1)
-	hover.set_corner_radius_all(14)
-	hover.shadow_color = Color(0.04, 0.42, 0.65, 0.24)
-	hover.shadow_size = 7
+	hover.bg_color = hover_fill
+	hover.border_color = Color(0.53, 1.0, 0.92, 0.98)
+	hover.set_border_width_all(2)
+	hover.set_corner_radius_all(13)
+	hover.shadow_color = Color(0.02, 0.80, 0.68, 0.22)
+	hover.shadow_size = 10
 	var pressed := StyleBoxFlat.new()
-	pressed.bg_color = normal_color.darkened(0.20)
-	pressed.border_color = Color(0.35, 0.75, 0.91, 0.72)
-	pressed.set_border_width_all(1)
-	pressed.set_corner_radius_all(14)
+	pressed.bg_color = normal_fill.darkened(0.18)
+	pressed.border_color = Color(0.28, 0.96, 0.83, 0.9)
+	pressed.set_border_width_all(2 if primary_button else 1)
+	pressed.set_corner_radius_all(13)
 	var disabled := StyleBoxFlat.new()
-	disabled.bg_color = Color(0.075, 0.10, 0.15)
-	disabled.border_color = Color(0.18, 0.25, 0.33, 0.60)
+	disabled.bg_color = Color(0.012, 0.035, 0.044)
+	disabled.border_color = Color(0.12, 0.28, 0.30, 0.52)
 	disabled.set_border_width_all(1)
-	disabled.set_corner_radius_all(14)
+	disabled.set_corner_radius_all(13)
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
@@ -1411,24 +1474,53 @@ func _save_progress() -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.025, 0.041, 0.073), true)
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0.002, 0.009, 0.019), true)
 	for star in stars:
-		draw_circle(Vector2(star.x, star.y), star.z, Color(0.19, 0.36, 0.49, 0.44))
+		draw_circle(Vector2(star.x, star.y), star.z, Color(0.08, 0.60, 0.54, 0.38))
 	if screen_state == ScreenState.MENU:
 		_draw_menu_art()
 		return
 	_draw_room()
 	if screen_state == ScreenState.PAUSED:
-		draw_rect(Rect2(0, 100, size.x, 520), Color(0.02, 0.03, 0.06, 0.34), true)
+		draw_rect(Rect2(0, 100, size.x, 520), Color(0.002, 0.012, 0.02, 0.38), true)
 
 
 func _draw_menu_art() -> void:
-	for i in range(5):
-		var x := 140.0 + float(i) * 250.0
-		draw_arc(Vector2(x, 358), 56.0 + float(i) * 7.0, 0, TAU, 72, Color(0.09, 0.38, 0.56, 0.18), 2.0, true)
-	draw_line(Vector2(150, 360), Vector2(1120, 360), Color(0.12, 0.45, 0.64, 0.22), 2.0, true)
-	_draw_robot(Vector2(310, 360), Color(0.30, 0.85, 1.0, 0.78), 1.0)
-	_draw_robot(Vector2(960, 360), Color(0.70, 0.47, 1.0, 0.25), 0.75)
+	var center := size * Vector2(0.5, 0.53)
+	var dimension := minf(size.x, size.y)
+	# Receding circuit-room outlines echo the supplied logo's geometric tunnel.
+	for depth in range(5):
+		var inset_x := size.x * (0.07 + float(depth) * 0.042)
+		var top_y := size.y * (0.15 + float(depth) * 0.045)
+		var bottom_y := size.y * (0.86 - float(depth) * 0.045)
+		var corner := dimension * (0.12 - float(depth) * 0.012)
+		var points := PackedVector2Array([
+			Vector2(inset_x + corner, top_y),
+			Vector2(size.x - inset_x - corner, top_y),
+			Vector2(size.x - inset_x, top_y + corner),
+			Vector2(size.x - inset_x, bottom_y - corner),
+			Vector2(size.x - inset_x - corner, bottom_y),
+			Vector2(inset_x + corner, bottom_y),
+			Vector2(inset_x, bottom_y - corner),
+			Vector2(inset_x, top_y + corner),
+			Vector2(inset_x + corner, top_y)
+		])
+		var alpha := 0.045 + float(depth) * 0.012
+		draw_polyline(points, Color(0.12, 0.88, 0.77, alpha), 1.4, true)
+	# The orbit is intentionally low-contrast; the actual logo remains the focal point.
+	for orbit in range(3):
+		var radius := dimension * (0.17 + float(orbit) * 0.055)
+		draw_arc(center + Vector2(0, 5), radius, -0.4, PI * 1.48, 72, Color(0.10, 0.84, 0.77, 0.07 + float(orbit) * 0.018), 2.0, true)
+	var path_points := PackedVector2Array([
+		center + Vector2(-dimension * 0.37, dimension * 0.16),
+		center + Vector2(-dimension * 0.22, dimension * 0.04),
+		center + Vector2(-dimension * 0.01, -dimension * 0.04),
+		center + Vector2(dimension * 0.18, -dimension * 0.13),
+		center + Vector2(dimension * 0.27, -dimension * 0.25)
+	])
+	draw_polyline(path_points, Color(0.10, 0.89, 0.80, 0.10), 5.0, true)
+	draw_circle(center, dimension * 0.085, Color(0.02, 0.60, 0.55, 0.06))
+	draw_arc(center, dimension * 0.085, 0.0, TAU, 64, Color(0.18, 0.96, 0.86, 0.12), 2.0, true)
 
 
 func _get_gate_timer_ratio() -> float:
@@ -1440,11 +1532,11 @@ func _get_gate_timer_ratio() -> float:
 
 func _draw_room() -> void:
 	var room_rect := Rect2(ROOM_LEFT, ROOM_TOP, ROOM_RIGHT - ROOM_LEFT, ROOM_BOTTOM - ROOM_TOP)
-	draw_rect(room_rect, Color(0.055, 0.085, 0.13), true)
+	draw_rect(room_rect, Color(0.006, 0.025, 0.036), true)
 	var accent: Color = level_data.get("accent", Color(0.15, 0.34, 0.45))
-	draw_rect(room_rect, Color(accent.r, accent.g, accent.b, 0.56), false, 3.0)
+	draw_rect(room_rect, Color(0.10, 0.90, 0.80, 0.70), false, 2.0)\n\tdraw_rect(room_rect.grow(-5.0), Color(accent.r, accent.g, accent.b, 0.16), false, 1.0)
 	for x in range(int(ROOM_LEFT + 20), int(ROOM_RIGHT), 40):
-		draw_line(Vector2(x, ROOM_TOP + 4), Vector2(x, ROOM_BOTTOM - 4), Color(0.13, 0.23, 0.31, 0.35), 1.0)
+		draw_line(Vector2(x, ROOM_TOP + 4), Vector2(x, ROOM_BOTTOM - 4), Color(0.06, 0.33, 0.32, 0.30), 1.0)
 	for y in range(int(ROOM_TOP + 20), int(ROOM_BOTTOM), 40):
 		draw_line(Vector2(ROOM_LEFT + 4, y), Vector2(ROOM_RIGHT - 4, y), Color(0.13, 0.23, 0.31, 0.35), 1.0)
 
@@ -1494,7 +1586,7 @@ func _draw_room() -> void:
 
 	# Show the player's route as it is being recorded, so the ghost mechanic feels tangible.
 	if is_recording and not recording_track.samples.is_empty():
-		var live_route_tint := Color(1.0, 0.69, 0.31, 0.62)
+		var live_route_tint := Color(0.18, 0.98, 0.83, 0.84)
 		if level_data.has("echo_jammer") and _track_passes_waypoint(
 			recording_track,
 			level_data["echo_jammer"],
@@ -1503,15 +1595,15 @@ func _draw_room() -> void:
 			live_route_tint = Color(1.0, 0.28, 0.43, 0.88)
 		_draw_track_path(recording_track, live_route_tint, 3.5)
 		var route_start: Vector2 = recording_track.samples.front()["p"]
-		draw_circle(route_start, 12.0, Color(1.0, 0.69, 0.31, 0.12))
-		draw_arc(route_start, 12.0, 0.0, TAU, 32, Color(1.0, 0.76, 0.40, 0.92), 2.0, true)
-		draw_string(ThemeDB.fallback_font, route_start + Vector2(17, -10), "START", HORIZONTAL_ALIGNMENT_LEFT, 55, 10, Color(1.0, 0.80, 0.50))
+		draw_circle(route_start, 12.0, Color(0.18, 0.98, 0.83, 0.14))
+		draw_arc(route_start, 12.0, 0.0, TAU, 32, Color(0.50, 1.0, 0.91, 0.96), 2.0, true)
+		draw_string(ThemeDB.fallback_font, route_start + Vector2(17, -10), "START", HORIZONTAL_ALIGNMENT_LEFT, 55, 10, Color(0.48, 1.0, 0.91))
 
 	if echo_track.samples.size() > 1 and (echo_playing or echo_visible):
-		_draw_track_path(echo_track, Color(0.29, 0.82, 1.0, 0.17), 3.0)
+		_draw_track_path(echo_track, Color(0.12, 0.98, 0.82, 0.20), 3.0)
 	if echo_visible:
 		var echo_alpha := 0.48 if echo_playing else 0.68
-		_draw_robot(echo_position, Color(0.28, 0.84, 1.0, echo_alpha), 0.78)
+		_draw_robot(echo_position, Color(0.24, 1.0, 0.88, echo_alpha), 0.78)
 	_draw_robot(player_position, Color(0.83, 0.95, 1.0), 1.0)
 
 	if joystick_touch_index != -1 or joystick_mouse_active or joystick_direction.length() > 0.05:
@@ -1519,16 +1611,16 @@ func _draw_room() -> void:
 	else:
 		var joystick_hint := Vector2(size.x - 136.0 if left_handed_controls else 136.0, size.y * 0.77)
 		draw_circle(joystick_hint, 44.0, Color(0.12, 0.24, 0.34, 0.16))
-		draw_arc(joystick_hint, 44.0, 0, TAU, 40, Color(0.40, 0.72, 0.86, 0.27), 2.0, true)
-		draw_circle(joystick_hint, 17.0, Color(0.30, 0.78, 0.94, 0.14))
+		draw_arc(joystick_hint, 44.0, 0, TAU, 40, Color(0.17, 0.73, 0.67, 0.24), 2.0, true)
+		draw_circle(joystick_hint, 17.0, Color(0.18, 0.91, 0.82, 0.12))
 
 	if door_open and gate_open_timer > 0.0:
-		draw_string(ThemeDB.fallback_font, Vector2(900, 145), "PULSE WINDOW  %.1fs" % gate_open_timer, HORIZONTAL_ALIGNMENT_CENTER, 190, 13, Color(1.0, 0.78, 0.39))
+		draw_string(ThemeDB.fallback_font, Vector2(900, 145), "PULSE WINDOW  %.1fs" % gate_open_timer, HORIZONTAL_ALIGNMENT_CENTER, 190, 13, Color(0.47, 1.0, 0.88))
 		# The bar gives a second, glanceable cue for the remaining crossing time.
 		var timer_bar := Rect2(900, 154, 160, 6)
 		draw_rect(timer_bar, Color(0.12, 0.17, 0.22, 0.96), true)
-		draw_rect(Rect2(timer_bar.position, Vector2(timer_bar.size.x * _get_gate_timer_ratio(), timer_bar.size.y)), Color(1.0, 0.66, 0.27, 0.98), true)
-		draw_rect(timer_bar, Color(1.0, 0.81, 0.52, 0.75), false, 1.0)
+		draw_rect(Rect2(timer_bar.position, Vector2(timer_bar.size.x * _get_gate_timer_ratio(), timer_bar.size.y)), Color(0.18, 0.96, 0.80, 0.98), true)
+		draw_rect(timer_bar, Color(0.60, 1.0, 0.93, 0.75), false, 1.0)
 	elif door_open:
 		draw_string(ThemeDB.fallback_font, Vector2(915, 145), "GATE POWERED", HORIZONTAL_ALIGNMENT_CENTER, 160, 13, Color(0.35, 1.0, 0.77))
 	else:
