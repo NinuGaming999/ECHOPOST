@@ -979,6 +979,12 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	# Recheck narrower and shorter landscape shapes. The intro should be reclaimed
 	# below 340 units, and the progress line hidden only when there is no safe room.
 	var compact_test_sizes: Array[Vector2] = [
+		Vector2(800, 620),
+		Vector2(800, 600),
+		Vector2(800, 580),
+		Vector2(800, 540),
+		Vector2(800, 500),
+		Vector2(800, 480),
 		Vector2(640, 360),
 		Vector2(800, 320),
 		Vector2(800, 280),
@@ -989,7 +995,11 @@ func _test_premium_mobile_ui(game: Control) -> void:
 		game.call("_layout_responsive_ui")
 		var compact_progress := ultra_menu.get_node("Progress") as Label
 		var compact_intro := ultra_menu.get_node("Intro") as Label
-		_check(compact_intro.visible == (compact_size.y >= 340.0), "Compact menu intro visibility must adapt to the available height.")
+		var compact_logo := ultra_menu.get_node("Logo") as TextureRect
+		var expected_intro_visible := compact_size.y >= 620.0 or (compact_size.y < 600.0 and compact_size.y >= 340.0)
+		_check(compact_intro.visible == expected_intro_visible, "Compact menu intro visibility must adapt to available height.")
+		_check(compact_logo.visible == (compact_size.y >= 620.0), "The supplied brand logo should show on the full-height menu and hide before compact reflow.")
+		_check(compact_logo.texture != null, "The supplied logo texture must be loaded into the menu.")
 		_check(compact_progress.visible == (compact_size.y >= 280.0), "Compact menu progress should hide only when the screen is too short.")
 		var compact_buttons: Array[Button] = []
 		for button_name in ultra_names:
