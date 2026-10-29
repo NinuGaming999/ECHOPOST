@@ -983,6 +983,7 @@ func _style_game_action_button(button: Button, role: String, diameter: float) ->
 	# so update both the minimum and rect after setting the new responsive diameter.
 	button.custom_minimum_size = Vector2(diameter, diameter)
 	button.size = Vector2(diameter, diameter)
+	button.pivot_offset = button.size * 0.5
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
