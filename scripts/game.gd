@@ -1730,12 +1730,13 @@ func _draw_robot(position: Vector2, tint: Color, scale_factor: float) -> void:
 	draw_circle(position, 18.0 * scale_factor, Color(0.01, 0.08, 0.12, 0.96 * alpha))
 	draw_circle(position, 14.5 * scale_factor, Color(tint.r * 0.28, tint.g * 0.72, tint.b * 0.78, 0.96 * alpha))
 	draw_arc(position, 18.0 * scale_factor, 0.0, TAU, 48, Color(tint.r, tint.g, tint.b, 0.92 * alpha), 1.7 * scale_factor, true)
-	draw_ellipse
-	draw_circle(position + Vector2(-4.5, -6.0) * scale_factor, 5.5 * scale_factor, Color(0.90, 1.0, 0.99, 0.74 * alpha))
-	draw_circle(position + Vector2(4.5, -2.5) * scale_factor, 2.3 * scale_factor, Color(0.76, 1.0, 0.97, 0.36 * alpha)
-)
-	draw_line(position + Vector2(-7, 18) * scale_factor, position + Vector2(-11, 23) * scale_factor, tint, 3.0 * scale_factor, true)
-	draw_line(position + Vector2(7, 18) * scale_factor, position + Vector2(11, 23) * scale_factor, tint, 3.0 * scale_factor, true)
+	var highlight_points := PackedVector2Array()
+	for highlight_index in range(25):
+		var highlight_angle := TAU * float(highlight_index) / 24.0
+		var highlight_point := Vector2(cos(highlight_angle) * 6.0, sin(highlight_angle) * 2.8).rotated(-0.25)
+		highlight_points.append(position + (highlight_point + Vector2(-4.5, -6.0)) * scale_factor)
+	draw_colored_polygon(highlight_points, Color(0.90, 1.0, 0.99, 0.62 * alpha))
+	draw_circle(position + Vector2(5.0, -2.5) * scale_factor, 2.3 * scale_factor, Color(0.76, 1.0, 0.97, 0.32 * alpha))
 
 
 func _draw_joystick() -> void:
