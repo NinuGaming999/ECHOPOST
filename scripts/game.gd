@@ -12,6 +12,10 @@ const ROOM_BOTTOM := 612.0
 const GATE_X := 1080.0
 const PLAYER_RADIUS := 15.0
 const MOVE_SPEED := 255.0
+const TOUCH_JOYSTICK_RADIUS := 68.0
+const TOUCH_JOYSTICK_DEAD_ZONE := 8.0
+const TOUCH_MOVE_ACCELERATION := 12.0
+const TOUCH_MOVE_DECELERATION := 18.0
 const RECORD_SAMPLE_STEP := 0.05
 const MIN_RECORD_SECONDS := 0.7
 const MAX_RECORD_SECONDS := 8.0
@@ -57,6 +61,7 @@ var joystick_touch_index: int = -1
 var joystick_mouse_active: bool = false
 var joystick_origin: Vector2 = Vector2.ZERO
 var joystick_direction: Vector2 = Vector2.ZERO
+var joystick_applied_direction: Vector2 = Vector2.ZERO
 
 var menu_root: Control
 var game_hud: Control
@@ -110,6 +115,7 @@ func _pause_for_lifecycle() -> void:
 	joystick_touch_index = -1
 	joystick_mouse_active = false
 	joystick_direction = Vector2.ZERO
+	joystick_applied_direction = Vector2.ZERO
 	pause_button.text = "RESUME"
 	status_message = "Paused automatically because ECHOPOST lost focus. Press RESUME to continue."
 	_update_hud()
@@ -194,6 +200,7 @@ func _input(event: InputEvent) -> void:
 				joystick_touch_index = touch.index
 				joystick_origin = touch.position
 				joystick_direction = Vector2.ZERO
+				joystick_applied_direction = Vector2.ZERO
 		else:
 			if touch.index == joystick_touch_index:
 				joystick_touch_index = -1
@@ -209,6 +216,7 @@ func _input(event: InputEvent) -> void:
 				joystick_mouse_active = true
 				joystick_origin = mouse_button.position
 				joystick_direction = Vector2.ZERO
+				joystick_applied_direction = Vector2.ZERO
 			elif not mouse_button.pressed:
 				joystick_mouse_active = false
 				joystick_direction = Vector2.ZERO
@@ -217,21 +225,29 @@ func _input(event: InputEvent) -> void:
 
 
 func _is_joystick_area(point: Vector2) -> bool:
-	# Use viewport proportions instead of hard-coded pixels so touch input remains
-	# predictable on phones with different landscape aspect ratios.
-	if point.y <= size.y * 0.56:
+	# Floating-stick pickup is intentionally generous: players may place their
+	# thumb anywhere on their half of the playfield, not only on a tiny corner pad.
+	# Keep the top HUD and full bottom action row out of the movement hit zone.
+	if point.y <= size.y * 0.24 or point.y >= size.y - 84.0:
 		return false
-	var bottom_action_band := point.y >= size.y - 76.0
 	if left_handed_controls:
-		# Keep the right-side joystick clear of the bottom restart target.
-		return point.x > size.x * 0.77 and not (bottom_action_band and point.x > size.x * 0.85)
-	# Keep the left-side joystick clear of the bottom menu target.
-	return point.x < size.x * 0.23 and not (bottom_action_band and point.x < size.x * 0.15)
+		return point.x >= size.x * 0.54
+	return point.x <= size.x * 0.46
+
+
+func _shape_touch_stick(offset: Vector2) -> Vector2:
+	# Radial dead zone rejects finger jitter; remapping preserves fine control
+	# immediately outside it and caps travel without changing direction.
+	var distance := offset.length()
+	if distance <= TOUCH_JOYSTICK_DEAD_ZONE:
+		return Vector2.ZERO
+	var strength := clampf((distance - TOUCH_JOYSTICK_DEAD_ZONE) / (TOUCH_JOYSTICK_RADIUS - TOUCH_JOYSTICK_DEAD_ZONE), 0.0, 1.0)
+	strength = pow(strength, 1.12)
+	return offset / distance * strength
 
 
 func _update_joystick(point: Vector2) -> void:
-	var offset := point - joystick_origin
-	joystick_direction = offset.limit_length(64.0) / 64.0
+	joystick_direction = _shape_touch_stick(point - joystick_origin)
 
 
 func _create_stars() -> void:
@@ -754,9 +770,11 @@ func _layout_responsive_ui() -> void:
 		if is_instance_valid(status_label):
 			status_label.size.x = clampf(size.x - 540.0, 420.0, 740.0)
 			status_label.position = Vector2(center_x - status_label.size.x * 0.5, size.y - 110.0)
-		var move_tip := game_hud.get_node_or_null("MoveTip") as Control
+		var move_tip := game_hud.get_node_or_null("MoveTip") as Label
 		if move_tip != null:
 			move_tip.position.y = size.y - 105.0
+			move_tip.position.x = size.x - move_tip.size.x - 28.0 if left_handed_controls else 34.0
+			move_tip.text = "DRAG RIGHT HALF TO MOVE\nWASD / ARROWS" if left_handed_controls else "DRAG LEFT HALF TO MOVE\nWASD / ARROWS"
 		var bottom_menu_control := game_hud.get_node_or_null("MenuButton") as Button
 		var record_control := game_hud.get_node_or_null("RecordButton") as Button
 		var latch_control := game_hud.get_node_or_null("LatchSwitchBButton") as Button
@@ -1182,9 +1200,21 @@ func _track_waypoint_progress(track: Variant, waypoint: Vector2, radius: float, 
 
 
 func _update_player(delta: float) -> void:
-	var direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-	if joystick_direction.length() > 0.12:
-		direction = joystick_direction
+	var keyboard_direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	var direction := keyboard_direction
+	if keyboard_direction.length() > 0.0:
+		# Keyboard remains immediate and precise; it never inherits touch smoothing.
+		joystick_applied_direction = Vector2.ZERO
+	elif joystick_touch_index != -1 or joystick_mouse_active or joystick_applied_direction.length() > 0.01:
+		var target_direction := joystick_direction if joystick_touch_index != -1 or joystick_mouse_active else Vector2.ZERO
+		var response_rate := TOUCH_MOVE_DECELERATION if target_direction.length() < 0.001 or target_direction.dot(joystick_applied_direction) < 0.0 else TOUCH_MOVE_ACCELERATION
+		var blend := 1.0 - exp(-delta * response_rate)
+		joystick_applied_direction = joystick_applied_direction.lerp(target_direction, blend)
+		if target_direction == Vector2.ZERO and joystick_applied_direction.length() < 0.015:
+			joystick_applied_direction = Vector2.ZERO
+		direction = joystick_applied_direction
+	else:
+		joystick_applied_direction = Vector2.ZERO
 	var next_position := player_position + direction * player_move_speed * delta
 	next_position.x = clampf(next_position.x, ROOM_LEFT + PLAYER_RADIUS + 10.0, ROOM_RIGHT - PLAYER_RADIUS - 10.0)
 	next_position.y = clampf(next_position.y, ROOM_TOP + PLAYER_RADIUS + 13.0, ROOM_BOTTOM - PLAYER_RADIUS - 12.0)
@@ -1638,7 +1668,7 @@ func _draw_room() -> void:
 		_draw_robot(echo_position, Color(0.24, 1.0, 0.88, echo_alpha), 0.78)
 	_draw_robot(player_position, Color(0.83, 0.95, 1.0), 1.0)
 
-	if joystick_touch_index != -1 or joystick_mouse_active or joystick_direction.length() > 0.05:
+	if joystick_touch_index != -1 or joystick_mouse_active or joystick_direction.length() > 0.05 or joystick_applied_direction.length() > 0.05:
 		_draw_joystick()
 	else:
 		var joystick_hint := Vector2(size.x - 136.0 if left_handed_controls else 136.0, size.y * 0.77)
@@ -1760,11 +1790,17 @@ func _draw_robot(position: Vector2, tint: Color, scale_factor: float) -> void:
 
 func _draw_joystick() -> void:
 	var center := joystick_origin
-	var offset := joystick_direction * 54.0
-	draw_circle(center, 54.0, Color(0.12, 0.24, 0.34, 0.42))
-	draw_arc(center, 54.0, 0, TAU, 48, Color(0.40, 0.72, 0.86, 0.48), 2.0, true)
-	draw_circle(center + offset, 23.0, Color(0.30, 0.78, 0.94, 0.70))
-	draw_arc(center + offset, 23.0, 0, TAU, 32, Color(0.79, 0.94, 1.0, 0.95), 2.0, true)
+	var offset := joystick_direction * 38.0
+	# A broad translucent glass pad and shorter thumb travel are easier to control
+	# and keep the knob visually inside its base at full tilt.
+	draw_circle(center, 62.0, Color(0.025, 0.10, 0.14, 0.54))
+	draw_arc(center, 62.0, 0.0, TAU, 56, Color(0.20, 0.88, 0.81, 0.58), 2.0, true)
+	draw_arc(center, 46.0, 0.0, TAU, 48, Color(0.17, 0.63, 0.62, 0.24), 1.0, true)
+	draw_circle(center, 4.0, Color(0.56, 1.0, 0.94, 0.32))
+	draw_circle(center + offset, 25.0, Color(0.08, 0.79, 0.75, 0.22))
+	draw_circle(center + offset, 20.0, Color(0.02, 0.25, 0.31, 0.94))
+	draw_arc(center + offset, 20.0, 0.0, TAU, 40, Color(0.56, 1.0, 0.94, 0.93), 2.0, true)
+	draw_circle(center + offset + Vector2(-5.0, -6.0), 4.8, Color(0.88, 1.0, 0.98, 0.58))
 
 
 func _draw_track_path(track: Variant, tint: Color, line_width: float) -> void:
