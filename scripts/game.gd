@@ -1534,11 +1534,12 @@ func _draw_room() -> void:
 	var room_rect := Rect2(ROOM_LEFT, ROOM_TOP, ROOM_RIGHT - ROOM_LEFT, ROOM_BOTTOM - ROOM_TOP)
 	draw_rect(room_rect, Color(0.006, 0.025, 0.036), true)
 	var accent: Color = level_data.get("accent", Color(0.15, 0.34, 0.45))
-	draw_rect(room_rect, Color(0.10, 0.90, 0.80, 0.70), false, 2.0)\n\tdraw_rect(room_rect.grow(-5.0), Color(accent.r, accent.g, accent.b, 0.16), false, 1.0)
+	draw_rect(room_rect, Color(0.10, 0.90, 0.80, 0.70), false, 2.0)
+	draw_rect(room_rect.grow(-5.0), Color(accent.r, accent.g, accent.b, 0.16), false, 1.0)
 	for x in range(int(ROOM_LEFT + 20), int(ROOM_RIGHT), 40):
 		draw_line(Vector2(x, ROOM_TOP + 4), Vector2(x, ROOM_BOTTOM - 4), Color(0.06, 0.33, 0.32, 0.30), 1.0)
 	for y in range(int(ROOM_TOP + 20), int(ROOM_BOTTOM), 40):
-		draw_line(Vector2(ROOM_LEFT + 4, y), Vector2(ROOM_RIGHT - 4, y), Color(0.13, 0.23, 0.31, 0.35), 1.0)
+		draw_line(Vector2(ROOM_LEFT + 4, y), Vector2(ROOM_RIGHT - 4, y), Color(0.06, 0.33, 0.32, 0.30), 1.0)
 
 	if level_data.has("echo_jammer"):
 		var jammer_position: Vector2 = level_data["echo_jammer"]
