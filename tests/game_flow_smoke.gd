@@ -954,6 +954,8 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	var pause: Button = game.get("pause_button")
 	var menu_button := game.get("game_hud").get_node("MenuButton") as Button
 	var restart_button := game.get("game_hud").get_node("ResetButton") as Button
+	var status_banner: Label = game.get("status_label")
+	var movement_hint := game.get("game_hud").get_node("MoveTip") as Label
 	game.set("left_handed_controls", false)
 	_check(record.size.y >= 52.0, "The primary recording control should have a phone-friendly touch height.")
 	_check(latch.size.y >= 52.0, "The latch control should have a phone-friendly touch height.")
@@ -975,8 +977,15 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	_check(record_style != null and record_style.corner_radius_top_left >= record.size.y * 0.4, "Record Echo should use a genuinely round button style.")
 	_check(record_style != null and record_style.bg_color.a < 0.7, "Record Echo should have a transparent glass fill so the game remains visible underneath.")
 	_check(record.pivot_offset.is_equal_approx(record.size * 0.5) and latch.pivot_offset.is_equal_approx(latch.size * 0.5), "Responsive action buttons should keep their press animation centered after resizing.")
+	var wide_status_rect := Rect2(status_banner.position, status_banner.size)
+	_check(not wide_status_rect.intersects(Rect2(record.position, record.size)) and not wide_status_rect.intersects(Rect2(latch.position, latch.size)), "The status banner should stay out of the right-side action cluster.")
+	_check(movement_hint.visible and not Rect2(movement_hint.position, movement_hint.size).intersects(wide_status_rect), "The movement hint should avoid the status banner on a wide screen.")
 	_check(bool(game.call("_is_joystick_area", Vector2(100, 700))), "The left joystick area should adapt to a wider/taller viewport.")
 	game.set("left_handed_controls", true)
+	game.call("_layout_responsive_ui")
+	_check(record.position.x < game.size.x * 0.5, "Left-handed mode should mirror the circular action cluster to the left side.")
+	var mirrored_status_rect := Rect2(status_banner.position, status_banner.size)
+	_check(not mirrored_status_rect.intersects(Rect2(record.position, record.size)) and not mirrored_status_rect.intersects(Rect2(latch.position, latch.size)), "The status banner should stay clear when action buttons are mirrored.")
 	_check(bool(game.call("_is_joystick_area", Vector2(1400, 700))), "The right joystick area should adapt in left-handed mode.")
 
 	# Compact-landscape checks need explicit handedness setup: this test previously
@@ -1011,6 +1020,9 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	_check(not compact_record_rect.intersects(compact_reset_rect), "Compact Record Echo and restart circles must not overlap.")
 	_check(restart_button.position.x + restart_button.size.x <= game.size.x, "Compact restart control should remain inside the right edge.")
 	_check(record.pivot_offset.is_equal_approx(record.size * 0.5) and restart_button.pivot_offset.is_equal_approx(restart_button.size * 0.5), "Compact touch controls should keep centered press animations.")
+	var compact_status_rect := Rect2(status_banner.position, status_banner.size)
+	_check(not compact_status_rect.intersects(compact_record_rect) and not compact_status_rect.intersects(compact_latch_rect), "The compact status banner must not overlap the action circles.")
+	_check(movement_hint.visible and not Rect2(movement_hint.position, movement_hint.size).intersects(compact_status_rect), "Compact movement guidance should not cover the status banner.")
 	_check(bool(game.call("_is_joystick_area", Vector2(170, 450))), "The compact left joystick zone should avoid the menu button.")
 	game.set("left_handed_controls", true)
 	_check(bool(game.call("_is_joystick_area", Vector2(780, 450))), "The compact right joystick zone should avoid the restart button.")
@@ -1086,6 +1098,8 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	var hud_reset := gameplay_hud.get_node("ResetButton") as Button
 	var hud_record := game.get("record_button") as Button
 	var hud_latch := game.get("latch_switch_button") as Button
+	var hud_status := game.get("status_label") as Label
+	var hud_hint := gameplay_hud.get_node("MoveTip") as Label
 	var hud_sizes: Array[Vector2] = [Vector2(640, 360), Vector2(720, 360), Vector2(800, 320)]
 	for hud_size in hud_sizes:
 		game.size = hud_size
@@ -1097,6 +1111,9 @@ func _test_premium_mobile_ui(game: Control) -> void:
 		var record_rect := Rect2(hud_record.position, hud_record.size)
 		var latch_rect := Rect2(hud_latch.position, hud_latch.size)
 		_check(not record_rect.intersects(latch_rect), "Record and latch circles must not overlap at %s." % str(hud_size))
+		var status_rect := Rect2(hud_status.position, hud_status.size)
+		_check(not status_rect.intersects(record_rect) and not status_rect.intersects(latch_rect), "Status banner should clear circular controls at %s." % str(hud_size))
+		_check(not hud_hint.visible, "Compact movement guidance should hide on very short viewports to preserve control space.")
 		for i in range(hud_buttons.size()):
 			for j in range(i + 1, hud_buttons.size()):
 				var first_hud_rect := Rect2(hud_buttons[i].position, hud_buttons[i].size)
