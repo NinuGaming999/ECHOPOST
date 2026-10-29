@@ -638,16 +638,24 @@ func _layout_responsive_ui() -> void:
 			progress.size.x = minf(800.0, size.x - 32.0)
 			progress.visible = size.y >= 280.0
 			progress.position = Vector2(center_x - progress.size.x * 0.5, size.y - 60.0 if compact_height else 619.0)
-		for button_name in ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]:
-			var centered_button := menu_root.get_node_or_null(button_name) as Button
+		var menu_button_names := ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]
+		var normal_button_heights: Array[float] = [54.0, 50.0, 48.0, 42.0, 42.0]
+		var normal_button_y: Array[float] = [340.0, 404.0, 458.0, 512.0, 564.0]
+		for button_index in range(menu_button_names.size()):
+			var centered_button := menu_root.get_node_or_null(menu_button_names[button_index]) as Button
 			if centered_button == null:
 				continue
 			centered_button.size.x = minf(330.0, size.x - 48.0)
 			centered_button.pivot_offset = centered_button.size * 0.5
 			centered_button.position.x = center_x - centered_button.size.x * 0.5
+			# A compact layout may have changed height and y-position. Restore the
+			# authored full-height stack whenever the viewport grows back.
+			if size.y >= 620.0:
+				centered_button.size.y = normal_button_heights[button_index]
+				centered_button.position.y = normal_button_y[button_index]
 		if compact_height:
 			var compact_button_names := ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]
-			if size.y < 600.0:
+			if size.y < 620.0:
 				# Very short landscape phones cannot fit a single-column menu without
 				# hiding controls. Reflow into two columns with touch-sized buttons.
 				var ultra_title := menu_root.get_node_or_null("Title") as Label
@@ -664,6 +672,8 @@ func _layout_responsive_ui() -> void:
 					intro.size.y = 42.0
 					intro.add_theme_font_size_override("font_size", clampi(roundi(13.0 * width_scale), 10, 13))
 				var ultra_top := 136.0
+				if intro != null and intro.visible:
+					ultra_top = maxf(ultra_top, intro.position.y + intro.size.y + 18.0)
 				if size.y < 340.0:
 					# On extra-short landscape screens, reclaim the intro's vertical space.
 					if ultra_title != null:
