@@ -965,12 +965,14 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	var failure_panel: Panel = game.get("failure_panel")
 	_check(options_panel.position.is_equal_approx((game.size - options_panel.size) * 0.5), "Options should remain centered when the viewport changes size.")
 	_check(failure_panel.position.is_equal_approx((game.size - failure_panel.size) * 0.5), "The failure/restart card should remain centered when the viewport changes size.")
-	_check(is_equal_approx(record.position.y, game.size.y - 66.0), "The main touch action should follow the bottom edge on a wider viewport.")
-	_check(is_equal_approx(restart_button.position.y, game.size.y - 66.0), "The restart touch target should follow the bottom edge.")
-	_check(menu_button.position.x + menu_button.size.x < record.position.x, "The main-menu button should not overlap the primary action.")
-	_check(record.position.x + record.size.x < latch.position.x, "The record and latch actions should have independent touch targets.")
-	_check(latch.position.x + latch.size.x < restart_button.position.x, "The latch and restart actions should not overlap.")
+	_check(record.position.x > game.size.x * 0.5 and record.position.y + record.size.y <= game.size.y - restart_button.size.y - 16.0, "Record Echo should sit on the right above bottom utility controls in the default layout.")
+	_check(is_equal_approx(record.size.x, record.size.y) and record.size.y >= 68.0, "Record Echo should remain a large circular touch target.")
+	_check(is_equal_approx(restart_button.position.y, game.size.y - restart_button.size.y - 16.0), "The restart circle should keep a comfortable bottom inset.")
+	_check(menu_button.position.x + menu_button.size.x <= game.size.x * 0.5, "The menu circle should stay on the opposite side from the default record control.")
 	_check(restart_button.position.x + restart_button.size.x <= game.size.x, "The restart action should remain inside the viewport.")
+	var record_style := record.get_theme_stylebox("normal") as StyleBoxFlat
+	_check(record_style != null and record_style.corner_radius_top_left >= record.size.y * 0.4, "Record Echo should use a genuinely round button style.")
+	_check(record_style != null and record_style.bg_color.a < 0.7, "Record Echo should have a transparent glass fill so the game remains visible underneath.")
 	_check(record.pivot_offset.is_equal_approx(record.size * 0.5) and latch.pivot_offset.is_equal_approx(latch.size * 0.5), "Responsive action buttons should keep their press animation centered after resizing.")
 	_check(bool(game.call("_is_joystick_area", Vector2(100, 700))), "The left joystick area should adapt to a wider/taller viewport.")
 	game.set("left_handed_controls", true)
@@ -997,10 +999,15 @@ func _test_premium_mobile_ui(game: Control) -> void:
 			intro.position.y + intro.size.y
 		]
 	)
-	_check(is_equal_approx(record.position.y, game.size.y - 66.0), "Bottom gameplay controls should stay inside a compact-height viewport.")
-	_check(menu_button.position.x + menu_button.size.x < record.position.x, "Compact menu and record touch targets must not overlap.")
-	_check(record.position.x + record.size.x < latch.position.x, "Compact record and latch targets must not overlap.")
-	_check(latch.position.x + latch.size.x < restart_button.position.x, "Compact latch and restart targets must not overlap.")
+	var compact_record_rect := Rect2(record.position, record.size)
+	var compact_latch_rect := Rect2(latch.position, latch.size)
+	var compact_menu_rect := Rect2(menu_button.position, menu_button.size)
+	var compact_reset_rect := Rect2(restart_button.position, restart_button.size)
+	_check(record.position.y + record.size.y <= restart_button.position.y, "Compact Record Echo circle should sit above bottom utility circles.")
+	_check(record.position.x >= 0.0 and record.position.x + record.size.x <= game.size.x, "Compact Record Echo circle must stay inside the viewport.")
+	_check(not compact_record_rect.intersects(compact_menu_rect), "Compact menu and Record Echo circles must not overlap.")
+	_check(not compact_record_rect.intersects(compact_latch_rect), "Compact Record Echo and latch circles must not overlap.")
+	_check(not compact_record_rect.intersects(compact_reset_rect), "Compact Record Echo and restart circles must not overlap.")
 	_check(restart_button.position.x + restart_button.size.x <= game.size.x, "Compact restart control should remain inside the right edge.")
 	_check(record.pivot_offset.is_equal_approx(record.size * 0.5) and restart_button.pivot_offset.is_equal_approx(restart_button.size * 0.5), "Compact touch controls should keep centered press animations.")
 	_check(bool(game.call("_is_joystick_area", Vector2(170, 450))), "The compact left joystick zone should avoid the menu button.")
@@ -1071,8 +1078,8 @@ func _test_premium_mobile_ui(game: Control) -> void:
 				var second_rect := Rect2(compact_buttons[j].position, compact_buttons[j].size)
 				_check(not first_rect.intersects(second_rect), "Compact menu overlap at %s: %s %s vs %s %s." % [str(compact_size), ultra_names[i], str(first_rect), ultra_names[j], str(second_rect)])
 
-	# The gameplay HUD shares the bottom row with navigation buttons; validate
-	# that narrower viewports do not allow theme-derived button sizes to collide.
+	# Record Echo now sits beside the opposite-side movement zone; utility circles
+	# stay at the bottom. Verify fit, round action hitboxes and no overlap on phones.
 	var gameplay_hud := game.get("game_hud") as Control
 	var hud_menu := gameplay_hud.get_node("MenuButton") as Button
 	var hud_reset := gameplay_hud.get_node("ResetButton") as Button
@@ -1082,10 +1089,13 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	for hud_size in hud_sizes:
 		game.size = hud_size
 		game.call("_layout_responsive_ui")
-		var hud_buttons: Array[Button] = [hud_menu, hud_record, hud_latch, hud_reset]
+		var hud_buttons: Array[Button] = [hud_menu, hud_record, hud_latch, hud_reset, pause]
 		for hud_button in hud_buttons:
 			_check(hud_button.position.x >= 0.0 and hud_button.position.x + hud_button.size.x <= game.size.x, "Gameplay HUD control must fit the viewport at %s: %s." % [str(hud_size), hud_button.name])
-			_check(is_equal_approx(hud_button.position.y, game.size.y - 66.0), "Gameplay HUD controls should keep a consistent bottom inset at %s." % str(hud_size))
+		_check(hud_record.position.y + hud_record.size.y <= hud_reset.position.y, "Primary action circle should remain above bottom utility buttons at %s." % str(hud_size))
+		var record_rect := Rect2(hud_record.position, hud_record.size)
+		var latch_rect := Rect2(hud_latch.position, hud_latch.size)
+		_check(not record_rect.intersects(latch_rect), "Record and latch circles must not overlap at %s." % str(hud_size))
 		for i in range(hud_buttons.size()):
 			for j in range(i + 1, hud_buttons.size()):
 				var first_hud_rect := Rect2(hud_buttons[i].position, hud_buttons[i].size)
