@@ -1715,14 +1715,25 @@ func _draw_portal(position: Vector2, powered: bool) -> void:
 
 
 func _draw_robot(position: Vector2, tint: Color, scale_factor: float) -> void:
-	var body_size := Vector2(24, 25) * scale_factor
-	draw_circle(position, 22.0 * scale_factor, Color(tint.r, tint.g, tint.b, 0.10 * tint.a))
-	draw_line(position + Vector2(0, -13) * scale_factor, position + Vector2(0, -20) * scale_factor, tint, 2.0 * scale_factor, true)
-	draw_circle(position + Vector2(0, -21) * scale_factor, 3.0 * scale_factor, tint)
-	draw_rect(Rect2(position - body_size * 0.5 + Vector2(0, 4) * scale_factor, body_size), tint, true)
-	draw_rect(Rect2(position - body_size * 0.5 + Vector2(0, 4) * scale_factor, body_size), Color(0.30, 0.58, 0.73, tint.a), false, 2.0 * scale_factor)
-	draw_circle(position + Vector2(-5, -2) * scale_factor, 2.5 * scale_factor, Color(0.03, 0.12, 0.18, tint.a))
-	draw_circle(position + Vector2(5, -2) * scale_factor, 2.5 * scale_factor, Color(0.03, 0.12, 0.18, tint.a))
+	# Match the app mark: a luminous signal-orb wrapped in an orbital route.
+	# Draw the orbit first so the core appears to sit above the ring.
+	var alpha := tint.a
+	var orbit_points := PackedVector2Array()
+	for i in range(49):
+		var angle := TAU * float(i) / 48.0
+		var local_point := Vector2(cos(angle) * 23.0, sin(angle) * 9.0).rotated(-0.38) * scale_factor
+		orbit_points.append(position + local_point)
+	draw_polyline(orbit_points, Color(0.10, 0.91, 0.83, 0.12 * alpha), 7.0 * scale_factor, true)
+	draw_polyline(orbit_points, Color(tint.r, tint.g, tint.b, 0.78 * alpha), 1.8 * scale_factor, true)
+	# Layered circles create a lightweight faux-glass sphere without textures.
+	draw_circle(position, 25.0 * scale_factor, Color(0.05, 0.95, 0.86, 0.075 * alpha))
+	draw_circle(position, 18.0 * scale_factor, Color(0.01, 0.08, 0.12, 0.96 * alpha))
+	draw_circle(position, 14.5 * scale_factor, Color(tint.r * 0.28, tint.g * 0.72, tint.b * 0.78, 0.96 * alpha))
+	draw_arc(position, 18.0 * scale_factor, 0.0, TAU, 48, Color(tint.r, tint.g, tint.b, 0.92 * alpha), 1.7 * scale_factor, true)
+	draw_ellipse
+	draw_circle(position + Vector2(-4.5, -6.0) * scale_factor, 5.5 * scale_factor, Color(0.90, 1.0, 0.99, 0.74 * alpha))
+	draw_circle(position + Vector2(4.5, -2.5) * scale_factor, 2.3 * scale_factor, Color(0.76, 1.0, 0.97, 0.36 * alpha)
+)
 	draw_line(position + Vector2(-7, 18) * scale_factor, position + Vector2(-11, 23) * scale_factor, tint, 3.0 * scale_factor, true)
 	draw_line(position + Vector2(7, 18) * scale_factor, position + Vector2(11, 23) * scale_factor, tint, 3.0 * scale_factor, true)
 
@@ -1739,8 +1750,14 @@ func _draw_joystick() -> void:
 func _draw_track_path(track: Variant, tint: Color, line_width: float) -> void:
 	if track.samples.size() < 2:
 		return
+	# Three restrained passes make the path feel like the glowing orbit in the logo:
+	# a broad aura, a saturated halo, then a crisp core line.
+	var aura := Color(tint.r, tint.g, tint.b, tint.a * 0.09)
+	var halo := Color(tint.r, tint.g, tint.b, tint.a * 0.28)
 	for i in range(1, track.samples.size()):
 		var from_point: Vector2 = track.samples[i - 1]["p"]
 		var to_point: Vector2 = track.samples[i]["p"]
+		draw_line(from_point, to_point, aura, line_width * 4.0, true)
+		draw_line(from_point, to_point, halo, line_width * 2.0, true)
 		draw_line(from_point, to_point, tint, line_width, true)
 
