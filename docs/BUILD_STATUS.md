@@ -32,11 +32,10 @@
 
 ## Verification status
 
-- **Latest completed Godot CI for the current controller/test blobs:** [run 40847792076](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40847792076) passed project import/parse, data smoke tests and gameplay-flow smoke tests on Godot 4.4.0 and 4.7.2. Verified controller blob: `78e07dad4309adf7c6cda4e0b27040d216458922`; gameplay-test blob: `abedab51d3bfbe0ffd1cbee314367fdfd9a7eeb9`.
-- **Android export:** [run 40847792545](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40847792545) succeeded for that controller/test version. The Android preset is now being updated to use the supplied logo for its launcher icon; the workflow triggered by that export-preset change must verify the new launcher asset.
-- **Device QA:** not performed here. Install the refreshed APK on physical Android hardware, inspect the logo and cyan palette at device resolution, play through all thirteen rooms, verify save persistence, touch reach, safe areas and background/foreground pause/resume.
-- **Release boundary:** nightly APKs are debug-signed and suitable for direct testing, not production signing or Google Play distribution.
-
+- **Latest completed Godot CI:** [run 40848778896](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40848778896) passed on Godot 4.4.0 and 4.7.2 at source/test commit `e184d8446d449aa36c14a97f9e8843a6783dfa6a`, including responsive logo/menu restoration tests.
+- **Latest Android APK export:** [run 40848778926](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40848778926) succeeded at the same commit with `project.godot` blob `aaf2ca779d5ca128ec5d41b25f33102d883e045c` and `export_presets.cfg` blob `a0ba9ce2ea2711d37ebcd025df7897435cbbdc01`. The custom ECHO logo launcher icon exported, archive integrity passed, an Actions artifact uploaded and [ECHOPOST Nightly APK](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk) refreshed (29,030,396 bytes).
+- **What has not been verified:** no physical-device installation/play-test yet. Safe-area handling, touch comfort, saving after relaunch, mobile performance and puzzle fairness still need device QA.
+- **Release signing:** nightly APK is debug-signed for direct testing, not a protected production-signed store build.
 ## Next work items
 
 1. Manually inspect Static Bloom, Chorus Route, Triune Relay, Fracture Clock, Dead Air Protocol, and Null Corridor's jammer visuals, Pulse Lock's countdown indicator, Latch Protocol's toggle switch, live route preview, violet Memory Shards, Memory Archive, Options panel and thirteen-room scrollable chapter selector in Godot; test both joystick sides and tune patrol fairness/puzzle pacing.
