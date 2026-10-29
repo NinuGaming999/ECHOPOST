@@ -1000,6 +1000,9 @@ func _test_premium_mobile_ui(game: Control) -> void:
 		_check(compact_intro.visible == expected_intro_visible, "Compact menu intro visibility must adapt to available height.")
 		_check(compact_logo.visible == (compact_size.y >= 620.0), "The supplied brand logo should show on the full-height menu and hide before compact reflow.")
 		_check(compact_logo.texture != null, "The supplied logo texture must be loaded into the menu.")
+		if compact_logo.texture != null:
+			_check(compact_logo.texture.resource_path == "res://assets/echopost_logo.jpg", "The menu must use the supplied ECHO logo asset, not a placeholder.")
+		_check(str(ProjectSettings.get_setting("application/config/icon")) == "res://assets/echopost_logo.jpg", "The supplied ECHO logo must also be the actual Godot project icon.")
 		_check(compact_progress.visible == (compact_size.y >= 280.0), "Compact menu progress should hide only when the screen is too short.")
 		var compact_buttons: Array[Button] = []
 		for button_name in ultra_names:
