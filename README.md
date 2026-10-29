@@ -4,7 +4,7 @@
 
 **Every player leaves a ghost.** ECHOPOST is a mobile-first 2D puzzle adventure about recording your movement and using its echo to solve rooms you cannot solve alone.
 
-This repository is the long-term home of the full game. The current source implements an early playable slice: keyboard/touch movement, recording/playback echoes with endpoint and Relay Beacon validation, an amber live route preview, pressure switches, hold/toggle/timed gates, exits, thirteen chamber layouts, roaming sentinels, optional Memory Shards with lore fragments, scrollable chapter selection, chapter unlocks, versioned local save data, and procedural graphics so it runs without external art assets.
+This repository is the long-term home of the full game. The current source implements an early playable slice: keyboard/touch movement, recording/playback echoes with endpoint and Relay Beacon validation, layered cyan neon route trails, pressure switches, hold/toggle/timed gates, exits, thirteen chamber layouts, roaming sentinels, an echo-only jammer puzzle, optional Memory Shards with lore fragments, scrollable chapter selection, chapter unlocks and versioned local save data. Gameplay art is mostly procedural, with the supplied ECHO logo used on the menu, project icon and Android launcher.
 
 > **Development status:** Early development. Automated Godot CI parses the project and runs smoke tests on every push and pull request. Android APK builds are automated, but the game still needs real-device QA and production art/audio. Online echo sharing and broader accessibility options remain future work.
 
@@ -26,6 +26,10 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 - **Options:** choose slow/normal/fast movement and put the virtual joystick on the right for left-handed play.
 - **Latch Switch B / E:** in Latch Protocol, stand near Switch B after the echo holds A, then tap LATCH SWITCH B or press E. The switch stays latched when you leave it.
 - **Touch:** use the on-screen virtual joystick and buttons.
+
+## Visual identity
+
+The supplied ECHO logo sets a dark navy and neon-cyan theme. The menu uses a geometric tunnel backdrop; the player and echo are glowing orbit-orbs; recorded paths have a layered cyan glow. The UI is intentionally restrained so routes, relays, the red sentinel and Null Corridor's violet jammer stay readable.
 
 ## Core puzzle
 
