@@ -35,7 +35,8 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [ ] Build 12–20 authored puzzles that teach one new idea at a time.
 - [x] Add a required Relay Beacon route checkpoint to Static Bloom and an ordered two-relay route to Chorus Route, including segment-distance validation and clear rejection feedback.
 - [x] Add Pulse Lock, a timed gate with a 3.5-second crossing window, timeout/retry handling, and a portal that stays powered after a successful crossing.
-- [x] Add an echo-only signal-jammer/dead-zone room; reject recordings whose sample segments enter the field and auto-reset after failure, while allowing a safe curved route.\n- [ ] Add more switch types and carefully constrain puzzle complexity beyond the toggle switch, ordered four-relay route, and combined relay/sentinel/timed-gate gauntlet.
+- [x] Add an echo-only signal-jammer/dead-zone room; reject recordings whose sample segments enter the field and auto-reset after failure, while allowing a safe curved route.
+- [ ] Add more switch types and carefully constrain puzzle complexity beyond the toggle switch, ordered four-relay route, and combined relay/sentinel/timed-gate gauntlet.
 - [ ] Add checkpoints, better reset messaging, and a campaign map.
 - [x] Add one optional Memory Shard per authored chamber (currently thirteen) with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
 - [x] Add a non-blocking restored-signal reward when all currently authored memories are recovered, both in the play status and Memory Archive.
@@ -43,6 +44,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 
 ## Milestone 3 — Art, animation, and audio
 
+- [x] Establish an initial ECHO logo/neon-cyan visual identity: supplied logo, dark navy panels, matching geometric SVG icon and cyan-to-red route feedback. Authored character animation, multiple room art packs and audio remain future work.
 - [ ] Replace temporary procedural robot drawing with a consistent character asset set.
 - [ ] Create several visual room themes with clear contrast and low-cost mobile rendering.
 - [ ] Animate walking, recording, echo playback, sentinel contact, gate opening, and portal entry.
