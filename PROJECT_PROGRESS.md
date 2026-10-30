@@ -27,7 +27,7 @@ Chapter IV adds two independently recorded echo slots without changing the exist
 - `scripts/data/level_catalog.gd` — blob `3a148fbc1211bcc0920bc9d02db718d39a1bf9cd`, 656 lines:
   - **L353–L391:** Twin Signal and Convergent Signal data.
   - **L411–L656:** campaign validator, including supported two-slot schema, Switch C type/bounds/spacing.
-- `tests/game_flow_smoke.gd` — blob `7139149a8775daa2ceb512a0d3fe92de0499dff4`, 1322 lines:
+- `tests/game_flow_smoke.gd` — blob `7139149a8775daa2ceb512a0d3fe92de0499dff4`, 1325 lines:
   - **L980–L1007:** campaign and four-chapter selector regression.
   - **L1009–L1053:** Chapter III bridge/pulse regressions with the 21-room count.
   - **L1055–L1143:** two-echo sequence, Echo 1 settle requirement, Echo 1 persistence while recording Echo 2, simultaneous A/C/B gate, restart clearing of both slots and pulse duet timer.
@@ -77,7 +77,7 @@ Chapter IV adds two independently recorded echo slots without changing the exist
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
 **Current main controller source blob:** `7d518565ad927d6a207b1dc49ae9fc80d96686f1` (2322 lines)  
-**Current gameplay regression-test blob:** `7139149a8775daa2ceb512a0d3fe92de0499dff4` (1322 lines)  
+**Current gameplay regression-test blob:** `7139149a8775daa2ceb512a0d3fe92de0499dff4` (1325 lines)  
 **Current settings-store blob:** `ae2c241920849d9db196a8462d1caadc5f820048` (43 lines); schema v2 stores Performance Mode separately from campaign progress.  
 **Low-end rendering commits:** saved Performance Mode preference [30f1189](https://github.com/NinuGaming999/ECHOPOST/commit/30f1189f7f8c03805b1c58fabf4abc94d5cd9c06), render/route optimization [1904ad8](https://github.com/NinuGaming999/ECHOPOST/commit/1904ad8f9b34a56c30873fba47258ef10e7cc0a1), regression tests [9297624](https://github.com/NinuGaming999/ECHOPOST/commit/929762484dd228eb3ca1d22da3c2ca41d8dc66bf), and final joystick/HUD cleanup [36622a5](https://github.com/NinuGaming999/ECHOPOST/commit/36622a5488f3cb4073b8692ae85a768b62710d43).  
 **Latest Godot CI for multi-echo source:** [run 41132293123](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293123) passed on Godot 4.4.0 and 4.7.2 for the 21-room Chapter IV revision.  
