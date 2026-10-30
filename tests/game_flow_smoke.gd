@@ -978,17 +978,18 @@ func _test_ambient_background(game: Control) -> void:
 
 
 func _test_second_chapter_campaign(game: Control) -> void:
-	_check(LevelCatalog.LEVELS.size() == 19, "Chapter III should expand the campaign to nineteen chambers.")
+	_check(LevelCatalog.LEVELS.size() == 21, "Chapter IV should preserve the nineteen-room campaign and add two multi-echo chambers.")
 	var errors: PackedStringArray = LevelCatalog.validate_levels()
-	_check(errors.is_empty(), "All Chapter II room layouts should pass campaign validation: %s" % "\n".join(errors))
+	_check(errors.is_empty(), "All Chapter II and later room layouts should pass campaign validation: %s" % "\n".join(errors))
 	var last_room: Dictionary = LevelCatalog.get_level(16)
-	_check(int(last_room.get("chapter", 0)) == 2, "The final chamber should be marked as part of Chapter II.")
-	_check(last_room.has("echo_jammer") and last_room.has("echo_waypoints") and last_room.has("gate_open_seconds") and bool(last_room.get("hazard", false)), "The final chamber should combine relay order, an echo jammer, a sentinel and a pulse gate.")
+	_check(int(last_room.get("chapter", 0)) == 2, "The final Chapter II chamber should remain in Chapter II.")
+	_check(last_room.has("echo_jammer") and last_room.has("echo_waypoints") and last_room.has("gate_open_seconds") and bool(last_room.get("hazard", false)), "The final Chapter II chamber should combine relay order, an echo jammer, a sentinel and a pulse gate.")
 	game.call("_update_chapter_buttons")
 	var buttons: Array = game.get("chapter_buttons")
-	if buttons.size() == 19:
+	if buttons.size() == 21:
 		_check(str((buttons[13] as Button).text).begins_with("CH. II"), "Chapter II chambers should be clearly marked in chamber select.")
 		_check(str((buttons[17] as Button).text).begins_with("CH. III"), "Chapter III chambers should be clearly marked in chamber select.")
+		_check(str((buttons[19] as Button).text).begins_with("CH. IV"), "Chapter IV chambers should be clearly marked in chamber select.")
 
 	# Verify the authored four-relay route can pass around the jammer and reach A
 	# within the eight-second recording cap.
