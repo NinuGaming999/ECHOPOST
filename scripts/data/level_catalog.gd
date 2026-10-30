@@ -302,6 +302,54 @@ const LEVELS: Array[Dictionary] = [
 		"accent": Color(1.0, 0.38, 0.52)
 	}
 
+	,
+	{
+		"name": "Drift Bridge",
+		"chapter": 3,
+		"subtitle": "THE FLOOR ENDS. THE BRIDGE DOES NOT.",
+		"hint": "The dark gap is unsafe ground. Step onto the moving bridge and let it carry you across. Your echo stays on SWITCH A while you ride to SWITCH B.",
+		"spawn": Vector2(150, 500),
+		"plate_a": Vector2(410, 500),
+		"plate_b": Vector2(990, 365),
+		"void_zones": [
+			{"position": Vector2(570, 112), "size": Vector2(300, 500)}
+		],
+		"moving_platforms": [
+			{"from": Vector2(490, 365), "to": Vector2(950, 365), "size": Vector2(170, 100), "speed": 110.0, "phase": 0.0}
+		],
+		"memory_shard": Vector2(740, 365),
+		"shard_lore": "The bridge keeper left the platform running after the station shut down. It still carries anyone patient enough to wait for it.",
+		"linger": 9.5,
+		"hazard": false,
+		"hazard_y": 365.0,
+		"hazard_amplitude": 0.0,
+		"hazard_speed": 0.0,
+		"accent": Color(0.20, 0.91, 0.88)
+	},
+	{
+		"name": "Phase Relay",
+		"chapter": 3,
+		"subtitle": "THE SWITCH ONLY LISTENS IN THE RIGHT MOMENT",
+		"hint": "Finish the two-relay echo on SWITCH A. SWITCH B pulses on a repeating cycle—be standing on it when its amber ring lights up. The gate gives you 3.2 seconds to cross.",
+		"spawn": Vector2(150, 500),
+		"plate_a": Vector2(420, 500),
+		"plate_b": Vector2(1010, 220),
+		"plate_b_mode": "pulse",
+		"pulse_period": 5.5,
+		"pulse_active_seconds": 2.1,
+		"pulse_phase_offset": 1.4,
+		"echo_waypoints": [Vector2(300, 270), Vector2(650, 270)],
+		"memory_shard": Vector2(800, 500),
+		"shard_lore": "The phase keeper never forced the signal through. They learned to listen for the one clear moment when the station answered.",
+		"linger": 9.5,
+		"gate_open_seconds": 3.2,
+		"hazard": false,
+		"hazard_y": 365.0,
+		"hazard_amplitude": 0.0,
+		"hazard_speed": 0.0,
+		"accent": Color(1.0, 0.68, 0.30)
+	}
+
 ]
 
 static func get_level(index: int) -> Dictionary:
@@ -355,8 +403,95 @@ static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 			var raw_plate_b_mode: Variant = level["plate_b_mode"]
 			if not (raw_plate_b_mode is String):
 				errors.append("%s plate_b_mode must be a string." % prefix)
-			elif str(raw_plate_b_mode) not in ["hold", "toggle"]:
-				errors.append("%s plate_b_mode must be 'hold' or 'toggle'." % prefix)
+			elif str(raw_plate_b_mode) not in ["hold", "toggle", "pulse"]:
+				errors.append("%s plate_b_mode must be 'hold', 'toggle', or 'pulse'." % prefix)
+		if str(level.get("plate_b_mode", "hold")) == "pulse":
+			for pulse_key in ["pulse_period", "pulse_active_seconds"]:
+				if not level.has(pulse_key):
+					errors.append("%s pulse switch is missing '%s'." % [prefix, pulse_key])
+			var raw_pulse_period: Variant = level.get("pulse_period", 0.0)
+			var raw_pulse_active: Variant = level.get("pulse_active_seconds", 0.0)
+			if not (raw_pulse_period is int or raw_pulse_period is float):
+				errors.append("%s pulse_period must be numeric." % prefix)
+			elif not (raw_pulse_active is int or raw_pulse_active is float):
+				errors.append("%s pulse_active_seconds must be numeric." % prefix)
+			else:
+				var pulse_period := float(raw_pulse_period)
+				var pulse_active := float(raw_pulse_active)
+				if pulse_period < 2.0 or pulse_period > 20.0:
+					errors.append("%s pulse_period must be between 2 and 20 seconds." % prefix)
+				if pulse_active < 0.5 or pulse_active >= pulse_period:
+					errors.append("%s pulse_active_seconds must be at least 0.5 and shorter than its period." % prefix)
+			if level.has("pulse_phase_offset"):
+				var raw_phase_offset: Variant = level["pulse_phase_offset"]
+				if not (raw_phase_offset is int or raw_phase_offset is float):
+					errors.append("%s pulse_phase_offset must be numeric." % prefix)
+				elif float(raw_phase_offset) < 0.0 or float(raw_phase_offset) > 20.0:
+					errors.append("%s pulse_phase_offset must be between 0 and 20 seconds." % prefix)
+		if level.has("moving_platforms"):
+			var raw_platforms: Variant = level["moving_platforms"]
+			if not (raw_platforms is Array):
+				errors.append("%s moving_platforms must be an Array." % prefix)
+			else:
+				if raw_platforms.is_empty():
+					errors.append("%s moving_platforms must contain at least one platform." % prefix)
+				for platform_index in range(raw_platforms.size()):
+					var raw_platform: Variant = raw_platforms[platform_index]
+					if not (raw_platform is Dictionary):
+						errors.append("%s moving_platforms[%d] must be a Dictionary." % [prefix, platform_index])
+						continue
+					var platform: Dictionary = raw_platform
+					for platform_key in ["from", "to", "size", "speed"]:
+						if not platform.has(platform_key):
+							errors.append("%s moving_platforms[%d] is missing '%s'." % [prefix, platform_index, platform_key])
+					if not (platform.get("from") is Vector2) or not (platform.get("to") is Vector2):
+						errors.append("%s moving_platforms[%d] endpoints must be Vector2 values." % [prefix, platform_index])
+					if not (platform.get("size") is Vector2):
+						errors.append("%s moving_platforms[%d] size must be a Vector2." % [prefix, platform_index])
+					if not (platform.get("speed") is int or platform.get("speed") is float):
+						errors.append("%s moving_platforms[%d] speed must be numeric." % [prefix, platform_index])
+					else:
+						var platform_speed := float(platform["speed"])
+						if platform_speed < 20.0 or platform_speed > 180.0:
+							errors.append("%s moving_platforms[%d] speed must be between 20 and 180." % [prefix, platform_index])
+					if platform.get("from") is Vector2 and platform.get("to") is Vector2:
+						var platform_from: Vector2 = platform["from"]
+						var platform_to: Vector2 = platform["to"]
+						if platform_from.distance_to(platform_to) < 100.0:
+							errors.append("%s moving_platforms[%d] travel distance must be at least 100 units." % [prefix, platform_index])
+						if platform.get("size") is Vector2:
+							var platform_size: Vector2 = platform["size"]
+							if platform_size.x < 80.0 or platform_size.y < 48.0:
+								errors.append("%s moving_platforms[%d] must be at least 80x48 units." % [prefix, platform_index])
+							for endpoint in [platform_from, platform_to]:
+								if endpoint.x - platform_size.x * 0.5 < 48.0 or endpoint.x + platform_size.x * 0.5 > 1232.0 or endpoint.y - platform_size.y * 0.5 < 112.0 or endpoint.y + platform_size.y * 0.5 > 612.0:
+									errors.append("%s moving_platforms[%d] endpoint is outside the playable room." % [prefix, platform_index])
+					if platform.has("phase") and not (platform["phase"] is int or platform["phase"] is float):
+						errors.append("%s moving_platforms[%d] phase must be numeric." % [prefix, platform_index])
+
+		if level.has("void_zones"):
+			var raw_void_zones: Variant = level["void_zones"]
+			if not (raw_void_zones is Array):
+				errors.append("%s void_zones must be an Array." % prefix)
+			else:
+				if not level.has("moving_platforms"):
+					errors.append("%s void_zones require a moving_platform route." % prefix)
+				for void_index in range(raw_void_zones.size()):
+					var raw_void: Variant = raw_void_zones[void_index]
+					if not (raw_void is Dictionary):
+						errors.append("%s void_zones[%d] must be a Dictionary." % [prefix, void_index])
+						continue
+					var void_zone: Dictionary = raw_void
+					if not (void_zone.get("position") is Vector2) or not (void_zone.get("size") is Vector2):
+						errors.append("%s void_zones[%d] position and size must be Vector2 values." % [prefix, void_index])
+						continue
+					var void_position: Vector2 = void_zone["position"]
+					var void_size: Vector2 = void_zone["size"]
+					if void_size.x <= 0.0 or void_size.y <= 0.0:
+						errors.append("%s void_zones[%d] size must be positive." % [prefix, void_index])
+					elif void_position.x < 48.0 or void_position.y < 112.0 or void_position.x + void_size.x > 1232.0 or void_position.y + void_size.y > 612.0:
+						errors.append("%s void_zones[%d] must remain inside the playable room." % [prefix, void_index])
+
 		if level.has("gate_open_seconds"):
 			var raw_gate_duration: Variant = level["gate_open_seconds"]
 			if not (raw_gate_duration is int or raw_gate_duration is float):
