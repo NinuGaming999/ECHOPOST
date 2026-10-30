@@ -1,58 +1,62 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
 
-## 0. Latest verified handoff — Chapter IV multi-echo
+## 0. Latest verified handoff — Chapter V 24-room campaign
 
-**Current gameplay source commit:** `6c33f62e71d00216fcfee3d7e5b2992e52753bd3`  
-**The gameplay hashes below are from this verified source commit. Earlier notes in this handoff preserve dated history; this opening section is authoritative for the current source and verification state.**
+**Current main merge commit:** `a53366c3bac60b8f91da501c1736ebb352f0f96f`  
+**Merged pull request:** [#1 — Add Chapter V: bridge crossing and echo duet gauntlet](https://github.com/NinuGaming999/ECHOPOST/pull/1)  
+**Verified PR test head:** `8299c6bf28d0a3341d54d2a14c3b4e3ef706f5a4`  
+**Godot verification:** [run 41134345034](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41134345034) passed before merge; the tested source was merged unchanged.
 
-Chapter IV adds two independently recorded echo slots without changing the existing single-echo rooms:
+Chapter V extends the campaign from 21 to **24 chambers across five signal chapters**:
 
-- **Chamber 20 — Twin Signal:** Echo 1 is recorded to Switch A and must finish replaying and settle before Echo 2 can be recorded. Echo 2 is recorded to Switch C. The real player must hold Switch B while both echoes hold their own switches.
-- **Chamber 21 — Convergent Signal:** repeats the duet and adds a repeating pulse on Switch B plus a 2.4-second timed gate crossing.
-- The mobile Record button guides the player through REC A / REC C and reports the recorded-slot count. Once both are set, it locks and its tooltip explains that a room restart is needed. Echo 1 remains alive while Echo 2 is captured; both routes, playback clocks, positions and linger times are independent. Restarting the room clears both ghosts and both tracks.
-- Existing rooms continue to use the original one-echo flow. The save format has not changed; all 21 optional Memory Shards continue to be indexed by room.
+- **Chamber 22 — Orbit Crossing:** two independently phased moving bridges cross one void corridor. The recorded route uses two ordered relays; the real player must ride a bridge to Switch B and catch its pulse before a 3.8-second gate closes. The violet Memory Shard sits on the upper bridge route.
+- **Chamber 23 — Tandem Relay:** Echo 1 must end on A and Echo 2 on C. Both independently recorded routes must cross the same two ordered relays and avoid the echo-only jammer.
+- **Chamber 24 — The Last Duet:** both echoes repeat four ordered relays, bypass the jammer and hold A/C while the player reaches the pulse-timed B switch. The final gate has a 4.2-second crossing window.
+
+### Implementation notes
+
+- The existing two-echo model is unchanged; no third slot, extra echo playback system, or new save format was introduced.
+- Orbit Crossing reuses the existing moving-platform and void support code. Its bridges are authored as ordinary platform data, so no additional per-frame node or particle simulation was added.
+- Tandem Relay and The Last Duet reuse the existing ordered-waypoint and echo-jammer validation for each echo recording.
+- The chapter selector now labels Chapter V, the campaign completion message references all five chapters, and the README describes all 24 rooms.
+- Memory Shards remain optional and are indexed dynamically by room count. The existing save format continues to load.
 
 ### Exact current source map
 
-- `scripts/game.gd` — blob `7d518565ad927d6a207b1dc49ae9fc80d96686f1`, 2322 lines:
-  - **L42–L59:** independent primary/secondary echo state and active recording-slot index.
-  - **L1091–L1138:** room initialization and cleanup of both echoes.
-  - **L1148–L1190:** record-button flow, sequential slot selection and protection against recording Echo 2 before Echo 1 settles.
-  - **L1220–L1291:** endpoint/relay/jammer validation and independent track release. **L1292–L1300:** slot-specific clear helper.
-  - **L1552–L1580:** independent replay and linger timers.
-  - **L1665–L1724:** duet gate requirements and pulse/timer compatibility. **L1745–L1772:** campaign completion and four-chapter ending copy.
-  - **L1840–L1890:** REC A / REC C guidance, recorded-slot counter, completed-state tooltip and button lock.
-  - **L2013 onward:** Switch C, secondary echo path and violet ghost rendering.
-- `scripts/data/level_catalog.gd` — blob `3a148fbc1211bcc0920bc9d02db718d39a1bf9cd`, 656 lines:
-  - **L353–L391:** Twin Signal and Convergent Signal data.
-  - **L411–L656:** campaign validator, including supported two-slot schema, Switch C type/bounds/spacing.
-- `tests/game_flow_smoke.gd` — blob `7139149a8775daa2ceb512a0d3fe92de0499dff4`, 1325 lines:
-  - **L980–L1007:** campaign and four-chapter selector regression.
-  - **L1009–L1053:** Chapter III bridge/pulse regressions with the 21-room count.
-  - **L1055–L1143:** two-echo sequence, Echo 1 settle requirement, Echo 1 persistence while recording Echo 2, simultaneous A/C/B gate, restart clearing of both slots and pulse duet timer.
-- `tests/headless_smoke.gd` — blob `131fa0b7bb95cb1e8baa485905bc799b6055c3d6`, 278 lines:
-  - **L50–L157:** campaign data assertions for both Chapter IV rooms and the two-slot schema.
-  - **L159 onward:** malformed two-slot drafts are rejected.
+- `scripts/game.gd` — blob `6e0e19d8d13361749a3f721b71ef10c31f741c7b`, 2322 lines:
+  - **L1759:** five-chapter campaign completion copy.
+  - **L1820–L1827:** Chapter V chamber labels and unlock state.
+  - Existing two-echo capture/playback and moving-platform code remains unchanged.
+- `scripts/data/level_catalog.gd` — blob `114318ea9f0c701e5db16f0c299a1345e59adf69`, 735 lines:
+  - **L396–L424:** Orbit Crossing.
+  - **L426–L446:** Tandem Relay.
+  - **L448–L473:** The Last Duet.
+  - **L475 onward:** existing level accessors and campaign validator.
+- `tests/headless_smoke.gd` — blob `0e72f3e868c09276c9a99373e56836f5b688c7a4`, 300 lines:
+  - **L160 onward:** data assertions for the new Chapter V rooms, their moving bridges, echo/relay/jammer combination, pulse gate, and overall campaign validation.
+- `tests/game_flow_smoke.gd` — blob `7b4beb0bbc1dbbb7d61226e7f80db65f45fa546a`, 1413 lines:
+  - **L1146 onward:** bridge support/pulse checks, both Tandem Relay routes, both final four-relay routes, jammer avoidance, and the complete final duet gate-unlock sequence.
+  - The chapter selector regression now checks the Chapter V label at chamber 22.
+- `README.md` — blob `92ebcb85da368a6aa1b5f8f9385c0c67d5f89434`, 110 lines; campaign and Memory Shard totals updated to 24 rooms.
 
-### Verification of this gameplay revision
+### Verification
 
-- **Godot CI:** [run 41132293123](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293123) — success on Godot 4.4.0 and 4.7.2. Both imported/parsed the project and passed data + full gameplay smoke tests.
-- **Android APK:** [run 41132293283](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293283) — success; exported, ZIP/package checked, uploaded and published the nightly APK.
-- **Current nightly APK:** [ECHOPOST-android.apk](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk), 29,305,280 bytes, SHA-256 `c3e6169088c936abd63281fe08e41b6949d0adc51fd5519c25c52bcf3423a799`.
-- **Limitations:** this is a debug-signed testing build. No physical Android device QA has been performed in this pass; install/test touch controls, two-echo readability, safe areas, save persistence and app lifecycle on hardware.
+- **Godot CI:** [run 41134345034](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41134345034) — passed on Godot **4.4.0** and **4.7.2**. Both versions imported/parsed the project and passed the data-layer and main-scene gameplay smoke tests.
+- **Android APK:** the Android workflow runs on pushes to `main`; the post-merge export has not yet been confirmed in this handoff. Until its run succeeds, do not assume the existing nightly APK contains Chapter V.
+- **Physical-device QA:** not performed. Test the bridges, touch zones, pulse timing, safe areas, Memory Shard pickup and save persistence on real Android hardware.
+- **Performance:** keep Performance Mode ON by default for weaker phones. No new continuous effects were added by Chapter V.
 
 ### Next development tasks
 
-1. Play Twin Signal and Convergent Signal manually and confirm the routes and timing feel fair on a phone.
-2. Add a third Echo/slot only after the two-slot flow is intuitive; avoid increasing cognitive load too quickly.
-3. Continue campaign content toward 24–26 rooms and diversify challenge geometry without raising rendering cost on weaker devices.
-4. Continue art/audio, accessibility and physical-device QA. Keep offline play independent of any future online features.
+1. Test Orbit Crossing on a phone and tune bridge wait/ride timing if the player cannot board comfortably from the safe side.
+2. Play Tandem Relay and The Last Duet manually; confirm that both recorded routes are legible and that the two-echo workflow remains understandable.
+3. Check Chapter V on low-end hardware with Performance Mode ON and OFF; avoid increasing the particle or route-rendering workload unnecessarily.
+4. Continue audio, accessibility and physical-device QA. Consider any third echo slot only after two-echo usability has been proven.
 
 ---
 
-
-> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current twenty-one-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
+> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current twenty-four-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
 
 **Repository:** https://github.com/NinuGaming999/ECHOPOST  
 **Working branch:** `main`  
