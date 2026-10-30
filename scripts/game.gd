@@ -1608,36 +1608,37 @@ func _update_hud() -> void:
 		level_hint_label.text = hint_text
 	if status_label.text != status_message:
 		status_label.text = status_message
-	if is_recording:
-		record_button.text = "■\n%d s" % int(ceil(MAX_RECORD_SECONDS - recording_elapsed))
-		record_button.tooltip_text = "Stop and send the recorded echo"
-		echo_status_label.text = "ECHO: RECORDING"
-	else:
-		record_button.text = "●\nREC"
-		record_button.tooltip_text = "Record a route, then stop and send the echo"
+	var record_text := "■\n%d s" % int(ceil(MAX_RECORD_SECONDS - recording_elapsed)) if is_recording else "●\nREC"
+	var record_tooltip := "Stop and send the recorded echo" if is_recording else "Record a route, then stop and send the echo"
+	var echo_text := "ECHO: RECORDING" if is_recording else "ECHO: READY"
+	if not is_recording:
 		if door_open and gate_open_timer > 0.0:
-			echo_status_label.text = "GATE: %.1fs TO CROSS" % gate_open_timer
+			echo_text = "GATE: %.1fs TO CROSS" % gate_open_timer
 		elif echo_playing:
-			echo_status_label.text = "ECHO: REPLAYING ROUTE"
+			echo_text = "ECHO: REPLAYING ROUTE"
 		elif echo_visible:
-			echo_status_label.text = "ECHO: %.1fs LEFT" % maxf(0.0, echo_linger_left)
+			echo_text = "ECHO: %.1fs LEFT" % maxf(0.0, echo_linger_left)
 		elif door_open:
-			echo_status_label.text = "ECHO: GATE OPEN"
-		else:
-			echo_status_label.text = "ECHO: READY"
+			echo_text = "ECHO: GATE OPEN"
+	if record_button.text != record_text:
+		record_button.text = record_text
+	if record_button.tooltip_text != record_tooltip:
+		record_button.tooltip_text = record_tooltip
+	if echo_status_label.text != echo_text:
+		echo_status_label.text = echo_text
 	var record_disabled := screen_state == ScreenState.PAUSED or screen_state == ScreenState.COMPLETE or failure_reset_timer > 0.0
 	if record_button.disabled != record_disabled:
 		record_button.disabled = record_disabled
 	if is_instance_valid(latch_switch_button):
 		var toggle_mode := str(level_data.get("plate_b_mode", "hold")) == "toggle"
-		latch_switch_button.visible = toggle_mode
-		latch_switch_button.disabled = screen_state != ScreenState.PLAYING or door_open
-		if door_open and switch_b_latched:
-			latch_switch_button.text = "B\nLATCHED"
-		elif switch_b_latched:
-			latch_switch_button.text = "B\nRELEASE"
-		else:
-			latch_switch_button.text = "B\nLATCH"
+		var latch_disabled := screen_state != ScreenState.PLAYING or door_open
+		var latch_text := "B\nLATCHED" if door_open and switch_b_latched else ("B\nRELEASE" if switch_b_latched else "B\nLATCH")
+		if latch_switch_button.visible != toggle_mode:
+			latch_switch_button.visible = toggle_mode
+		if latch_switch_button.disabled != latch_disabled:
+			latch_switch_button.disabled = latch_disabled
+		if latch_switch_button.text != latch_text:
+			latch_switch_button.text = latch_text
 
 
 func _load_progress() -> void:
@@ -1960,12 +1961,13 @@ func _draw_joystick() -> void:
 	# A broad translucent glass pad and shorter thumb travel are easier to control
 	# and keep the knob visually inside its base at full tilt.
 	draw_circle(center, 62.0, Color(0.025, 0.10, 0.14, 0.54))
-	draw_arc(center, 62.0, 0.0, TAU, 56, Color(0.20, 0.88, 0.81, 0.58), 2.0, true)
-	draw_arc(center, 46.0, 0.0, TAU, 48, Color(0.17, 0.63, 0.62, 0.24), 1.0, true)
+	draw_arc(center, 62.0, 0.0, TAU, 24 if performance_mode else 56, Color(0.20, 0.88, 0.81, 0.58), 2.0, true)
+	if not performance_mode:
+		draw_arc(center, 46.0, 0.0, TAU, 40, Color(0.17, 0.63, 0.62, 0.24), 1.0, true)
 	draw_circle(center, 4.0, Color(0.56, 1.0, 0.94, 0.32))
 	draw_circle(center + offset, 25.0, Color(0.08, 0.79, 0.75, 0.22))
 	draw_circle(center + offset, 20.0, Color(0.02, 0.25, 0.31, 0.94))
-	draw_arc(center + offset, 20.0, 0.0, TAU, 40, Color(0.56, 1.0, 0.94, 0.93), 2.0, true)
+	draw_arc(center + offset, 20.0, 0.0, TAU, 20 if performance_mode else 40, Color(0.56, 1.0, 0.94, 0.93), 2.0, true)
 	draw_circle(center + offset + Vector2(-5.0, -6.0), 4.8, Color(0.88, 1.0, 0.98, 0.58))
 
 
