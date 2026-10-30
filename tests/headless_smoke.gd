@@ -63,6 +63,8 @@ func _test_level_catalog() -> void:
 	var echo_jammer_room_found := false
 	var moving_platform_room_found := false
 	var pulse_switch_room_found := false
+	var twin_signal_room_found := false
+	var convergent_signal_room_found := false
 	for index in range(LevelCatalog.LEVELS.size()):
 		var level: Dictionary = LevelCatalog.get_level(index)
 		var level_name := str(level.get("name", ""))
@@ -88,6 +90,12 @@ func _test_level_catalog() -> void:
 			pulse_switch_room_found = true
 			_check(str(level.get("plate_b_mode", "")) == "pulse", "Phase Relay should use the new pulse Switch B type.")
 			_check(float(level.get("pulse_active_seconds", 0.0)) < float(level.get("pulse_period", 0.0)), "Pulse Switch active window must be shorter than its cycle.")
+		if level_name == "Twin Signal":
+			twin_signal_room_found = true
+			_check(int(level.get("echo_slots", 0)) == 2 and level.get("plate_c") is Vector2, "Twin Signal should expose two echo slots and a third switch.")
+		if level_name == "Convergent Signal":
+			convergent_signal_room_found = true
+			_check(str(level.get("plate_b_mode", "")) == "pulse" and int(level.get("echo_slots", 0)) == 2, "Convergent Signal should combine two echoes and a pulse switch.")
 		if level_name == "Null Corridor":
 			echo_jammer_room_found = true
 			_check(level.get("echo_jammer") is Vector2, "Null Corridor should define an echo-only jammer position.")
@@ -139,6 +147,8 @@ func _test_level_catalog() -> void:
 	_check(echo_jammer_room_found, "The campaign should include Null Corridor as a named echo-jammer challenge.")
 	_check(moving_platform_room_found, "The campaign should include Drift Bridge as a moving-platform challenge.")
 	_check(pulse_switch_room_found, "The campaign should include Phase Relay as a pulse-switch challenge.")
+	_check(twin_signal_room_found, "The campaign should include Twin Signal as the two-echo tutorial.")
+	_check(convergent_signal_room_found, "The campaign should include Convergent Signal as the two-echo timed-pulse challenge.")
 	var original_name := str(LevelCatalog.LEVELS[0]["name"])
 	var isolated_copy: Dictionary = LevelCatalog.get_level(0)
 	isolated_copy["name"] = "Changed only in this test copy"
@@ -184,6 +194,13 @@ func _test_level_validator_rejects_bad_drafts() -> void:
 	broken_pulse_room["pulse_active_seconds"] = 9.0
 	var broken_pulse_errors: PackedStringArray = LevelCatalog.validate_level_list([broken_pulse_room])
 	_check(_has_error(broken_pulse_errors, "shorter than its period"), "Validator should reject a pulse window that is longer than its full cycle.")
+
+	var broken_echo_room := LevelCatalog.get_level(19)
+	broken_echo_room["echo_slots"] = 3
+	broken_echo_room.erase("plate_c")
+	var broken_echo_errors: PackedStringArray = LevelCatalog.validate_level_list([broken_echo_room])
+	_check(_has_error(broken_echo_errors, "echo_slots must be the supported value 2"), "Validator should reject unsupported echo-slot counts.")
+	_check(_has_error(broken_echo_errors, "require plate_c"), "Validator should require a valid Switch C for a two-echo room.")
 
 
 func _has_error(errors: PackedStringArray, fragment: String) -> bool:

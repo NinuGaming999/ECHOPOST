@@ -348,6 +348,49 @@ const LEVELS: Array[Dictionary] = [
 		"hazard_amplitude": 0.0,
 		"hazard_speed": 0.0,
 		"accent": Color(1.0, 0.68, 0.30)
+	},
+	{
+		"name": "Twin Signal",
+		"chapter": 4,
+		"subtitle": "ONE ROUTE IS NOT ENOUGH",
+		"hint": "Record Echo 1 from spawn to SWITCH A. Let it settle, then record Echo 2 from A to SWITCH C. Reach SWITCH B while both ghosts hold their plates.",
+		"spawn": Vector2(155, 365),
+		"plate_a": Vector2(405, 230),
+		"plate_c": Vector2(700, 495),
+		"plate_b": Vector2(990, 365),
+		"echo_slots": 2,
+		"memory_shard": Vector2(820, 175),
+		"shard_lore": "Two couriers answered the same signal from opposite ends of the station. For the first time, the silence had to make room for a conversation.",
+		"linger": 22.0,
+		"hazard": false,
+		"hazard_y": 365.0,
+		"hazard_amplitude": 0.0,
+		"hazard_speed": 0.0,
+		"accent": Color(0.55, 0.52, 1.0)
+	},
+	{
+		"name": "Convergent Signal",
+		"chapter": 4,
+		"subtitle": "TWO MEMORIES. ONE MOMENT.",
+		"hint": "Set both echoes on A and C, then hold SWITCH B through its pulse. The gate stays open for only 2.4 seconds—cross immediately.",
+		"spawn": Vector2(155, 505),
+		"plate_a": Vector2(410, 250),
+		"plate_c": Vector2(705, 475),
+		"plate_b": Vector2(1005, 235),
+		"plate_b_mode": "pulse",
+		"pulse_period": 6.0,
+		"pulse_active_seconds": 2.5,
+		"pulse_phase_offset": 0.0,
+		"echo_slots": 2,
+		"memory_shard": Vector2(850, 510),
+		"shard_lore": "The relay answered only when both recorded paths aligned with the same brief pulse. The couriers called it a promise kept together.",
+		"linger": 22.0,
+		"gate_open_seconds": 2.4,
+		"hazard": false,
+		"hazard_y": 365.0,
+		"hazard_amplitude": 0.0,
+		"hazard_speed": 0.0,
+		"accent": Color(1.0, 0.64, 0.38)
 	}
 
 ]
@@ -391,6 +434,14 @@ static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 			errors.append("%s plate_a must be a Vector2." % prefix)
 		if not level.has("plate_b") or not (level["plate_b"] is Vector2):
 			errors.append("%s plate_b must be a Vector2." % prefix)
+		if level.has("echo_slots"):
+			var raw_echo_slots: Variant = level["echo_slots"]
+			if not (raw_echo_slots is int) or int(raw_echo_slots) != 2:
+				errors.append("%s echo_slots must be the supported value 2." % prefix)
+			if not level.has("plate_c") or not (level.get("plate_c") is Vector2):
+				errors.append("%s two-echo rooms require plate_c as a Vector2." % prefix)
+		elif level.has("plate_c"):
+			errors.append("%s plate_c requires echo_slots: 2." % prefix)
 		if not level.has("memory_shard") or not (level["memory_shard"] is Vector2):
 			errors.append("%s memory_shard must be a Vector2." % prefix)
 		if str(level.get("shard_lore", "")).strip_edges().is_empty():
@@ -524,7 +575,7 @@ static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 								var anchor_position: Vector2 = level[anchor_key]
 								if jammer_position.distance_to(anchor_position) < jammer_radius + 40.0:
 									errors.append("%s echo jammer must be separated from %s." % [prefix, anchor_key])
-		for point_key in ["spawn", "plate_a", "plate_b", "memory_shard", "echo_waypoint", "echo_jammer"]:
+		for point_key in ["spawn", "plate_a", "plate_b", "plate_c", "memory_shard", "echo_waypoint", "echo_jammer"]:
 			if level.has(point_key) and level[point_key] is Vector2:
 				var point: Vector2 = level[point_key]
 				if point.x < 63.0 or point.x > 1217.0 or point.y < 140.0 or point.y > 597.0:
@@ -541,6 +592,13 @@ static func validate_level_list(levels: Array[Dictionary]) -> PackedStringArray:
 			var plate_b_position: Vector2 = level["plate_b"]
 			if plate_a_position.distance_to(plate_b_position) < 86.0:
 				errors.append("%s Switch A and Switch B must be separated by at least 86 units." % prefix)
+		if level.has("plate_c") and level["plate_c"] is Vector2:
+			var plate_c_position: Vector2 = level["plate_c"]
+			for anchor_key in ["spawn", "plate_a", "plate_b", "memory_shard"]:
+				if level.has(anchor_key) and level[anchor_key] is Vector2:
+					var anchor_position: Vector2 = level[anchor_key]
+					if plate_c_position.distance_to(anchor_position) < 86.0:
+						errors.append("%s Switch C must be separated from %s by at least 86 units." % [prefix, anchor_key])
 
 		if level.has("memory_shard") and level["memory_shard"] is Vector2:
 			var shard_position: Vector2 = level["memory_shard"]

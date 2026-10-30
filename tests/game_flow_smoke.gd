@@ -37,6 +37,7 @@ func _run_tests() -> void:
 	_test_timed_gate_requires_crossing(game)
 	_test_second_chapter_campaign(game)
 	_test_chapter_three_mechanics(game)
+	_test_multi_echo_puzzles(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
@@ -1005,7 +1006,7 @@ func _test_second_chapter_campaign(game: Control) -> void:
 	_check(int(game.get("current_level_index")) == 16 and bool((game.get("level_data") as Dictionary).get("hazard", false)), "The final Chapter II room should load its sentinel and gate rules.")
 
 func _test_chapter_three_mechanics(game: Control) -> void:
-	_check(LevelCatalog.LEVELS.size() == 19, "The campaign should contain nineteen chambers after Chapter III is added.")
+	_check(LevelCatalog.LEVELS.size() == 21, "The campaign should contain twenty-one chambers after Chapter IV is added.")
 	var errors: PackedStringArray = LevelCatalog.validate_levels()
 	_check(errors.is_empty(), "Chapter III platform and pulse-switch layouts should pass validation: %s" % "\n".join(errors))
 
@@ -1047,6 +1048,91 @@ func _test_chapter_three_mechanics(game: Control) -> void:
 	_check(bool(game.get("door_open")), "Echo on A plus the player on B during the pulse should open the gate.")
 	_check(is_equal_approx(float(game.get("gate_open_timer")), float(phase_data["gate_open_seconds"])), "The pulse switch should start the authored gate-crossing timer.")
 	_check(not bool(game.get("latch_switch_button").visible), "Pulse Switch B should not expose the toggle-latch control.")
+	game.call("_start_level", 0)
+
+
+func _test_multi_echo_puzzles(game: Control) -> void:
+	_check(LevelCatalog.LEVELS.size() == 21, "Chapter IV should add two independently recorded two-echo chambers.")
+	var validation_errors: PackedStringArray = LevelCatalog.validate_levels()
+	_check(validation_errors.is_empty(), "Two-echo rooms should pass catalog validation: %s" % "\n".join(validation_errors))
+
+	var twin_room: Dictionary = LevelCatalog.get_level(19)
+	_check(str(twin_room.get("name", "")) == "Twin Signal", "Chamber 20 should teach recording two independent echoes.")
+	_check(int(twin_room.get("echo_slots", 0)) == 2 and twin_room.get("plate_c") is Vector2, "Twin Signal should define two echo slots and Switch C.")
+	game.call("_start_level", 19)
+	var spawn: Vector2 = twin_room["spawn"]
+	var plate_a: Vector2 = twin_room["plate_a"]
+	var plate_c: Vector2 = twin_room["plate_c"]
+	var plate_b: Vector2 = twin_room["plate_b"]
+	game.set("player_position", spawn)
+	game.call("_on_record_pressed")
+	var first_route = EchoTrackScript.new()
+	first_route.add_sample(0.0, spawn)
+	first_route.add_sample(1.2, plate_a)
+	game.set("recording_track", first_route)
+	game.set("recording_elapsed", 1.2)
+	game.set("player_position", plate_a)
+	game.call("_finish_recording")
+	_check(int(game.get("echo_slots_recorded")) == 1 and bool(game.get("echo_playing")), "The first recorded track should be released as Echo 1.")
+	game.call("_on_record_pressed")
+	_check(not bool(game.get("is_recording")), "Echo 2 recording must wait until Echo 1 has finished and settled on A.")
+	game.call("_update_echo", 1.3)
+	_check(bool(game.get("echo_visible")) and not bool(game.get("echo_playing")) and (game.get("echo_position") as Vector2).distance_to(plate_a) < 1.0, "Echo 1 should settle and hold Switch A.")
+	game.call("_on_record_pressed")
+	_check(bool(game.get("is_recording")) and int(game.get("recording_slot_index")) == 1, "The second recording should start in Echo 2 mode.")
+	var second_route = EchoTrackScript.new()
+	second_route.add_sample(0.0, plate_a)
+	second_route.add_sample(1.4, plate_c)
+	game.set("recording_track", second_route)
+	game.set("recording_elapsed", 1.4)
+	game.set("player_position", plate_c)
+	game.call("_finish_recording")
+	_check(int(game.get("echo_slots_recorded")) == 2 and bool(game.get("secondary_echo_playing")), "The second recording should release an independent Echo 2.")
+	_check(bool(game.get("echo_visible")) and (game.get("echo_position") as Vector2).distance_to(plate_a) < 1.0, "Recording Echo 2 must not erase Echo 1 from Switch A.")
+	game.call("_update_echo", 1.5)
+	_check(bool(game.get("secondary_echo_visible")) and not bool(game.get("secondary_echo_playing")) and (game.get("secondary_echo_position") as Vector2).distance_to(plate_c) < 1.0, "Echo 2 should settle on Switch C.")
+	game.set("player_position", plate_b)
+	game.call("_check_puzzle_state")
+	_check(bool(game.get("door_open")), "Echoes holding A and C plus the player on B should open Twin Signal's gate.")
+	_check(bool(game.get("record_button").disabled), "The record button should lock after both echo slots have been captured.")
+	_check(not (game.get("secondary_echo_track").samples as Array).is_empty(), "Echo 2 should retain its own independent route samples.")
+
+	var convergence_room: Dictionary = LevelCatalog.get_level(20)
+	_check(str(convergence_room.get("name", "")) == "Convergent Signal", "Chamber 21 should combine two echoes with a pulse gate.")
+	game.call("_start_level", 20)
+	var start_two: Vector2 = convergence_room["spawn"]
+	var a_two: Vector2 = convergence_room["plate_a"]
+	var c_two: Vector2 = convergence_room["plate_c"]
+	var b_two: Vector2 = convergence_room["plate_b"]
+	game.set("player_position", start_two)
+	game.call("_on_record_pressed")
+	var route_a = EchoTrackScript.new()
+	route_a.add_sample(0.0, start_two)
+	route_a.add_sample(1.1, a_two)
+	game.set("recording_track", route_a)
+	game.set("recording_elapsed", 1.1)
+	game.set("player_position", a_two)
+	game.call("_finish_recording")
+	game.call("_update_echo", 1.2)
+	game.call("_on_record_pressed")
+	var route_c = EchoTrackScript.new()
+	route_c.add_sample(0.0, a_two)
+	route_c.add_sample(1.3, c_two)
+	game.set("recording_track", route_c)
+	game.set("recording_elapsed", 1.3)
+	game.set("player_position", c_two)
+	game.call("_finish_recording")
+	game.call("_update_echo", 1.4)
+	game.set("player_position", b_two)
+	game.set("hazard_time", 3.0)
+	_check(not bool(game.call("_is_pulse_switch_active")), "Convergent Signal should have a real off-cycle for Switch B.")
+	game.call("_check_puzzle_state")
+	_check(not bool(game.get("door_open")), "Two echoes alone must not bypass the pulse requirement.")
+	game.set("hazard_time", 1.0)
+	_check(bool(game.call("_is_pulse_switch_active")), "Convergent Signal should expose a deterministic active pulse window.")
+	game.call("_check_puzzle_state")
+	_check(bool(game.get("door_open")), "Both settled echoes and the player on B during its pulse should open the gate.")
+	_check(is_equal_approx(float(game.get("gate_open_timer")), 2.4), "The duet pulse gate should start its short 2.4-second crossing timer.")
 	game.call("_start_level", 0)
 
 

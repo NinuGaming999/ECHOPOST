@@ -46,6 +46,14 @@ var echo_playing: bool = false
 var echo_elapsed: float = 0.0
 var echo_linger_left: float = 0.0
 var echo_track: Variant = ECHO_TRACK_SCRIPT.new()
+var secondary_echo_position: Vector2 = Vector2.ZERO
+var secondary_echo_visible: bool = false
+var secondary_echo_playing: bool = false
+var secondary_echo_elapsed: float = 0.0
+var secondary_echo_linger_left: float = 0.0
+var secondary_echo_track: Variant = ECHO_TRACK_SCRIPT.new()
+var echo_slots_recorded: int = 0
+var recording_slot_index: int = 0
 
 var is_recording: bool = false
 var recording_elapsed: float = 0.0
@@ -1101,6 +1109,14 @@ func _start_level(level_index: int) -> void:
 	echo_elapsed = 0.0
 	echo_linger_left = 0.0
 	echo_track.clear()
+	secondary_echo_position = Vector2.ZERO
+	secondary_echo_visible = false
+	secondary_echo_playing = false
+	secondary_echo_elapsed = 0.0
+	secondary_echo_linger_left = 0.0
+	secondary_echo_track.clear()
+	echo_slots_recorded = 0
+	recording_slot_index = 0
 	is_recording = false
 	recording_elapsed = 0.0
 	record_sample_accumulator = 0.0
@@ -1133,16 +1149,41 @@ func _on_record_pressed() -> void:
 	if screen_state != ScreenState.PLAYING or failure_reset_timer > 0.0:
 		return
 	if not is_recording:
+		var slot_count := int(level_data.get("echo_slots", 1))
+		if slot_count > 1:
+			if echo_slots_recorded >= slot_count:
+				status_message = "BOTH ECHOES ARE SET — restart the room to record a new pair."
+				_update_hud()
+				return
+			recording_slot_index = echo_slots_recorded
+			if recording_slot_index == 1:
+				var first_echo_settled := echo_visible and not echo_playing and echo_position.distance_to(level_data["plate_a"]) < 43.0
+				if not first_echo_settled:
+					status_message = "WAIT FOR ECHO 1 — it must settle on SWITCH A before recording Echo 2."
+					_update_hud()
+					return
+				if echo_linger_left < MAX_RECORD_SECONDS + 0.5:
+					status_message = "ECHO 1 IS FADING — restart the room and record the pair more quickly."
+					_update_hud()
+					return
+		else:
+			recording_slot_index = 0
 		is_recording = true
 		recording_elapsed = 0.0
 		record_sample_accumulator = 0.0
 		recording_track.clear()
 		recording_hits_jammer = false
 		_add_record_sample(0.0, player_position)
-		echo_visible = false
-		echo_playing = false
-		echo_track.clear()
-		status_message = "Recording... move to SWITCH A, then press STOP & SEND."
+		if slot_count > 1 and recording_slot_index == 1:
+			secondary_echo_visible = false
+			secondary_echo_playing = false
+			secondary_echo_track.clear()
+			status_message = "RECORDING ECHO 2 — move to SWITCH C, then STOP & SEND."
+		else:
+			echo_visible = false
+			echo_playing = false
+			echo_track.clear()
+			status_message = "RECORDING ECHO 1 — move to SWITCH A, then STOP & SEND." if slot_count > 1 else "Recording... move to SWITCH A, then press STOP & SEND."
 	else:
 		_finish_recording()
 	_update_hud()
@@ -1180,15 +1221,17 @@ func _finish_recording() -> void:
 	if not is_recording:
 		return
 	if recording_elapsed < MIN_RECORD_SECONDS:
-		status_message = "TOO SHORT — keep recording until at least 0.7 seconds, then stop on SWITCH A."
+		var short_target := "SWITCH C" if recording_slot_index == 1 else "SWITCH A"
+		status_message = "TOO SHORT — keep recording until at least 0.7 seconds, then stop on %s." % short_target
 		return
 	_add_record_sample(recording_elapsed, player_position)
 	is_recording = false
-	if player_position.distance_to(level_data["plate_a"]) >= 42.0:
-		echo_visible = false
-		echo_playing = false
-		echo_track.clear()
-		status_message = "ROUTE REJECTED — finish the recording on SWITCH A, then try again."
+	var multi_echo := int(level_data.get("echo_slots", 1)) > 1
+	var target_plate: Vector2 = level_data["plate_c"] if multi_echo and recording_slot_index == 1 else level_data["plate_a"]
+	var target_name := "SWITCH C" if multi_echo and recording_slot_index == 1 else "SWITCH A"
+	if player_position.distance_to(target_plate) >= 42.0:
+		_clear_echo_slot(recording_slot_index)
+		status_message = "ROUTE REJECTED — finish Echo %d on %s, then try again." % [recording_slot_index + 1, target_name] if multi_echo else "ROUTE REJECTED — finish the recording on SWITCH A, then try again."
 		if _room_requires_relay():
 			_schedule_room_reset("ROUTE REJECTED", status_message)
 		else:
@@ -1198,47 +1241,67 @@ func _finish_recording() -> void:
 	if level_data.has("echo_waypoints"):
 		var required_waypoints: Array = level_data["echo_waypoints"]
 		if not _track_passes_waypoints_in_order(recording_track, required_waypoints, 40.0):
-			echo_visible = false
-			echo_playing = false
-			echo_track.clear()
+			_clear_echo_slot(recording_slot_index)
 			var relay_sequence := PackedStringArray()
 			for relay_index in range(required_waypoints.size()):
 				relay_sequence.append("RELAY %d" % (relay_index + 1))
-			status_message = "ROUTE REJECTED — pass through %s in order before finishing on SWITCH A." % ", then ".join(relay_sequence)
+			status_message = "ROUTE REJECTED — pass through %s in order before finishing on %s." % [", then ".join(relay_sequence), target_name]
 			_schedule_room_reset("RELAY SEQUENCE FAILED", status_message)
 			return
 	if level_data.has("echo_waypoint"):
 		var relay_position: Vector2 = level_data["echo_waypoint"]
 		if not _track_passes_waypoint(recording_track, relay_position, 40.0):
-			echo_visible = false
-			echo_playing = false
-			echo_track.clear()
-			status_message = "ROUTE REJECTED — pass through the RELAY BEACON before finishing on SWITCH A."
+			_clear_echo_slot(recording_slot_index)
+			status_message = "ROUTE REJECTED — pass through the RELAY BEACON before finishing on %s." % target_name
 			_schedule_room_reset("RELAY BEACON MISSED", status_message)
 			return
-	_draw_void_zones()
-	_draw_moving_platforms()
-
 	if level_data.has("echo_jammer"):
 		var jammer_position: Vector2 = level_data["echo_jammer"]
 		var jammer_radius := float(level_data.get("echo_jammer_radius", 100.0))
 		if _track_passes_waypoint(recording_track, jammer_position, jammer_radius):
-			echo_visible = false
-			echo_playing = false
-			echo_track.clear()
+			_clear_echo_slot(recording_slot_index)
 			status_message = "ECHO DEAD ZONE — the recorded route crossed the blackout. Reroute around it."
 			_schedule_room_reset("ECHO JAMMED", status_message)
 			return
-	echo_track = recording_track.copy_track()
-	echo_playing = echo_track.samples.size() > 1
-	echo_visible = echo_playing
-	echo_elapsed = 0.0
-	echo_linger_left = 0.0
-	if echo_track.samples.size() > 0:
-		echo_position = echo_track.position_at(0.0)
-	status_message = "Echo released. Move to SWITCH B and stay there until the gate opens."
+	var released_track = recording_track.copy_track()
+	if multi_echo and recording_slot_index == 1:
+		secondary_echo_track = released_track
+		secondary_echo_playing = secondary_echo_track.samples.size() > 1
+		secondary_echo_visible = secondary_echo_playing
+		secondary_echo_elapsed = 0.0
+		secondary_echo_linger_left = 0.0
+		if secondary_echo_track.samples.size() > 0:
+			secondary_echo_position = secondary_echo_track.position_at(0.0)
+	else:
+		echo_track = released_track
+		echo_playing = echo_track.samples.size() > 1
+		echo_visible = echo_playing
+		echo_elapsed = 0.0
+		echo_linger_left = 0.0
+		if echo_track.samples.size() > 0:
+			echo_position = echo_track.position_at(0.0)
+	if multi_echo:
+		echo_slots_recorded = maxi(echo_slots_recorded, recording_slot_index + 1)
+		status_message = "ECHO 1 RELEASED — let it settle on A, then record Echo 2 to SWITCH C." if echo_slots_recorded == 1 else "ECHO 2 RELEASED — let both echoes settle on A and C, then reach SWITCH B."
+	else:
+		status_message = "Echo released. Move to SWITCH B and stay there until the gate opens."
 	_update_hud()
 	queue_redraw()
+
+
+func _clear_echo_slot(slot_index: int) -> void:
+	if int(level_data.get("echo_slots", 1)) > 1 and slot_index == 1:
+		secondary_echo_visible = false
+		secondary_echo_playing = false
+		secondary_echo_elapsed = 0.0
+		secondary_echo_linger_left = 0.0
+		secondary_echo_track.clear()
+	else:
+		echo_visible = false
+		echo_playing = false
+		echo_elapsed = 0.0
+		echo_linger_left = 0.0
+		echo_track.clear()
 
 
 func _add_record_sample(sample_time: float, point: Vector2) -> void:
@@ -1498,7 +1561,20 @@ func _update_echo(delta: float) -> void:
 		echo_linger_left -= delta
 		if echo_linger_left <= 0.0:
 			echo_visible = false
-			status_message = "Your echo faded. Record another route ending on SWITCH A."
+			status_message = "Echo 1 faded. Restart the room to record a fresh pair." if int(level_data.get("echo_slots", 1)) > 1 else "Your echo faded. Record another route ending on SWITCH A."
+
+	if secondary_echo_playing:
+		secondary_echo_elapsed += delta
+		secondary_echo_position = secondary_echo_track.position_at(secondary_echo_elapsed)
+		if secondary_echo_track.samples.size() > 0 and secondary_echo_elapsed >= secondary_echo_track.duration():
+			secondary_echo_playing = false
+			secondary_echo_linger_left = float(level_data.get("linger", 8.0))
+			secondary_echo_position = secondary_echo_track.position_at(secondary_echo_track.duration())
+	elif secondary_echo_visible:
+		secondary_echo_linger_left -= delta
+		if secondary_echo_linger_left <= 0.0:
+			secondary_echo_visible = false
+			status_message = "Echo 2 faded. Record it again while Echo 1 still holds A."
 
 
 func _room_requires_relay() -> bool:
@@ -1594,16 +1670,19 @@ func _check_puzzle_state() -> void:
 	var plate_b_mode := str(level_data.get("plate_b_mode", "hold"))
 	var toggle_switch_b := plate_b_mode == "toggle"
 	var pulse_switch_b := plate_b_mode == "pulse"
+	var multi_echo := int(level_data.get("echo_slots", 1)) > 1
 	var echo_on_a := echo_visible and (not toggle_switch_b or not echo_playing) and echo_position.distance_to(level_data["plate_a"]) < 43.0
+	var echo_on_c := multi_echo and secondary_echo_visible and not secondary_echo_playing and secondary_echo_position.distance_to(level_data["plate_c"]) < 43.0
+	var echoes_ready := echo_on_a and (not multi_echo or echo_on_c)
 	var player_near_b := player_position.distance_to(level_data["plate_b"]) < 43.0
 	var player_on_b := switch_b_latched if toggle_switch_b else (player_near_b and (not pulse_switch_b or _is_pulse_switch_active()))
 
 	# A missed timed-gate window cannot instantly re-open while the player is still
-	# holding Switch B. Leave either switch and return to re-arm another attempt.
-	if timed_gate_failed and (not echo_on_a or not player_on_b):
+	# holding Switch B. Both echoes must remain on their own plates in duet chambers.
+	if timed_gate_failed and (not echoes_ready or not player_on_b):
 		timed_gate_failed = false
 
-	if echo_on_a and player_on_b:
+	if echoes_ready and player_on_b:
 		if timed_gate_failed:
 			status_message = "PULSE GATE MISSED — leave SWITCH B and return to try again."
 			return
@@ -1618,8 +1697,34 @@ func _check_puzzle_state() -> void:
 		else:
 			status_message = "BOTH SWITCHES HELD — GATE OPEN! Reach the portal."
 		return
-	if is_recording and player_position.distance_to(level_data["plate_a"]) < 42.0:
-		status_message = "Good! Stop recording here so your echo holds SWITCH A."
+
+	if is_recording:
+		var recording_target: Vector2 = level_data["plate_c"] if multi_echo and recording_slot_index == 1 else level_data["plate_a"]
+		var recording_target_name := "SWITCH C" if multi_echo and recording_slot_index == 1 else "SWITCH A"
+		if player_position.distance_to(recording_target) < 42.0:
+			status_message = "Good! Stop recording Echo %d here so it holds %s." % [recording_slot_index + 1, recording_target_name] if multi_echo else "Good! Stop recording here so your echo holds SWITCH A."
+	elif multi_echo and not echo_on_a:
+		if echo_playing:
+			status_message = "ECHO 1 TRAVELLING — let it finish on SWITCH A."
+		elif echo_slots_recorded == 0:
+			status_message = "RECORD ECHO 1 — finish on SWITCH A, then let it settle before recording Echo 2."
+		else:
+			status_message = "ECHO 1 LOST — restart the room to rebuild the pair."
+	elif multi_echo and not echo_on_c:
+		if echo_slots_recorded < 2:
+			status_message = "ECHO 1 HOLDS A — record Echo 2 from here and finish on SWITCH C."
+		elif secondary_echo_playing:
+			status_message = "ECHO 2 TRAVELLING — let it finish on SWITCH C."
+		else:
+			status_message = "ECHO 2 MISSED C — record it again while Echo 1 still holds A."
+	elif echoes_ready and not player_on_b:
+		if pulse_switch_b:
+			if player_near_b:
+				status_message = "DUET READY — stay on B until its pulse goes live."
+			else:
+				status_message = "BOTH ECHOES ARE LINKED — move to SWITCH B and catch its amber pulse."
+		else:
+			status_message = "BOTH ECHOES LINKED — move yourself onto SWITCH B."
 	elif echo_visible and not door_open:
 		if not echo_on_a and echo_playing:
 			status_message = "Your echo is travelling. Stay near SWITCH B and wait for it to reach A."
@@ -1717,7 +1822,7 @@ func _update_chapter_buttons() -> void:
 		var button := chapter_buttons[i]
 		var prefix := "UNLOCKED" if i <= unlocked_level else "LOCKED"
 		var chapter_number := int(LEVELS[i].get("chapter", 1))
-		var chapter_tag := "CH. III  •  " if chapter_number == 3 else ("CH. II  •  " if chapter_number == 2 else "")
+		var chapter_tag := "CH. IV  •  " if chapter_number == 4 else ("CH. III  •  " if chapter_number == 3 else ("CH. II  •  " if chapter_number == 2 else ""))
 		button.text = "%s%02d   %s   •   %s" % [chapter_tag, i + 1, str(LEVELS[i]["name"]).to_upper(), prefix]
 		button.disabled = i > unlocked_level
 
@@ -1745,8 +1850,10 @@ func _update_hud() -> void:
 		level_hint_label.text = hint_text
 	if status_label.text != status_message:
 		status_label.text = status_message
-	var record_text := "■\n%d s" % int(ceil(MAX_RECORD_SECONDS - recording_elapsed)) if is_recording else "●\nREC"
-	var record_tooltip := "Stop and send the recorded echo" if is_recording else "Record a route, then stop and send the echo"
+	var multi_echo := int(level_data.get("echo_slots", 1)) > 1
+	var next_slot_name := "C" if echo_slots_recorded == 1 else "A"
+	var record_text := "■\n%d s" % int(ceil(MAX_RECORD_SECONDS - recording_elapsed)) if is_recording else ("✓\nSYNC" if multi_echo and echo_slots_recorded >= 2 else ("●\nREC " + next_slot_name if multi_echo else "●\nREC"))
+	var record_tooltip := "Stop and send Echo %d to its switch" % (recording_slot_index + 1) if is_recording else ("Record Echo %d ending on Switch %s" % [echo_slots_recorded + 1, next_slot_name] if multi_echo else "Record a route, then stop and send the echo")
 	var echo_text := "ECHO: RECORDING" if is_recording else "ECHO: READY"
 	if not is_recording:
 		if door_open and gate_open_timer > 0.0:
@@ -1765,7 +1872,11 @@ func _update_hud() -> void:
 		record_button.tooltip_text = record_tooltip
 	if echo_status_label.text != echo_text:
 		echo_status_label.text = echo_text
-	var record_disabled := screen_state == ScreenState.PAUSED or screen_state == ScreenState.COMPLETE or failure_reset_timer > 0.0
+	if multi_echo:
+		echo_text = "ECHOES: %d/2 LINKED" % echo_slots_recorded
+		if is_recording:
+			echo_text = "RECORDING ECHO %d" % (recording_slot_index + 1)
+		var record_disabled := screen_state == ScreenState.PAUSED or screen_state == ScreenState.COMPLETE or failure_reset_timer > 0.0 or (multi_echo and echo_slots_recorded >= 2 and not is_recording)
 	if record_button.disabled != record_disabled:
 		record_button.disabled = record_disabled
 	if is_instance_valid(latch_switch_button):
@@ -1951,6 +2062,9 @@ func _draw_room() -> void:
 	elif plate_b_mode == "pulse":
 		switch_b_active = _is_pulse_switch_active() and player_position.distance_to(level_data["plate_b"]) < 43.0
 	_draw_switch(level_data["plate_b"], "B", Color(1.0, 0.70, 0.34), switch_b_active)
+	if level_data.has("plate_c"):
+		var switch_c_active := secondary_echo_visible and not secondary_echo_playing and secondary_echo_position.distance_to(level_data["plate_c"]) < 43.0
+		_draw_switch(level_data["plate_c"], "C", Color(0.76, 0.49, 1.0), switch_c_active)
 	if plate_b_mode == "pulse":
 		var pulse_label := "PULSE LIVE" if _is_pulse_switch_active() else "PULSE IN %.1fs" % _get_pulse_switch_seconds_until_active()
 		var pulse_tint := Color(1.0, 0.76, 0.34) if _is_pulse_switch_active() else Color(0.73, 0.80, 0.92)
@@ -1999,6 +2113,11 @@ func _draw_room() -> void:
 	if echo_visible:
 		var echo_alpha := 0.48 if echo_playing else 0.68
 		_draw_robot(echo_position, Color(0.24, 1.0, 0.88, echo_alpha), 0.78)
+	if secondary_echo_track.samples.size() > 1 and (secondary_echo_playing or secondary_echo_visible):
+		_draw_track_path(secondary_echo_track, Color(0.74, 0.47, 1.0, 0.22), 3.0)
+	if secondary_echo_visible:
+		var secondary_alpha := 0.48 if secondary_echo_playing else 0.72
+		_draw_robot(secondary_echo_position, Color(0.79, 0.55, 1.0, secondary_alpha), 0.78)
 	_draw_robot(player_position, Color(0.83, 0.95, 1.0), 1.0)
 
 	if joystick_touch_index != -1 or joystick_mouse_active or joystick_direction.length() > 0.05 or joystick_applied_direction.length() > 0.05:
