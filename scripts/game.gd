@@ -57,6 +57,8 @@ var switch_b_latched: bool = false
 var gate_open_timer: float = 0.0
 var timed_gate_failed: bool = false
 var hazard_time: float = 0.0
+var platform_positions: Array[Vector2] = []
+var player_on_moving_platform: bool = false
 var failure_reset_timer: float = 0.0
 var failure_reset_reason: String = ""
 var status_message: String = "Your route can become someone else's solution."
@@ -1109,6 +1111,8 @@ func _start_level(level_index: int) -> void:
 	gate_open_timer = 0.0
 	timed_gate_failed = false
 	hazard_time = 0.0
+	platform_positions = _get_moving_platform_positions(0.0)
+	player_on_moving_platform = false
 	status_message = str(level_data["hint"])
 	screen_state = ScreenState.PLAYING
 	menu_root.hide()
@@ -1212,6 +1216,9 @@ func _finish_recording() -> void:
 			status_message = "ROUTE REJECTED — pass through the RELAY BEACON before finishing on SWITCH A."
 			_schedule_room_reset("RELAY BEACON MISSED", status_message)
 			return
+	_draw_void_zones()
+	_draw_moving_platforms()
+
 	if level_data.has("echo_jammer"):
 		var jammer_position: Vector2 = level_data["echo_jammer"]
 		var jammer_radius := float(level_data.get("echo_jammer_radius", 100.0))
@@ -1368,13 +1375,115 @@ func _update_player(delta: float) -> void:
 		direction = joystick_applied_direction
 	else:
 		joystick_applied_direction = Vector2.ZERO
-	var next_position := player_position + direction * player_move_speed * delta
+
+	# A rider inherits the platform's world displacement while retaining steering.
+	# Echoes replay world-space points and are not carried by live platform motion.
+	var old_platform_positions := platform_positions
+	if old_platform_positions.size() != level_data.get("moving_platforms", []).size():
+		old_platform_positions = _get_moving_platform_positions(hazard_time)
+	var next_platform_positions := _get_moving_platform_positions(hazard_time + delta)
+	var ride_delta := Vector2.ZERO
+	player_on_moving_platform = false
+	for platform_index in range(old_platform_positions.size()):
+		var platform: Dictionary = level_data["moving_platforms"][platform_index]
+		var platform_size: Vector2 = platform["size"]
+		var platform_rect := Rect2(old_platform_positions[platform_index] - platform_size * 0.5, platform_size).grow(PLAYER_RADIUS * 0.40)
+		if platform_rect.has_point(player_position):
+			ride_delta = next_platform_positions[platform_index] - old_platform_positions[platform_index]
+			player_on_moving_platform = true
+			break
+
+	var carried_position := player_position + ride_delta
+	var next_position := carried_position + direction * player_move_speed * delta
 	next_position.x = clampf(next_position.x, ROOM_LEFT + PLAYER_RADIUS + 10.0, ROOM_RIGHT - PLAYER_RADIUS - 10.0)
 	next_position.y = clampf(next_position.y, ROOM_TOP + PLAYER_RADIUS + 13.0, ROOM_BOTTOM - PLAYER_RADIUS - 12.0)
+	if not _is_position_supported(next_position, next_platform_positions):
+		# A mis-timed step cannot enter the void. Preserve the bridge's carry so
+		# steering against the edge cannot strand a rider.
+		if _is_position_supported(carried_position, next_platform_positions):
+			next_position = carried_position
+		else:
+			next_position = player_position
+		if not player_on_moving_platform:
+			status_message = "VOID GAP — board the moving bridge before crossing."
 	var gate_block_x := GATE_X - PLAYER_RADIUS - 3.0
 	if not door_open and player_position.x <= gate_block_x and next_position.x > gate_block_x:
 		next_position.x = gate_block_x
 	player_position = next_position
+	platform_positions = next_platform_positions
+	player_on_moving_platform = _is_position_on_moving_platform(player_position, platform_positions)
+
+
+func _get_moving_platform_positions(at_time: float) -> Array[Vector2]:
+	var positions: Array[Vector2] = []
+	for platform_value in level_data.get("moving_platforms", []):
+		if not (platform_value is Dictionary):
+			continue
+		var platform: Dictionary = platform_value
+		var from_position: Vector2 = platform.get("from", Vector2.ZERO)
+		var to_position: Vector2 = platform.get("to", Vector2.ZERO)
+		var travel_distance := from_position.distance_to(to_position)
+		var speed := maxf(1.0, float(platform.get("speed", 1.0)))
+		var one_way_duration := travel_distance / speed
+		if one_way_duration <= 0.001:
+			positions.append(from_position)
+			continue
+		var cycle_duration := one_way_duration * 2.0
+		var cycle_time := fposmod(at_time + float(platform.get("phase", 0.0)), cycle_duration)
+		var progress := cycle_time / one_way_duration if cycle_time <= one_way_duration else 2.0 - cycle_time / one_way_duration
+		positions.append(from_position.lerp(to_position, clampf(progress, 0.0, 1.0)))
+	return positions
+
+
+func _is_position_on_moving_platform(position: Vector2, positions: Array[Vector2]) -> bool:
+	var platforms: Array = level_data.get("moving_platforms", [])
+	for platform_index in range(mini(platforms.size(), positions.size())):
+		var platform: Dictionary = platforms[platform_index]
+		var platform_size: Vector2 = platform.get("size", Vector2.ZERO)
+		var platform_rect := Rect2(positions[platform_index] - platform_size * 0.5, platform_size).grow(PLAYER_RADIUS * 0.40)
+		if platform_rect.has_point(position):
+			return true
+	return false
+
+
+func _is_position_supported(position: Vector2, positions: Array[Vector2]) -> bool:
+	for void_value in level_data.get("void_zones", []):
+		if not (void_value is Dictionary):
+			continue
+		var void_zone: Dictionary = void_value
+		var void_rect := Rect2(void_zone.get("position", Vector2.ZERO), void_zone.get("size", Vector2.ZERO))
+		if void_rect.has_point(position):
+			return _is_position_on_moving_platform(position, positions)
+	return true
+
+
+func _is_pulse_switch_active() -> bool:
+	if str(level_data.get("plate_b_mode", "hold")) != "pulse":
+		return false
+	var period := maxf(0.1, float(level_data.get("pulse_period", 1.0)))
+	var active_duration := clampf(float(level_data.get("pulse_active_seconds", 0.0)), 0.0, period)
+	var phase_offset := maxf(0.0, float(level_data.get("pulse_phase_offset", 0.0)))
+	var phase := fposmod(hazard_time + phase_offset, period)
+	return phase < active_duration
+
+
+func _get_pulse_switch_seconds_until_active() -> float:
+	if _is_pulse_switch_active():
+		return 0.0
+	var period := maxf(0.1, float(level_data.get("pulse_period", 1.0)))
+	var phase_offset := maxf(0.0, float(level_data.get("pulse_phase_offset", 0.0)))
+	var phase := fposmod(hazard_time + phase_offset, period)
+	return maxf(0.0, period - phase)
+
+
+func _get_pulse_switch_seconds_remaining() -> float:
+	if not _is_pulse_switch_active():
+		return 0.0
+	var period := maxf(0.1, float(level_data.get("pulse_period", 1.0)))
+	var active_duration := clampf(float(level_data.get("pulse_active_seconds", 0.0)), 0.0, period)
+	var phase_offset := maxf(0.0, float(level_data.get("pulse_phase_offset", 0.0)))
+	var phase := fposmod(hazard_time + phase_offset, period)
+	return maxf(0.0, active_duration - phase)
 
 
 func _update_echo(delta: float) -> void:
@@ -1482,10 +1591,12 @@ func _check_puzzle_state() -> void:
 		if player_position.distance_to(Vector2(1170, 365)) < 39.0:
 			_complete_level()
 		return
-	var toggle_switch_b := str(level_data.get("plate_b_mode", "hold")) == "toggle"
+	var plate_b_mode := str(level_data.get("plate_b_mode", "hold"))
+	var toggle_switch_b := plate_b_mode == "toggle"
+	var pulse_switch_b := plate_b_mode == "pulse"
 	var echo_on_a := echo_visible and (not toggle_switch_b or not echo_playing) and echo_position.distance_to(level_data["plate_a"]) < 43.0
 	var player_near_b := player_position.distance_to(level_data["plate_b"]) < 43.0
-	var player_on_b := switch_b_latched if toggle_switch_b else player_near_b
+	var player_on_b := switch_b_latched if toggle_switch_b else (player_near_b and (not pulse_switch_b or _is_pulse_switch_active()))
 
 	# A missed timed-gate window cannot instantly re-open while the player is still
 	# holding Switch B. Leave either switch and return to re-arm another attempt.
@@ -1500,6 +1611,8 @@ func _check_puzzle_state() -> void:
 		gate_open_timer = maxf(0.0, float(level_data.get("gate_open_seconds", 0.0)))
 		if gate_open_timer > 0.0:
 			status_message = "PULSE GATE OPEN — cross the barrier within %.1f seconds, then reach the portal." % gate_open_timer
+		elif pulse_switch_b:
+			status_message = "PHASE RELAY LIVE — both switches are linked. Cross the gate and reach the portal."
 		elif toggle_switch_b:
 			status_message = "SWITCH B LATCHED — GATE OPEN! Cross the barrier and reach the portal."
 		else:
@@ -1515,6 +1628,11 @@ func _check_puzzle_state() -> void:
 		elif echo_on_a and not player_on_b:
 			if toggle_switch_b:
 				status_message = "ECHO HOLDS A — move to SWITCH B, then tap LATCH SWITCH B."
+			elif pulse_switch_b:
+				if player_near_b:
+					status_message = "PHASE RELAY — stay on B. The next pulse arrives in %.1fs." % _get_pulse_switch_seconds_until_active()
+				else:
+					status_message = "ECHO HOLDS A — get to B and wait for its amber pulse window."
 			else:
 				status_message = "Echo holds A. Move yourself onto SWITCH B."
 
@@ -1598,7 +1716,8 @@ func _update_chapter_buttons() -> void:
 	for i in range(chapter_buttons.size()):
 		var button := chapter_buttons[i]
 		var prefix := "UNLOCKED" if i <= unlocked_level else "LOCKED"
-		var chapter_tag := "CH. II  •  " if int(LEVELS[i].get("chapter", 1)) > 1 else ""
+		var chapter_number := int(LEVELS[i].get("chapter", 1))
+		var chapter_tag := "CH. III  •  " if chapter_number == 3 else ("CH. II  •  " if chapter_number == 2 else "")
 		button.text = "%s%02d   %s   •   %s" % [chapter_tag, i + 1, str(LEVELS[i]["name"]).to_upper(), prefix]
 		button.disabled = i > unlocked_level
 
@@ -1632,6 +1751,8 @@ func _update_hud() -> void:
 	if not is_recording:
 		if door_open and gate_open_timer > 0.0:
 			echo_text = "GATE: %.1fs TO CROSS" % gate_open_timer
+		elif str(level_data.get("plate_b_mode", "hold")) == "pulse":
+			echo_text = "B PULSE: LIVE" if _is_pulse_switch_active() else "B PULSE: %.1fs" % _get_pulse_switch_seconds_until_active()
 		elif echo_playing:
 			echo_text = "ECHO: REPLAYING ROUTE"
 		elif echo_visible:
@@ -1823,10 +1944,17 @@ func _draw_room() -> void:
 		draw_string(ThemeDB.fallback_font, Vector2(jammer_position.x - jammer_radius - 10.0, jammer_position.y - jammer_radius - 9.0), "ECHO DEAD ZONE", HORIZONTAL_ALIGNMENT_CENTER, jammer_radius * 2.0 + 20.0, 13, Color(0.86, 0.67, 1.0, 0.95))
 
 	_draw_switch(level_data["plate_a"], "A", Color(0.23, 0.83, 1.0), echo_visible and echo_position.distance_to(level_data["plate_a"]) < 43.0)
+	var plate_b_mode := str(level_data.get("plate_b_mode", "hold"))
 	var switch_b_active := player_position.distance_to(level_data["plate_b"]) < 43.0
-	if str(level_data.get("plate_b_mode", "hold")) == "toggle":
+	if plate_b_mode == "toggle":
 		switch_b_active = switch_b_latched
+	elif plate_b_mode == "pulse":
+		switch_b_active = _is_pulse_switch_active() and player_position.distance_to(level_data["plate_b"]) < 43.0
 	_draw_switch(level_data["plate_b"], "B", Color(1.0, 0.70, 0.34), switch_b_active)
+	if plate_b_mode == "pulse":
+		var pulse_label := "PULSE LIVE" if _is_pulse_switch_active() else "PULSE IN %.1fs" % _get_pulse_switch_seconds_until_active()
+		var pulse_tint := Color(1.0, 0.76, 0.34) if _is_pulse_switch_active() else Color(0.73, 0.80, 0.92)
+		draw_string(ThemeDB.fallback_font, level_data["plate_b"] + Vector2(-55, 70), pulse_label, HORIZONTAL_ALIGNMENT_CENTER, 110, 11, pulse_tint)
 	_draw_gate()
 	_draw_portal(Vector2(1170, 365), door_open)
 	if level_data.has("echo_waypoint"):
@@ -1933,6 +2061,42 @@ func _draw_memory_shard(position: Vector2) -> void:
 	draw_colored_polygon(PackedVector2Array([diamond[4], diamond[1], diamond[2]]), Color(0.78, 0.55, 1.0, 0.96))
 	draw_polyline(PackedVector2Array([diamond[0], diamond[1], diamond[2], diamond[3], diamond[0]]), Color(0.94, 0.82, 1.0, 0.98), 1.5, true)
 	draw_string(ThemeDB.fallback_font, position + Vector2(20, 4), "MEMORY", HORIZONTAL_ALIGNMENT_LEFT, 70, 10, Color(0.86, 0.72, 1.0))
+
+
+func _draw_void_zones() -> void:
+	for void_value in level_data.get("void_zones", []):
+		if not (void_value is Dictionary):
+			continue
+		var void_zone: Dictionary = void_value
+		var void_rect := Rect2(void_zone.get("position", Vector2.ZERO), void_zone.get("size", Vector2.ZERO))
+		draw_rect(void_rect, Color(0.004, 0.006, 0.025, 0.96), true)
+		draw_rect(void_rect, Color(0.45, 0.25, 0.85, 0.84), false, 3.0)
+		var stripe_step := 46 if performance_mode else 30
+		for stripe_x in range(int(void_rect.position.x + 12.0), int(void_rect.end.x - 8.0), stripe_step):
+			draw_line(Vector2(stripe_x, void_rect.position.y + 8.0), Vector2(stripe_x + 24.0, void_rect.end.y - 8.0), Color(0.28, 0.20, 0.55, 0.32), 1.2, true)
+		draw_string(ThemeDB.fallback_font, void_rect.position + Vector2(12.0, 28.0), "VOID GAP • BRIDGE ONLY", HORIZONTAL_ALIGNMENT_CENTER, void_rect.size.x - 24.0, 13, Color(0.72, 0.58, 1.0, 0.95))
+
+
+func _draw_moving_platforms() -> void:
+	var platforms: Array = level_data.get("moving_platforms", [])
+	for platform_index in range(mini(platforms.size(), platform_positions.size())):
+		var platform: Dictionary = platforms[platform_index]
+		var from_position: Vector2 = platform["from"]
+		var to_position: Vector2 = platform["to"]
+		var platform_size: Vector2 = platform["size"]
+		var center: Vector2 = platform_positions[platform_index]
+		draw_line(from_position, to_position, Color(0.12, 0.72, 0.78, 0.16), 12.0, true)
+		draw_line(from_position, to_position, Color(0.24, 0.85, 0.91, 0.52), 2.0, true)
+		draw_circle(from_position, 7.0, Color(0.27, 0.95, 0.94, 0.78))
+		draw_circle(to_position, 7.0, Color(0.27, 0.95, 0.94, 0.78))
+		var deck := Rect2(center - platform_size * 0.5, platform_size)
+		draw_rect(deck.grow(7.0), Color(0.01, 0.06, 0.11, 0.92), true)
+		draw_rect(deck, Color(0.04, 0.24, 0.34, 0.98), true)
+		draw_rect(deck, Color(0.25, 0.93, 0.96, 0.96), false, 3.0)
+		for stripe_index in range(3):
+			var stripe_x := deck.position.x + 28.0 + float(stripe_index) * (platform_size.x - 56.0) / 2.0
+			draw_line(Vector2(stripe_x, deck.position.y + 12.0), Vector2(stripe_x, deck.end.y - 12.0), Color(0.31, 0.83, 0.90, 0.56), 2.0, true)
+		draw_string(ThemeDB.fallback_font, Vector2(deck.position.x, deck.position.y - 10.0), "MOVING BRIDGE • RIDE", HORIZONTAL_ALIGNMENT_CENTER, platform_size.x, 11, Color(0.55, 1.0, 0.98, 0.98))
 
 
 func _draw_switch(position: Vector2, letter: String, tint: Color, active: bool) -> void:
