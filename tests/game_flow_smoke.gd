@@ -360,6 +360,7 @@ func _test_memory_archive_ui(game: Control) -> void:
 func _test_options_panel(game: Control) -> void:
 	var previous_speed := float(game.get("player_move_speed"))
 	var previous_handedness := bool(game.get("left_handed_controls"))
+	var previous_performance_mode := bool(game.get("performance_mode"))
 	game.call("_show_menu")
 	var menu_root: Control = game.get("menu_root")
 	_check(menu_root.get_node_or_null("OptionsButton") is Button, "The main menu should expose an Options button.")
@@ -371,11 +372,17 @@ func _test_options_panel(game: Control) -> void:
 	_check(game.get("speed_normal_button") is Button, "Options should expose the normal movement preset.")
 	_check(game.get("speed_fast_button") is Button, "Options should expose the fast movement preset.")
 	_check(game.get("left_handed_button") is Button, "Options should expose the left-handed joystick setting.")
+	_check(game.get("performance_button") is Button, "Options should expose a Performance Mode setting.")
 
 	game.call("_set_move_speed", 200.0)
 	_check(is_equal_approx(float(game.get("player_move_speed")), 200.0), "Selecting SLOW should affect the actual player movement speed.")
 	game.call("_set_left_handed_controls", true)
 	_check(bool(game.get("left_handed_controls")), "The left-handed setting should update active control state.")
+	game.call("_set_performance_mode", false)
+	_check(not bool(game.get("performance_mode")), "Performance Mode should be switchable off for devices that can handle full effects.")
+	_check(str((game.get("performance_button") as Button).text).contains("OFF"), "Options should display the selected performance setting.")
+	game.call("_set_performance_mode", true)
+	_check(bool(game.get("performance_mode")), "Performance Mode should be switchable back on.")
 	game.size = Vector2(1280, 720)
 	_check(not bool(game.call("_is_joystick_area", Vector2(100, 600))), "Left-handed mode should stop starting a joystick on the left side.")
 	_check(bool(game.call("_is_joystick_area", Vector2(1180, 600))), "Left-handed mode should allow starting a joystick on the right side.")
@@ -383,6 +390,7 @@ func _test_options_panel(game: Control) -> void:
 	# Integration tests must restore the player's real stored preferences.
 	game.call("_set_move_speed", previous_speed)
 	game.call("_set_left_handed_controls", previous_handedness)
+	game.call("_set_performance_mode", previous_performance_mode)
 	game.call("_show_menu")
 	_check(not bool(panel.visible), "Returning from Options should hide the settings panel.")
 	_check(is_equal_approx(float(game.get("player_move_speed")), previous_speed), "The test should restore the original movement speed.")
@@ -917,6 +925,8 @@ func _test_touch_joystick_comfort(game: Control) -> void:
 	_check(is_equal_approx(full_input.x, 1.0), "Long thumb drags should cap at full movement without losing direction.")
 	var diagonal_input: Vector2 = game.call("_shape_touch_stick", Vector2(100.0, 100.0))
 	_check(is_equal_approx(diagonal_input.length(), 1.0), "Diagonal joystick input should be normalized so diagonal travel is not faster.")
+	_check(bool(game.call("_segment_touches_circle", Vector2(0, 0), Vector2(100, 0), Vector2(50, 5), 6.0)), "A route segment that clips the jammer must be detected.")
+	_check(not bool(game.call("_segment_touches_circle", Vector2(0, 0), Vector2(100, 0), Vector2(50, 8), 6.0)), "A route segment outside the jammer radius must remain valid.")
 
 	# Input accelerates gently and settles quickly when the thumb is released.
 	game.set("player_position", Vector2(160.0, 365.0))
