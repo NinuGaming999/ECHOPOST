@@ -1,6 +1,6 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
-> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current thirteen-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
+> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current seventeen-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
 
 **Repository:** https://github.com/NinuGaming999/ECHOPOST  
 **Working branch:** `main`  
@@ -83,7 +83,7 @@ ECHOPOST is a mobile-first 2D puzzle adventure about recording a route and letti
 5. The two switches open the gate; reaching the portal completes the chamber.
 6. Campaign progress is saved locally and the next chamber unlocks.
 
-The current source includes thirteen authored chamber layouts:
+The current source includes seventeen authored chamber layouts across two signal chapters:
 - **The First Echo:** basic teach-the-mechanic chamber.
 - **Long Memory:** roaming sentinel and a more distant Switch B.
 - **Split Signal:** faster/larger sentinel movement and opposite-side switches.
@@ -97,12 +97,27 @@ The current source includes thirteen authored chamber layouts:
 - **Fracture Clock:** combines three ordered relays with a 4.5-second timed gate crossing.
 - **Dead Air Protocol:** four ordered relays, a fast sentinel that can erase the recording, 6.5 seconds of echo linger, Switch B farther back at x=850, and a 1.8-second gate window.
 - **Null Corridor:** a 105-unit purple echo-only jammer rejects any recording whose line segments enter the field. The direct spawn-to-Switch-A route is blocked; a curved route above the field is accepted. The live player can cross the jammer without a collision.
+- **Glass Horizon:** three ordered relays and a wide sentinel sweep.
+- **Clockbreak Crossing:** three ordered relays followed by a 2.8-second timed gate.
+- **Switchback Protocol:** two ordered relays, an echo-only jammer bypass, and a latched Switch B.
+- **The Last Chorus:** four ordered relays, an echo-only jammer bypass, a moving sentinel, and a 2.8-second gate window.
 
-The first five rooms teach the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces a single required gold Relay Beacon; Chorus Route requires two beacons in order; Pulse Lock adds a timed crossing and retry rule; Latch Protocol adds a toggle switch; Triune Relay extends ordered route planning to three checkpoints; Fracture Clock combines the three-relay sequence with a timed crossing; Dead Air Protocol combines four relays, active sentinel evasion and a short timed gate. Relay tests check line segments between samples, so a crossing between samples is valid. Thirteen rooms are still a prototype, not a finished campaign.
+The first five rooms teach the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces a single required gold Relay Beacon; Chorus Route requires two beacons in order; Pulse Lock adds a timed crossing and retry rule; Latch Protocol adds a toggle switch; Triune Relay extends ordered route planning to three checkpoints; Fracture Clock combines the three-relay sequence with a timed crossing; Dead Air Protocol combines four relays, active sentinel evasion and a short timed gate. Relay tests check line segments between samples, so a crossing between samples is valid. Seventeen rooms across two chapters are still a prototype, not a finished campaign.
 
 The menu identity uses the supplied ECHO logo and a matching cyan geometric SVG icon; room/character art is still drawn procedurally in `scripts/game.gd`. Procedural visuals keep the project importable without an asset pack but are placeholder art, not final art. Each chamber also has one optional Memory Shard that reveals a short courier-network lore fragment.
 
 ## 2. Latest work in this development pass
+
+### October 31, 2026 — Chapter II campaign expansion
+
+**Goal:** add substantial new content by combining familiar echo mechanics in harder, carefully spaced rooms without introducing new mobile-control complexity.
+
+- Added four authored Chapter II rooms: Glass Horizon, Clockbreak Crossing, Switchback Protocol, and The Last Chorus. Campaign total is 17 rooms (13 original + 4 new).
+- Chapter II reuses the existing ordered-relay, sentinel, echo-only jammer, toggle-switch, and timed-gate systems. Older save files retain their unlocked room indices; the new chambers unlock through normal progression.
+- Chamber Select prefixes Chapter II rooms with `CH. II`; its scrollable list and the Memory Archive continue to size themselves from `LEVELS.size()`.
+- Added a regression test that validates the full catalog, checks all final-room mechanics, verifies the four-relay route bypasses the jammer and fits within the 8-second recording cap, and confirms the final room loads.
+- Updated README, game design, roadmap, build status, and continuity notes to reflect the expanded 17-room campaign.
+- CI is being run for the current source revision; do not mark this change verified until both Godot versions and the Android export finish.
 
 ### October 30, 2026 — Low-end rendering and frame pacing
 

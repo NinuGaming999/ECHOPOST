@@ -23,9 +23,9 @@ Make players feel that a successful run leaves a useful trace in the world. The 
 5. The gate opens; reach the portal to complete the room.
 6. Unlock the next chamber; progress is stored locally.
 
-## Current early campaign: thirteen chambers
+## Current campaign: seventeen chambers across two signal chapters
 
-The thirteen current chambers progress from the basic two-switch echo rule through patrols, single and ordered route checkpoints, a latched toggle switch, a timed crossing, and combined late-game challenges. Null Corridor adds an echo-only signal jammer that forces route geometry rather than another timer. They are a content foundation, not the final campaign.
+The first thirteen chambers establish the two-switch echo rule, sentinels, ordered relays, a latched switch, timed gates and the echo-only jammer. Chapter II adds four synthesis rooms that combine the established rules at higher difficulty. The campaign remains a content foundation, not a finished game.
 
 - **The First Echo:** a safe introduction to recording, echo playback, and both switches.
 - **Long Memory:** introduces the roaming sentinel and separates Switch A from the real player's destination.
@@ -40,8 +40,12 @@ The thirteen current chambers progress from the basic two-switch echo rule throu
 - **Fracture Clock:** combines three ordered Relay Beacons with a 4.5-second timed gate. The route must be valid before the player can use the echo to open the timed crossing.
 - **Dead Air Protocol:** the gauntlet room requires four ordered Relay Beacons, records while a fast sentinel patrol can interrupt the player, shortens echo linger to 6.5 seconds, and moves Switch B farther from the gate and leaves only 1.8 seconds to cross it. Sentinel contact during a recording discards the entire take, so both route order and safe movement timing matter.
 - **Null Corridor:** a purple 105-unit ECHO DEAD ZONE jams the recorded echo route. The direct path between spawn and Switch A crosses the field and is rejected with an ECHO JAMMED reset; recording a curved route around it succeeds. The real player is unaffected, so the puzzle teaches that recorded and live movement have different hazards.
+- **Glass Horizon:** combines three ordered relays with a wide, fast-moving sentinel patrol.
+- **Clockbreak Crossing:** combines three ordered relays with a 2.8-second gate crossing.
+- **Switchback Protocol:** requires two ordered relays routed above an echo-only jammer, then uses a latched Switch B.
+- **The Last Chorus:** the Chapter II finale combines four ordered relays, a jammer bypass, a moving sentinel and a 2.8-second gate window.
 
-The chapter selector scrolls so future rooms do not collide with the navigation controls. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. Moving platforms, multi-echo puzzles, checkpoints and more varied puzzle rules remain future work; the thirteen current rooms are still a foundation rather than a finished campaign.
+The chapter selector scrolls so future rooms do not collide with the navigation controls. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. Moving platforms, multi-echo puzzles, checkpoints and more varied puzzle rules remain future work; the seventeen current rooms are still a foundation rather than a finished campaign.
 
 ## Echo rules
 
@@ -54,7 +58,7 @@ The chapter selector scrolls so future rooms do not collide with the navigation 
 - A room may require route checkpoints. Static Bloom's `echo_waypoint` requires crossing one Relay Beacon; Chorus Route requires Relay 1 then Relay 2, and Triune Relay requires Relay 1, Relay 2, then Relay 3, all in path order. The game checks the nearest point on each sample-to-sample line segment so crossings between samples count. Wrong order or a missed checkpoint is rejected with explicit feedback that names every required relay in the correct order.
 - Pulse Lock defines `gate_open_seconds`. When both switches activate it, the timer ticks only during PLAYING state; timeout closes the gate if the player has not crossed the barrier. A missed attempt stays latched until the player leaves a switch, so standing still cannot immediately reopen the gate. Crossing the barrier before timeout permanently powers the portal for that room.
 - Sentinel contact is a full room failure. The current take is discarded immediately and a brief SIGNAL LOST card explains the cause; after a short visual countdown, the same chamber starts fresh with the echo, switches, gate, timer and recording state cleared. In rooms with required Relay Beacons, a missing/out-of-order relay or a route that ends away from Switch A also triggers this automatic room reset. Ordinary non-relay endpoint mistakes remain retryable without resetting the whole room.
-- Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. The Memory Archive can revisit a recovered fragment later. Recovering all thirteen shards reveals a final “signal restored” reward in the play status and Archive. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
+- Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. The Memory Archive can revisit a recovered fragment later. Recovering all seventeen shards reveals a final “signal restored” reward in the play status and Archive. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
 - Save schema version 2 stores the collected room indices. Version 1 saves remain loadable and begin with no Memory Shards collected; duplicate, negative, and out-of-campaign indices are filtered during loading.
 - A future online version must validate uploaded recordings and isolate them from executable code. A recording should be data only, never a script.
 

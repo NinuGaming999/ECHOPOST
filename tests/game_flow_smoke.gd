@@ -976,16 +976,16 @@ func _test_ambient_background(game: Control) -> void:
 
 
 func _test_second_chapter_campaign(game: Control) -> void:
-	_check(LevelCatalog.LEVELS.size() == 16, "Chapter II should expand the campaign to sixteen chambers.")
+	_check(LevelCatalog.LEVELS.size() == 17, "Chapter II should expand the campaign to seventeen chambers.")
 	var errors: PackedStringArray = LevelCatalog.validate_levels()
 	_check(errors.is_empty(), "All Chapter II room layouts should pass campaign validation: %s" % "\n".join(errors))
-	var last_room: Dictionary = LevelCatalog.get_level(15)
+	var last_room: Dictionary = LevelCatalog.get_level(16)
 	_check(int(last_room.get("chapter", 0)) == 2, "The final chamber should be marked as part of Chapter II.")
 	_check(last_room.has("echo_jammer") and last_room.has("echo_waypoints") and last_room.has("gate_open_seconds") and bool(last_room.get("hazard", false)), "The final chamber should combine relay order, an echo jammer, a sentinel and a pulse gate.")
 	game.call("_update_chapter_buttons")
 	var buttons: Array = game.get("chapter_buttons")
-	if buttons.size() == 16:
-		_check(str((buttons[12] as Button).text).begins_with("CH. II"), "Chapter II chambers should be clearly marked in chamber select.")
+	if buttons.size() == 17:
+		_check(str((buttons[13] as Button).text).begins_with("CH. II"), "Chapter II chambers should be clearly marked in chamber select.")
 
 	# Verify the authored four-relay route can pass around the jammer and reach A
 	# within the eight-second recording cap.
@@ -999,8 +999,8 @@ func _test_second_chapter_campaign(game: Control) -> void:
 	_check(route.duration() <= 8.0, "The final four-relay route should fit inside the recording limit.")
 	_check(game.call("_track_passes_waypoints_in_order", route, last_room["echo_waypoints"], 40.0), "The final authored relay route should visit all four relays in order.")
 	_check(not game.call("_track_passes_waypoint", route, last_room["echo_jammer"], float(last_room["echo_jammer_radius"])), "The final authored route should bypass the echo jammer.")
-	game.call("_start_level", 15)
-	_check(int(game.get("current_level_index")) == 15 and bool((game.get("level_data") as Dictionary).get("hazard", false)), "The final Chapter II room should load its sentinel and gate rules.")
+	game.call("_start_level", 16)
+	_check(int(game.get("current_level_index")) == 16 and bool((game.get("level_data") as Dictionary).get("hazard", false)), "The final Chapter II room should load its sentinel and gate rules.")
 
 func _test_premium_mobile_ui(game: Control) -> void:
 	var previous_handedness := bool(game.get("left_handed_controls"))

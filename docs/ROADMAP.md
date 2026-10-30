@@ -9,7 +9,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Desktop movement and touchscreen virtual joystick.
 - [x] Record, stop, replay, and linger behavior for one echo.
 - [x] Two-switch gate and exit loop.
-- [x] Thirteen authored room layouts with varied switch positions, sentinel patrol patterns, single/two/three/four-relay ordered-route challenges, a timed-gate crossing, a toggle-style Switch B, a three-relay/timed-gate combination, and a four-relay/sentinel/short-timer gauntlet.
+- [x] Seventeen authored room layouts with varied switch positions, sentinel patrol patterns, single/two/three/four-relay ordered-route challenges, a timed-gate crossing, a toggle-style Switch B, a three-relay/timed-gate combination, and a four-relay/sentinel/short-timer gauntlet.
 - [x] Moving sentinel in later rooms.
 - [x] Chapter unlocks, local save data, and a scrollable chapter selector.
 - [x] Separate echo-track, level-catalog, and progress-store code from the main scene.
@@ -32,15 +32,15 @@ This roadmap is the intended path from the initial project foundation to a relea
 ## Milestone 2 — Content foundation
 
 - [ ] Create a reusable room scene/data model and a level validation tool.
-- [ ] Build 12–20 authored puzzles that teach one new idea at a time.
+- [ ] Build 20–24 authored puzzles that teach one new idea at a time.
 - [x] Add a required Relay Beacon route checkpoint to Static Bloom and an ordered two-relay route to Chorus Route, including segment-distance validation and clear rejection feedback.
 - [x] Add Pulse Lock, a timed gate with a 3.5-second crossing window, timeout/retry handling, and a portal that stays powered after a successful crossing.
 - [x] Add an echo-only signal-jammer/dead-zone room; reject recordings whose sample segments enter the field and auto-reset after failure, while allowing a safe curved route.
 - [ ] Add more switch types and carefully constrain puzzle complexity beyond the toggle switch, ordered four-relay route, and combined relay/sentinel/timed-gate gauntlet.
 - [ ] Add checkpoints, better reset messaging, and a campaign map.
-- [x] Add one optional Memory Shard per authored chamber (currently thirteen) with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
+- [x] Add one optional Memory Shard per authored chamber (currently seventeen) with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
 - [x] Add a non-blocking restored-signal reward when all currently authored memories are recovered, both in the play status and Memory Archive.
-- [ ] Expand narrative fragments and authored world storytelling beyond the thirteen current introductory memories.
+- [ ] Expand narrative fragments and authored world storytelling beyond the seventeen current introductory memories.
 
 ## Milestone 3 — Art, animation, and audio
 
@@ -54,7 +54,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 ## Milestone 4 — Mobile QA and release preparation
 
 - [ ] Validate lifecycle pause/resume on physical Android devices and unusual background/foreground transitions.
-- [ ] Install the current debug APK and test all thirteen rooms, touch controls, save persistence and app relaunch on a real Android device.
+- [ ] Install the current debug APK and test all seventeen rooms, touch controls, save persistence and app relaunch on a real Android device.
 - [x] Add saved Performance Mode with reduced decorative rendering, batched route polylines and a 30 FPS mobile target; both supported Godot CI versions pass the settings/rendering regressions.
 - [ ] Measure low-end GPU performance, actual FPS, battery/thermals, aspect ratios and safe areas on physical devices.
 - [ ] Tune touch targets, joystick sensitivity, landscape handling, and screen cutouts based on device tests.
