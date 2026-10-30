@@ -55,7 +55,8 @@ This roadmap is the intended path from the initial project foundation to a relea
 
 - [ ] Validate lifecycle pause/resume on physical Android devices and unusual background/foreground transitions.
 - [ ] Install the current debug APK and test all thirteen rooms, touch controls, save persistence and app relaunch on a real Android device.
-- [ ] Test low-end GPU performance, battery use, varied landscape aspect ratios and display cutouts.
+- [x] Add saved Performance Mode with reduced decorative rendering, batched route polylines and a 30 FPS mobile target; both supported Godot CI versions pass the settings/rendering regressions.
+- [ ] Measure low-end GPU performance, actual FPS, battery/thermals, aspect ratios and safe areas on physical devices.
 - [ ] Tune touch targets, joystick sensitivity, landscape handling, and screen cutouts based on device tests.
 - [x] Set the Android package ID (`com.ninugaming.echopost`), version (`0.1.0`), app icon and tracked arm64-v8a debug export preset.
 - [x] Automate Android debug APK export, ZIP integrity validation, Actions artifact upload and nightly GitHub Release publication. [Successful export run](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100).

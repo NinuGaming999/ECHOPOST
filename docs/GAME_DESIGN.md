@@ -62,6 +62,7 @@ The chapter selector scrolls so future rooms do not collide with the navigation 
 
 - Use generous thumb targets and clear state feedback. Gameplay actions are translucent round glass controls rather than menu-style rectangles: the large Record Echo button is on the right by default, the optional latch circle sits beside it, and round Pause/Menu/Restart controls remain at the edges. The action cluster mirrors to the left in left-handed mode and uses glow/pressed states without hiding the playfield.
 - Reposition the circular action cluster, pause button, movement hint and status banner with viewport changes; preserve clear space between the movement zone and action hitboxes. Automated checks cover compact landscapes, but physical-device safe-area, cutout and aspect-ratio QA is still required.
+- Keep Performance Mode available for weaker phones. It should simplify decorative effects and route rendering while preserving every puzzle-relevant cue; target steadier mobile frame pacing and verify actual FPS, battery and thermals on physical hardware.
 - Add a color-blindness-friendly indicator and text/icon cues, not color alone.
 - Basic control preferences are implemented: slow/normal/fast movement presets and left-handed joystick placement, saved separately from campaign progress. Reduced motion, color-independent feedback, audio/haptics toggles, localization, and safe-area tuning remain release accessibility work.
 - Keep challenge based on planning and route choice.

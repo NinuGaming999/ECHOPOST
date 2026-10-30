@@ -23,8 +23,12 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Current main controller source blob for the exact line map below:** `e1989868c2c6501499a22bb57a5fe3912cdd3c14` (1915 lines)  
-**Current gameplay regression-test blob:** `4430a264d794e131d5f3e2f9a8904fed898b5018` (1131 lines)  
+**Current main controller source blob for the exact line map below:** `f7c75cdd825e4d12335202319fecdb366f0f6423` (1991 lines)  
+**Current gameplay regression-test blob:** `cdf19da99cca0d296e0facaf2a239c9060f1bb59` (1141 lines)  
+**Current settings-store blob:** `ae2c241920849d9db196a8462d1caadc5f820048` (43 lines); schema v2 stores Performance Mode separately from campaign progress.  
+**Low-end rendering commits:** saved Performance Mode preference [30f1189](https://github.com/NinuGaming999/ECHOPOST/commit/30f1189f7f8c03805b1c58fabf4abc94d5cd9c06), render/route optimization [1904ad8](https://github.com/NinuGaming999/ECHOPOST/commit/1904ad8f9b34a56c30873fba47258ef10e7cc0a1), regression tests [9297624](https://github.com/NinuGaming999/ECHOPOST/commit/929762484dd228eb3ca1d22da3c2ca41d8dc66bf), and final joystick/HUD cleanup [36622a5](https://github.com/NinuGaming999/ECHOPOST/commit/36622a5488f3cb4073b8692ae85a768b62710d43).  
+**Latest Godot CI:** [run 41091283098](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41091283098) passed on Godot 4.4.0 and 4.7.2.  
+**Latest Android APK export:** [run 41091282986](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41091282986) succeeded and refreshed the nightly APK for the exact tested source revision.  
 **Round-glass in-game action HUD:** source [`eeca6c96eed7783176ef704d8889f5f57fe35d52`](https://github.com/NinuGaming999/ECHOPOST/commit/eeca6c96eed7783176ef704d8889f5f57fe35d52), responsive size/minimum fix [`dc7538dc2702e64ac097978c683b26dd5200749d`](https://github.com/NinuGaming999/ECHOPOST/commit/dc7538dc2702e64ac097978c683b26dd5200749d), status/hint safe-lane layout [`7537dcf7f6222b9cdb9d98fe344ccc997d1bc306`](https://github.com/NinuGaming999/ECHOPOST/commit/7537dcf7f6222b9cdb9d98fe344ccc997d1bc306), circular HUD regression tests [`36f598d08cc667d1b610a3c0bbacca88f09d5133`](https://github.com/NinuGaming999/ECHOPOST/commit/36f598d08cc667d1b610a3c0bbacca88f09d5133)  
 **Latest Godot CI for the round-control revision:** [run 40860534243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40860534243) passed on Godot 4.4.0 and 4.7.2.  
 **Latest Android APK export for the same code/test commit:** [run 40860534080](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40860534080) succeeded and refreshed the nightly APK.  
@@ -99,6 +103,23 @@ The first five rooms teach the two-switch echo mechanic with varied geometry/pat
 The menu identity uses the supplied ECHO logo and a matching cyan geometric SVG icon; room/character art is still drawn procedurally in `scripts/game.gd`. Procedural visuals keep the project importable without an asset pack but are placeholder art, not final art. Each chamber also has one optional Memory Shard that reveals a short courier-network lore fragment.
 
 ## 2. Latest work in this development pass
+
+### October 30, 2026 — Low-end rendering and frame pacing
+
+**Goal:** reduce avoidable CPU/GPU work per frame and provide a saved low-end-device preset without removing puzzle-critical feedback.
+
+- `scripts/game.gd:L545–L558` and `L1651–L1664`: Performance Mode defaults ON for fresh installs and older settings files. It is switchable in Options and stored separately from campaign progress. On mobile it targets 30 FPS for steadier frame pacing; turning it off restores full visual effects and a 60 FPS mobile cap. Desktop/editor pacing is unchanged.
+- `scripts/game.gd:L1733–L1849`: halves room-grid density, skips animated corner rails and scan sweep, and lowers tessellation for jammer/relay/switch/gate/portal decorations in Performance Mode. Puzzle cues remain visible.
+- `scripts/game.gd:L1925–L1954` and `L1957–L1970`: Performance Mode uses a lower-allocation orb renderer and fewer joystick arc segments.
+- `scripts/game.gd:L1974–L1991`: routes are batched into PackedVector2Array polylines. Performance Mode submits one polyline per route instead of three draw calls per segment; full mode retains three glow passes as three batched polylines.
+- `scripts/game.gd:L1220–L1242`: Null Corridor's live jammer preview checks each new sampled segment once and caches the result, rather than rescanning the whole recorded route on every rendered frame. Final route validation remains in place.
+- `scripts/game.gd:L1598–L1643`: HUD text, tooltips and states are only written when displayed values change.
+- `scripts/data/settings_store.gd:L9–L29`: settings schema v2 persists `graphics/performance_mode`; old preference files safely default to ON.
+- `tests/headless_smoke.gd:L206–L229` and `tests/game_flow_smoke.gd:L360–L399`, `L907–L959`: cover default-on settings, save/load, Options toggling, and route-segment collision math.
+- Source/test commits: [settings schema](https://github.com/NinuGaming999/ECHOPOST/commit/30f1189f7f8c03805b1c58fabf4abc94d5cd9c06), [render and route optimization](https://github.com/NinuGaming999/ECHOPOST/commit/1904ad8f9b34a56c30873fba47258ef10e7cc0a1), [regression suite](https://github.com/NinuGaming999/ECHOPOST/commit/929762484dd228eb3ca1d22da3c2ca41d8dc66bf), [final UI cleanup](https://github.com/NinuGaming999/ECHOPOST/commit/36622a5488f3cb4073b8692ae85a768b62710d43).
+- **Godot verification:** [run 41091283098](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41091283098) passed import/parse, data and gameplay-flow tests on both Godot 4.4.0 and 4.7.2.
+- **Android verification:** [run 41091282986](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41091282986) exported, integrity-checked and published the APK for the same tested source revision. [Direct APK](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk).
+- **Measurement boundary:** no physical low-end handset or GPU profiler was available. Code-level work was reduced and CI passed, but actual FPS, battery and thermals still need measurement on hardware.
 
 ### October 29, 2026 — Round glass in-game action controls
 
@@ -483,48 +504,37 @@ This change is covered by an automated headless integration test. It is **not ye
 
 ## 4. Exact source line map — `scripts/game.gd`
 
-This map matches controller blob SHA `e1989868c2c6501499a22bb57a5fe3912cdd3c14` (1915 lines). Ranges end immediately before the next function.
+This map matches controller blob SHA `f7c75cdd825e4d12335202319fecdb366f0f6423` (1991 lines).
 
-- **L99–L125 — `_notification()` / `_pause_for_lifecycle()`:** viewport resize and pause on application lifecycle; clears held and smoothed joystick input.
-- **L126–L186:** initialization and frame loop, including clean automatic room resets.
-- **L187–L227 — `_input()`:** keyboard, touch and mouse control handling.
-- **L228–L238 — `_is_joystick_area()`:** wide handedness-aware floating-thumb regions with protected top, center and bottom action areas.
-- **L239–L249 — `_shape_touch_stick()`:** radial dead zone, proportional response and direction normalization.
-- **L250–L253 — `_update_joystick()`:** update the floating thumb response.
-- **L254–L260:** procedural star background.
-- **L261–L271 — `_build_interface()`; L272–L309 — `_build_menu()`:** interface and main menu/logo construction.
-- **L310–L344 — `_build_game_hud()`:** circular Record/Latch/Pause/Menu/Restart controls and game status.
-- **L345–L462:** completion, help, chapter selection and Memory Archive.
-- **L463–L534:** Archive opener, Options panel and movement-speed/handedness settings.
-- **L535–L563 — `_update_memory_archive()` / `_build_failure_panel()`:** archive state and automatic-reset card.
-- **L564–L844 — `_layout_responsive_ui()`:** compact menu rules, responsive circular action placement, right-side default Record, left-handed mirror, center banner sizing, safe movement hint placement and modal anchoring.
-- **L845–L850 — `_layout_centered_panels()`:** center modals.
-- **L851–L872 — `_make_panel()`; L873–L887 — `_make_label()`; L888–L947 — `_make_button()`:** reusable menu/panel/button styling and press behavior.
-- **L948–L1000 — `_style_game_action_button()`:** translucent circular in-game action surfaces, cyan/latch accent colors, hover/pressed/disabled states, and synchronized diameter/minimum-size/pivot updates.
-- **L1001–L1008 — `_animate_button()`:** button press/hover animation.
-- **L1009–L1035:** menu return/start handling.
-- **L1036–L1081 — `_start_level()`:** initialize a chamber and reset movement/actions.
-- **L1082–L1127:** recording and latch input actions.
-- **L1128–L1189 — `_finish_recording()`:** endpoint, relay order and jammer validation.
-- **L1190–L1197:** sample capture and route segment checks.
-- **L1198–L1288:** relay linking/order/progress.
-- **L1289–L1313 — `_update_player()`:** immediate keyboard movement plus eased touch response.
-- **L1314–L1332:** echo playback and relay-room detection.
-- **L1333–L1396:** automatic failure/reset, sentinel and memory collection.
-- **L1397–L1455:** timed gate and puzzle completion checks.
-- **L1456–L1516:** chamber completion, replay/restart and pause/resume.
-- **L1517–L1548:** help/chapter navigation and menu progress.
-- **L1549–L1586 — `_update_hud()`:** round Record/Latch control labels and echo/gate status messaging.
-- **L1587–L1611:** load/save campaign settings.
-- **L1612–L1623 — `_draw()`:** scene draw dispatch.
-- **L1624–L1661 — `_draw_menu_art()`:** logo-inspired tunnel background.
-- **L1662–L1668 — `_get_gate_timer_ratio()`:** timed-gate progress.
-- **L1669–L1786 — `_draw_room()`:** playfield, animated circuit rails/signal sweep, jammer, objectives and hazards.
-- **L1787–L1825:** relay, shard and switch rendering.
-- **L1826–L1836 — `_draw_switch()`; L1837–L1850 — `_draw_gate()`; L1851–L1859 — `_draw_portal()`:** objective/hazard rendering.
-- **L1860–L1884 — `_draw_robot()`:** orbital signal sphere.
-- **L1885–L1900 — `_draw_joystick()`:** floating glass movement pad and puck.
-- **L1901–L1915 — `_draw_track_path()`:** layered cyan route glow.
+- **L102–L140:** app lifecycle pause, initialization and frame loop setup.
+- **L141–L189 — `_process()`:** recording sample/update, echo playback, hazard and puzzle evaluation.
+- **L190–L230 — `_input()`; L231–L256:** keyboard/touch input, floating joystick zones, dead zone and analog response.
+- **L257–L274:** background stars and interface setup.
+- **L275–L312 — `_build_menu()`; L313–L347 — `_build_game_hud()`:** branded menu and round glass gameplay actions.
+- **L348–L471:** completion/help/chapter/archive construction.
+- **L472–L500 — `_build_options_panel()`:** speed, handedness and Performance Mode controls.
+- **L507–L559:** movement presets, handedness, Performance Mode toggling and mobile frame cap.
+- **L560–L629:** option labels, archive refresh and failure/reset panel.
+- **L630–L872 — `_layout_responsive_ui()`:** responsive menu, circular action placement, left-handed mirror and safe text lanes.
+- **L873–L975:** panel, label and common button construction.
+- **L976–L1028 — `_style_game_action_button()`:** translucent round in-game action surfaces.
+- **L1029–L1063:** press animation and menu/start flow.
+- **L1064–L1110 — `_start_level()`:** initialize a chamber and reset controls.
+- **L1111–L1157:** Record and Latch actions.
+- **L1158–L1219 — `_finish_recording()`:** route endpoint, relay-order and jammer validation.
+- **L1220–L1242 — `_add_record_sample()` / `_segment_touches_circle()`:** update cached jammer-overlap status once per new route segment.
+- **L1243–L1337:** relay linking/order/progress geometry.
+- **L1338–L1362 — `_update_player()`:** keyboard movement and eased touch movement.
+- **L1363–L1462:** echo playback, reset, sentinel, shard, timed-gate and puzzle checks.
+- **L1463–L1597:** completion, replay/restart, pause, navigation and menu progress.
+- **L1598–L1643 — `_update_hud()`:** avoid rewriting identical labels and control states.
+- **L1644–L1670:** load/save campaign and settings.
+- **L1671–L1725:** draw dispatch and branded menu backdrop.
+- **L1726–L1849 — `_draw_room()`:** room grid; optional animated rails/sweep and lower-detail puzzle arcs in Performance Mode.
+- **L1850–L1924:** relay, shard, switch, gate and portal drawing.
+- **L1925–L1956 — `_draw_robot()`:** low-allocation orb in Performance Mode; full orbit/highlight geometry otherwise.
+- **L1957–L1973 — `_draw_joystick()`:** lower arc tessellation in Performance Mode.
+- **L1974–L1991 — `_draw_track_path()`:** batched polylines; one route draw in Performance Mode.
 
 ## 5. Exact line map — supporting scripts and tests
 
@@ -571,19 +581,25 @@ This map matches controller blob SHA `e1989868c2c6501499a22bb57a5fe3912cdd3c14` 
 - **L206–L228:** settings defaults/persistence/normalization.
 - **L229–L233:** assertion helper.
 
-### `tests/game_flow_smoke.gd` (1131 lines, current blob SHA `4430a264d794e131d5f3e2f9a8904fed898b5018`)
+### `tests/game_flow_smoke.gd` (1141 lines, blob SHA `cdf19da99cca0d296e0facaf2a239c9060f1bb59`)
 - **L1–L12:** test harness and preloads.
-- **L13–L92:** orchestration and core lifecycle/UI/campaign/recording setup.
-- **L93–L241:** lifecycle pause, recording cap/short stop, sentinel reset, manual restart and portal completion idempotency.
-- **L243–L391:** chapter selector, Memory Shards, reward/archive UI and Options/handedness.
-- **L393–L498:** Latch Protocol and Static Bloom beacon validation.
-- **L500–L682:** ordered two-/three-relay routes and Fracture Clock timer.
-- **L683–L772:** Dead Air Protocol gauntlet.
-- **L773–L818:** Null Corridor jammer reject/reset and safe curved bypass.
-- **L819–L898:** timed-gate crossing and automatic failure-reset cleanup.
-- **L899–L949 — `_test_touch_joystick_comfort()`:** wide floating-thumb zones, protected HUD regions, left/right inversion, dead-zone precision, diagonal normalization, eased start/stop and no drift.
-- **L950–L1126 — `_test_premium_mobile_ui()`:** logo asset, responsive menu and circular HUD action tests. Verifies Record is round/transparent/on the right by default, action cluster mirrors left-handed, Record/Latch/menu/restart/pause remain within bounds and don't overlap, and status/movement text stays clear across 640×360, 720×360 and 800×320 layouts.
-- **L1127–L1131 — `_check()`:** report test failures.
+- **L13–L92:** orchestration and lifecycle/UI/campaign/recording setup.
+- **L93–L241:** lifecycle pause, recording cap/short stop, sentinel reset, restart cleanup and portal completion.
+- **L243–L399 — `_test_options_panel()`:** Options speed/handedness settings plus Performance Mode toggle and restoration.
+- **L401–L690:** latch, Relay Beacon, ordered relay and Fracture Clock tests.
+- **L691–L780:** Dead Air Protocol.
+- **L781–L826 — `_test_echo_jammer_route()`:** Null Corridor reject/reset and safe curved bypass.
+- **L827–L906:** timed-gate crossing and failure-reset behavior.
+- **L907–L959 — `_test_touch_joystick_comfort()`:** floating-thumb zones, dead-zone, easing, diagonal normalization and segment-to-jammer geometry.
+- **L960–L1136 — `_test_premium_mobile_ui()`:** round glass controls, handedness mirror, status clearance, logo and compact viewport bounds.
+- **L1137–L1141 — `_check()`:** report test failures.
+
+### `tests/headless_smoke.gd` (236 lines, blob SHA `df2d8fa7b4604ba224b9078f3b4ad307bd61daa7`)
+- **L206–L229 — `_test_settings_store()`:** Performance Mode defaults ON, persists OFF, and safely defaults ON if the key is missing.
+
+### `scripts/data/settings_store.gd` (43 lines, blob SHA `ae2c241920849d9db196a8462d1caadc5f820048`)
+- **L9–L21:** load speed, handedness and the graphics Performance Mode flag, with ON as the fallback.
+- **L24–L29:** save settings schema v2 independently from campaign progress.
 
 ### `project.godot` (44 lines, blob SHA `aaf2ca779d5ca128ec5d41b25f33102d883e045c`)
 - **L1–L10:** Project metadata, app icon, main scene and feature declarations.
@@ -619,10 +635,11 @@ This map matches controller blob SHA `e1989868c2c6501499a22bb57a5fe3912cdd3c14` 
 
 ## 6. Current verification status — be precise
 
-- **Latest completed Godot CI:** [run 40860534243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40860534243) passed on Godot 4.4.0 and 4.7.2 at source/test commit `36f598d08cc667d1b610a3c0bbacca88f09d5133`. Both versions passed project import/parse, data smoke and gameplay-flow tests, including circle/alpha checks, status clearance, handedness mirroring and compact action-control bounds.
-- **Latest Android APK export:** [run 40860534080](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40860534080) succeeded for the same commit. The APK exported, archive validation passed, an Actions artifact was uploaded, and [ECHOPOST Nightly APK](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk) was refreshed.
-- **Current code/test hashes:** `scripts/game.gd` = `e1989868c2c6501499a22bb57a5fe3912cdd3c14` (1915 lines); `tests/game_flow_smoke.gd` = `4430a264d794e131d5f3e2f9a8904fed898b5018` (1131 lines); `scripts/data/level_catalog.gd` = `b36787a5440912eafb7b800331e890ab3c51d74e` (382 lines); `tests/headless_smoke.gd` = `75df36b96e483b5db939297939fe9702226c7399` (233 lines).
-- **Device QA:** not yet performed here. Try the new round controls on a real phone; check Record/Latch reach, cutout/safe-area behavior and whether the transparent button fill remains readable over the world.
+- **Latest completed Godot CI:** [run 41091283098](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41091283098) passed on Godot 4.4.0 and 4.7.2 at commit `36622a5488f3cb4073b8692ae85a768b62710d43`. Both versions passed import/parse, data smoke and gameplay-flow tests, including Performance Mode persistence/toggling, route-segment collision math and mobile UI regressions.
+- **Latest Android APK export:** [run 41091282986](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41091282986) succeeded for the same tested revision. Export, ZIP integrity, artifact upload and nightly publication passed. [Direct APK](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk).
+- **Current code/test hashes:** `scripts/game.gd` = `f7c75cdd825e4d12335202319fecdb366f0f6423` (1991 lines); `scripts/data/settings_store.gd` = `ae2c241920849d9db196a8462d1caadc5f820048` (43 lines); `tests/game_flow_smoke.gd` = `cdf19da99cca0d296e0facaf2a239c9060f1bb59` (1141 lines); `tests/headless_smoke.gd` = `df2d8fa7b4604ba224b9078f3b4ad307bd61daa7` (236 lines).
+- **Performance measurement boundary:** no physical low-end handset or GPU profiler was available. The code-level workload is reduced and CI is green, but actual FPS, battery and thermals still need measurement on hardware.
+- **Device QA:** touch reach, safe areas/cutouts, save persistence after relaunch, and background/foreground behavior still need physical-device testing.
 - **Release boundary:** nightly APK is debug-signed for direct testing, not a production signing key or Google Play-ready release.
 
 ### Commands to run in the repository root on Windows

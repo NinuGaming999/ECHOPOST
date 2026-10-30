@@ -23,7 +23,7 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 - **Record Echo:** begin recording your route; press again to release the echo.
 - **Restart Room:** restart the current puzzle.
 - **Pause:** freeze or resume play.
-- **Options:** choose slow/normal/fast movement and put the virtual joystick on the right for left-handed play.
+- **Options:** choose slow/normal/fast movement, mirror the joystick/actions for left-handed play, and toggle **Performance Mode**. It is ON by default, reduces optional effects and route-rendering work, and targets 30 FPS on mobile. Turn it OFF on faster devices to restore the full neon effects and 60 FPS mobile cap.
 - **Latch Switch B / E:** in Latch Protocol, stand near Switch B after the echo holds A, then tap LATCH SWITCH B or press E. The switch stays latched when you leave it.
 - **Touch movement:** touch and drag anywhere on the left side of the playfield to move (right side when left-handed mode is enabled). A floating, dead-zone joystick gives fine control with short drags and eases in/out so movement does not snap or drift. The top HUD, center gutter and bottom action row are protected from movement input.
 - **Touch actions:** use the large translucent round **REC** button on the right to record/send an echo; the optional Switch B latch is the smaller round control beside it. Round **Pause**, **Menu** and **Restart** controls stay at the top/bottom edges. In left-handed mode, the Record/Latch cluster mirrors to the left.
@@ -77,7 +77,7 @@ godot --headless --path . --script res://tests/headless_smoke.gd
 godot --headless --path . --script res://tests/game_flow_smoke.gd
 ```
 
-On Windows, run `RUN_TESTS.bat`. The data tests cover echo-track timing/interpolation, campaign validation, and save/load boundaries. The data smoke tests also verify that control preferences save independently from campaign progress and validate timed-gate/ordered-relay room data. The gameplay integration test verifies recording limits, short-recording feedback, automatic full-room resets after sentinel contact and failed relay routes, reset-state cleanup, responsive/premium UI sizing and anchoring, logo texture/visibility and full-layout restoration across ten viewport sizes, compact 960×540 menu reflow and non-overlapping bottom touch controls, idempotent portal completion with save restoration, chapter/archive/options layouts, Memory Shard lore persistence, single/two-/three-/four-relay routes, linked-state feedback, timed-gate countdown/timeout/retry/crossing, Fracture Clock, and Dead Air Protocol, the Null Corridor jammer's blocked-route/reset and safe-bypass cases, plus lifecycle pause. GitHub Actions installs Godot and runs these tests on each push and pull request. See `PROJECT_PROGRESS.md` for the exact source map, known gaps, recent CI results, and next tasks.
+On Windows, run `RUN_TESTS.bat`. The data tests cover echo-track timing/interpolation, campaign validation, and save/load boundaries. The data smoke tests also verify that control/graphics preferences save independently from campaign progress, including the default-on and persisted Performance Mode setting, and validate timed-gate/ordered-relay room data. The gameplay integration test verifies recording limits, short-recording feedback, automatic full-room resets after sentinel contact and failed relay routes, reset-state cleanup, responsive/premium UI sizing and anchoring, logo texture/visibility and full-layout restoration across ten viewport sizes, compact 960×540 menu reflow and non-overlapping bottom touch controls, idempotent portal completion with save restoration, chapter/archive/options layouts, Memory Shard lore persistence, single/two-/three-/four-relay routes, linked-state feedback, timed-gate countdown/timeout/retry/crossing, Fracture Clock, and Dead Air Protocol, the Null Corridor jammer's blocked-route/reset and safe-bypass cases, plus lifecycle pause, Performance Mode toggling/persistence, and the incremental jammer segment-intersection helper. GitHub Actions installs Godot and runs these tests on each push and pull request. See `PROJECT_PROGRESS.md` for the exact source map, known gaps, recent CI results, and next tasks.
 
 ## Android APK
 
@@ -98,7 +98,7 @@ The Android workflow builds the APK and attaches it to that versioned release. B
 
 ## Saves
 
-Campaign progress and collected memories are stored at `user://echopost_save.cfg`. Control preferences are stored separately at `user://echopost_settings.cfg`, so changing speed or joystick side does not reset progress. Cloud save and online echo-sharing features are future milestones. See `docs/ROADMAP.md` and `docs/GAME_DESIGN.md`.
+Campaign progress and collected memories are stored at `user://echopost_save.cfg`. Control and graphics preferences are stored separately at `user://echopost_settings.cfg`, so changing speed, joystick side or Performance Mode does not reset progress. Cloud save and online echo-sharing features are future milestones. See `docs/ROADMAP.md` and `docs/GAME_DESIGN.md`.
 
 ## Contributing
 
