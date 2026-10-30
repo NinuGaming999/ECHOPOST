@@ -1,6 +1,6 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
-> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current seventeen-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
+> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current nineteen-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
 
 **Repository:** https://github.com/NinuGaming999/ECHOPOST  
 **Working branch:** `main`  
@@ -24,12 +24,12 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Current main controller source blob:** `2f6c7a04ef45606315033b1ef7f52e5a42eb86e5` (2039 lines)  
-**Current gameplay regression-test blob:** `d77eef16b1f5e086b5a625960871f2fa7cd9ff50` (1186 lines)  
+**Current main controller source blob:** `dd9ff0cb64e7927c889832eb9bb34343f2c4bf62` (2203 lines)  
+**Current gameplay regression-test blob:** `1febbbf3da6775365ccb24661c20a32a860020f9` (1234 lines)  
 **Current settings-store blob:** `ae2c241920849d9db196a8462d1caadc5f820048` (43 lines); schema v2 stores Performance Mode separately from campaign progress.  
 **Low-end rendering commits:** saved Performance Mode preference [30f1189](https://github.com/NinuGaming999/ECHOPOST/commit/30f1189f7f8c03805b1c58fabf4abc94d5cd9c06), render/route optimization [1904ad8](https://github.com/NinuGaming999/ECHOPOST/commit/1904ad8f9b34a56c30873fba47258ef10e7cc0a1), regression tests [9297624](https://github.com/NinuGaming999/ECHOPOST/commit/929762484dd228eb3ca1d22da3c2ca41d8dc66bf), and final joystick/HUD cleanup [36622a5](https://github.com/NinuGaming999/ECHOPOST/commit/36622a5488f3cb4073b8692ae85a768b62710d43).  
-**Latest Godot CI:** [run 41122626449](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41122626449) passed on Godot 4.4.0 and 4.7.2 for the 17-room Chapter II revision.  
-**Latest Android APK export:** [run 41122626539](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41122626539) succeeded for the same tested source revision and refreshed the nightly APK.  
+**Latest Godot CI:** [run 41128769256](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41128769256) passed on Godot 4.4.0 and 4.7.2 for the 19-room Chapter III revision.  
+**Latest Android APK export:** [run 41128769076](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41128769076) succeeded for the same tested source revision and refreshed the nightly APK.  
 **Round-glass in-game action HUD:** source [`eeca6c96eed7783176ef704d8889f5f57fe35d52`](https://github.com/NinuGaming999/ECHOPOST/commit/eeca6c96eed7783176ef704d8889f5f57fe35d52), responsive size/minimum fix [`dc7538dc2702e64ac097978c683b26dd5200749d`](https://github.com/NinuGaming999/ECHOPOST/commit/dc7538dc2702e64ac097978c683b26dd5200749d), status/hint safe-lane layout [`7537dcf7f6222b9cdb9d98fe344ccc997d1bc306`](https://github.com/NinuGaming999/ECHOPOST/commit/7537dcf7f6222b9cdb9d98fe344ccc997d1bc306), circular HUD regression tests [`36f598d08cc667d1b610a3c0bbacca88f09d5133`](https://github.com/NinuGaming999/ECHOPOST/commit/36f598d08cc667d1b610a3c0bbacca88f09d5133)  
 **Latest Godot CI for the round-control revision:** [run 40860534243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40860534243) passed on Godot 4.4.0 and 4.7.2.  
 **Latest Android APK export for the same code/test commit:** [run 40860534080](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40860534080) succeeded and refreshed the nightly APK.  
@@ -39,8 +39,8 @@
 **Latest visual refinement commits:** orbit-orb/route glow [`dfa3672fd57cafb7b7b537d57ea606f1272b3004`](https://github.com/NinuGaming999/ECHOPOST/commit/dfa3672fd57cafb7b7b537d57ea606f1272b3004), polished orb renderer [`e7d8edabf723104767f00f176e3e741cc25e74ad`](https://github.com/NinuGaming999/ECHOPOST/commit/e7d8edabf723104767f00f176e3e741cc25e74ad), circuit rails/signal sweep [`204f37d2c12858a590491bb959f57782138a61c8`](https://github.com/NinuGaming999/ECHOPOST/commit/204f37d2c12858a590491bb959f57782138a61c8), logo regression assertions [`42f31a31811570bc224004f833ba4ab333eddbda`](https://github.com/NinuGaming999/ECHOPOST/commit/42f31a31811570bc224004f833ba4ab333eddbda)  
 **Latest verified Godot CI:** [run 40851002676](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40851002676) passed on Godot 4.4.0 and 4.7.2.  
 **Latest verified Android APK:** [run 40851002626](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40851002626) succeeded for the same source/test commit.  
-**Current level catalog blob:** `416bc2d88c1e3ac9b024a5915d89edfe919a62b0` (463 lines; 17 rooms across two chapters)  
-**Current data smoke-test blob:** `1c3b8ff559adc403d0faee8118ee2be9d52d5e22` (237 lines; permits multiple four-relay/sentinel/timed-gate rooms)  
+**Current level catalog blob:** `ed66fef722977c090535800b01b6f019db6e4edc` (598 lines; 19 rooms and platform/pulse validation)  
+**Current data smoke-test blob:** `602aae3b0c030a1f7a756dc8fae7901c89c92014` (261 lines; platform and pulse-switch validation)  
 **Supplied ECHO logo:** `assets/echopost_logo.jpg` (blob `7dd3e438e5cd152eb0120e59833c25611f0036f1`)  
 **Matching SVG identity icon:** `assets/echopost_icon.svg` (67 lines; blob `0eaae23f67fc11c19a101c2eec6ef3a88f06a543`)  
 **Current project-settings blob:** `aaf2ca779d5ca128ec5d41b25f33102d883e045c` (44 lines; project icon uses the supplied ECHO logo)  
@@ -84,7 +84,7 @@ ECHOPOST is a mobile-first 2D puzzle adventure about recording a route and letti
 5. The two switches open the gate; reaching the portal completes the chamber.
 6. Campaign progress is saved locally and the next chamber unlocks.
 
-The current source includes seventeen authored chamber layouts across two signal chapters:
+The current source includes nineteen authored chamber layouts across three signal chapters:
 - **The First Echo:** basic teach-the-mechanic chamber.
 - **Long Memory:** roaming sentinel and a more distant Switch B.
 - **Split Signal:** faster/larger sentinel movement and opposite-side switches.
@@ -102,12 +102,25 @@ The current source includes seventeen authored chamber layouts across two signal
 - **Clockbreak Crossing:** three ordered relays followed by a 2.8-second timed gate.
 - **Switchback Protocol:** two ordered relays, an echo-only jammer bypass, and a latched Switch B.
 - **The Last Chorus:** four ordered relays, an echo-only jammer bypass, a moving sentinel, and a 2.8-second gate window.
+- **Drift Bridge:** a moving platform carries the live player across a full-height void zone; unsupported movement into the gap is blocked, and platform time pauses with gameplay.
+- **Phase Relay:** Switch B is active only during a repeating pulse window, followed by a 3.2-second timed gate.
 
-The first five rooms teach the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces a single required gold Relay Beacon; Chorus Route requires two beacons in order; Pulse Lock adds a timed crossing and retry rule; Latch Protocol adds a toggle switch; Triune Relay extends ordered route planning to three checkpoints; Fracture Clock combines the three-relay sequence with a timed crossing; Dead Air Protocol combines four relays, active sentinel evasion and a short timed gate. Relay tests check line segments between samples, so a crossing between samples is valid. Seventeen rooms across two chapters are still a prototype, not a finished campaign.
+The first five rooms teach the two-switch echo mechanic with varied geometry/patrols. Static Bloom introduces a single required gold Relay Beacon; Chorus Route requires two beacons in order; Pulse Lock adds a timed crossing and retry rule; Latch Protocol adds a toggle switch; Triune Relay extends ordered route planning to three checkpoints; Fracture Clock combines the three-relay sequence with a timed crossing; Dead Air Protocol combines four relays, active sentinel evasion and a short timed gate. Relay tests check line segments between samples, so a crossing between samples is valid. Nineteen rooms across three chapters are still a prototype, not a finished campaign.
 
 The menu identity uses the supplied ECHO logo and a matching cyan geometric SVG icon; room/character art is still drawn procedurally in `scripts/game.gd`. Procedural visuals keep the project importable without an asset pack but are placeholder art, not final art. Each chamber also has one optional Memory Shard that reveals a short courier-network lore fragment.
 
 ## 2. Latest work in this development pass
+
+### October 31, 2026 — Chapter III: moving bridges and pulse switches
+
+**Goal:** introduce mechanics that change how the player navigates and times a gate, rather than only recombining earlier relay/sentinel rules.
+
+- Added chamber 18, **Drift Bridge**: a moving platform shuttles across a full-height void zone. The real player is carried by platform displacement while retaining steering; unsupported steps into the gap are blocked. Echo tracks remain world-space recordings and are not moved by the live bridge.
+- Added chamber 19, **Phase Relay**: Switch B pulses for 2.1 seconds in a 5.5-second cycle. The player and echo must occupy their switches during the live phase; success starts a 3.2-second gate window.
+- Added catalog validation for platform endpoints, deck size, travel distance, speed, void geometry and pulse timing. Added data/gameplay regressions for rider carry, safe support, pulse off/on phases and gate activation.
+- Chapter Select labels the two new rooms as Chapter III. Existing saves continue to unlock the additions through normal campaign progress.
+- Godot 4.4.0 and 4.7.2 tests plus the Android APK export passed on source commit `6868983cd1ae6dea14a0c730ebe56b3f174f8cf8`.
+- Physical Android playtesting remains outstanding; do not infer actual device performance or touch comfort from CI.
 
 ### October 31, 2026 — Chapter II campaign expansion
 
