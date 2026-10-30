@@ -19,6 +19,7 @@ func _run_tests() -> void:
 	root.add_child(game)
 	await process_frame
 
+	_test_ambient_background(game)
 	_test_chapter_select_layout(game)
 	_test_touch_joystick_comfort(game)
 	_test_premium_mobile_ui(game)
@@ -955,6 +956,20 @@ func _test_touch_joystick_comfort(game: Control) -> void:
 	game.set("left_handed_controls", previous_handedness)
 	game.size = previous_size
 	game.call("_layout_responsive_ui")
+
+
+func _test_ambient_background(game: Control) -> void:
+	var background: Variant = game.get("background_texture")
+	_check(background is Texture2D, "The generated ECHO nebula background should load as an offline texture.")
+	if background is Texture2D:
+		_check(background.get_width() == 320 and background.get_height() == 180, "The compressed background texture should retain its 16:9 landscape dimensions.")
+	var particles: Array = game.get("stars")
+	_check(particles.size() == 78, "The ambient background should create a deterministic field of 78 twinkling stars.")
+	_check(not particles.is_empty() and particles[0] is Vector4, "Each star should store normalized position, size and twinkle phase.")
+	var previous_time := float(game.get("particle_time"))
+	game.set("screen_state", 0)
+	game.call("_process", 0.016)
+	_check(float(game.get("particle_time")) > previous_time, "Ambient stars should keep blinking while the main menu is visible.")
 
 
 func _test_premium_mobile_ui(game: Control) -> void:

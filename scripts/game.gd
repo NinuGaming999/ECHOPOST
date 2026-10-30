@@ -25,6 +25,7 @@ const LEVEL_CATALOG = preload("res://scripts/data/level_catalog.gd")
 const LEVELS: Array[Dictionary] = LEVEL_CATALOG.LEVELS
 const PROGRESS_STORE = preload("res://scripts/data/progress_store.gd")
 const SETTINGS_STORE = preload("res://scripts/data/settings_store.gd")
+const BACKGROUND_IMAGE_PATH := "res://assets/echo_nebula_background.jpg"
 
 var screen_state: ScreenState = ScreenState.MENU
 var current_level_index: int = 0
@@ -34,6 +35,8 @@ var collected_shards: PackedInt32Array = PackedInt32Array()
 var player_move_speed: float = MOVE_SPEED
 var left_handed_controls: bool = false
 var performance_mode: bool = true
+var background_texture: Texture2D
+var particle_time: float = 0.0
 var level_data: Dictionary = {}
 
 var player_position: Vector2 = Vector2(160, 365)
@@ -57,7 +60,7 @@ var hazard_time: float = 0.0
 var failure_reset_timer: float = 0.0
 var failure_reset_reason: String = ""
 var status_message: String = "Your route can become someone else's solution."
-var stars: Array[Vector3] = []
+var stars: Array[Vector4] = []
 
 var joystick_touch_index: int = -1
 var joystick_mouse_active: bool = false
@@ -130,6 +133,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_create_stars()
+	_load_background_texture()
 	_load_progress()
 	_load_settings()
 	_build_interface()
@@ -139,7 +143,10 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	# The background ambience continues on the menu and pause screens as well.
+	particle_time = fposmod(particle_time + minf(delta, 0.05), 4096.0)
 	if screen_state != ScreenState.PLAYING:
+		queue_redraw()
 		return
 
 	# A failed run freezes briefly behind a polished reset card, then reboots the
@@ -254,11 +261,30 @@ func _update_joystick(point: Vector2) -> void:
 	joystick_direction = _shape_touch_stick(point - joystick_origin)
 
 
+func _load_background_texture() -> void:
+	# Decode the small generated JPEG exactly once at startup. Keeping it as a
+	# local project asset means the background also works fully offline.
+	if not FileAccess.file_exists(BACKGROUND_IMAGE_PATH):
+		push_warning("ECHOPOST background image is missing: " + BACKGROUND_IMAGE_PATH)
+		return
+	var image_bytes := FileAccess.get_file_as_bytes(BACKGROUND_IMAGE_PATH)
+	if image_bytes.is_empty():
+		push_warning("ECHOPOST background image is empty.")
+		return
+	var image := Image.new()
+	var load_error := image.load_jpg_from_buffer(image_bytes)
+	if load_error != OK:
+		push_warning("Could not decode ECHOPOST background image. Error: %s" % load_error)
+		return
+	background_texture = ImageTexture.create_from_image(image)
+
+
 func _create_stars() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 812731
-	for i in range(90):
-		stars.append(Vector3(rng.randf_range(0.0, 1280.0), rng.randf_range(0.0, 720.0), rng.randf_range(0.6, 1.8)))
+	for _i in range(78):
+		# Store normalized positions so the star field follows every aspect ratio.
+		stars.append(Vector4(rng.randf(), rng.randf(), rng.randf_range(0.7, 1.7), rng.randf_range(0.0, TAU)))
 
 
 func _build_interface() -> void:
@@ -1669,20 +1695,42 @@ func _save_progress() -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.002, 0.009, 0.019), true)
-	if performance_mode:
-		for star_index in range(0, stars.size(), 3):
-			var reduced_star: Vector3 = stars[star_index]
-			draw_circle(Vector2(reduced_star.x, reduced_star.y), reduced_star.z, Color(0.08, 0.60, 0.54, 0.30))
+	var screen_rect := Rect2(Vector2.ZERO, size)
+	if background_texture != null:
+		var background_tint := Color(0.58, 0.80, 0.92, 0.92) if performance_mode else Color(0.72, 0.88, 1.0, 0.94)
+		draw_texture_rect(background_texture, screen_rect, false, background_tint)
 	else:
-		for star in stars:
-			draw_circle(Vector2(star.x, star.y), star.z, Color(0.08, 0.60, 0.54, 0.38))
+		draw_rect(screen_rect, Color(0.002, 0.009, 0.019), true)
+	# A navy veil keeps the photo atmospheric rather than competing with the puzzles.
+	draw_rect(screen_rect, Color(0.002, 0.009, 0.019, 0.34), true)
 	if screen_state == ScreenState.MENU:
 		_draw_menu_art()
-		return
-	_draw_room()
-	if screen_state == ScreenState.PAUSED:
-		draw_rect(Rect2(0, 100, size.x, 520), Color(0.002, 0.012, 0.02, 0.38), true)
+	else:
+		_draw_room()
+		if screen_state == ScreenState.PAUSED:
+			draw_rect(Rect2(0, 100, size.x, 520), Color(0.002, 0.012, 0.02, 0.38), true)
+	_draw_ambient_particles()
+
+
+func _draw_ambient_particles() -> void:
+	# Twinkling signal-stars: 78 deterministic points in full mode, one third on
+	# weak devices. No nodes, textures or per-particle timers are created.
+	var particle_step := 3 if performance_mode else 1
+	for star_index in range(0, stars.size(), particle_step):
+		var star: Vector4 = stars[star_index]
+		var pulse := 0.5 + 0.5 * sin(particle_time * (0.85 + star.z * 0.45) + star.w)
+		var alpha := (0.14 + pulse * 0.48) * (0.78 if performance_mode else 1.0)
+		var star_color := Color(0.22, 0.78, 1.0, alpha)
+		if star_index % 7 == 0:
+			star_color = Color(0.18, 1.0, 0.88, alpha)
+		var position := Vector2(star.x * size.x, star.y * size.y)
+		var radius := star.z * (0.72 + pulse * 0.38)
+		draw_circle(position, radius, star_color)
+		# Occasional tiny four-point glints add life only in the full visual mode.
+		if not performance_mode and pulse > 0.94 and star.z > 1.35:
+			var glint_color := Color(star_color.r, star_color.g, star_color.b, alpha * 0.55)
+			draw_line(position + Vector2(-radius * 2.2, 0), position + Vector2(radius * 2.2, 0), glint_color, 0.8)
+			draw_line(position + Vector2(0, -radius * 2.2), position + Vector2(0, radius * 2.2), glint_color, 0.8)
 
 
 func _draw_menu_art() -> void:
@@ -1732,7 +1780,7 @@ func _get_gate_timer_ratio() -> float:
 
 func _draw_room() -> void:
 	var room_rect := Rect2(ROOM_LEFT, ROOM_TOP, ROOM_RIGHT - ROOM_LEFT, ROOM_BOTTOM - ROOM_TOP)
-	draw_rect(room_rect, Color(0.006, 0.025, 0.036), true)
+	draw_rect(room_rect, Color(0.006, 0.025, 0.036, 0.80), true)
 	var accent: Color = level_data.get("accent", Color(0.15, 0.34, 0.45))
 	draw_rect(room_rect, Color(0.10, 0.90, 0.80, 0.70), false, 2.0)
 	draw_rect(room_rect.grow(-5.0), Color(accent.r, accent.g, accent.b, 0.16), false, 1.0)
