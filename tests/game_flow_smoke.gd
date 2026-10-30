@@ -1149,7 +1149,7 @@ func _test_chapter_five_mechanics(game: Control) -> void:
 	var orbit_room: Dictionary = LevelCatalog.get_level(21)
 	_check(str(orbit_room.get("name", "")) == "Orbit Crossing", "Chamber 22 should be the double moving-bridge introduction.")
 	game.call("_start_level", 21)
-	var orbit_platforms: Array = game.call("_get_moving_platform_positions", 0.0)
+	var orbit_platforms: Array[Vector2] = game.call("_get_moving_platform_positions", 0.0)
 	_check(orbit_platforms.size() == 2, "Orbit Crossing should calculate both moving bridges.")
 	if orbit_platforms.size() == 2:
 		_check(bool(game.call("_is_position_supported", orbit_platforms[0], orbit_platforms)), "A point on either moving bridge should remain supported over the void.")
