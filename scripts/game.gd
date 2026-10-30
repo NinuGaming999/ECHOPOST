@@ -33,6 +33,7 @@ var rooms_completed: int = 0
 var collected_shards: PackedInt32Array = PackedInt32Array()
 var player_move_speed: float = MOVE_SPEED
 var left_handed_controls: bool = false
+var performance_mode: bool = true
 var level_data: Dictionary = {}
 
 var player_position: Vector2 = Vector2(160, 365)
@@ -47,6 +48,7 @@ var is_recording: bool = false
 var recording_elapsed: float = 0.0
 var record_sample_accumulator: float = 0.0
 var recording_track: Variant = ECHO_TRACK_SCRIPT.new()
+var recording_hits_jammer: bool = false
 var door_open: bool = false
 var switch_b_latched: bool = false
 var gate_open_timer: float = 0.0
@@ -81,7 +83,8 @@ var speed_slow_button: Button
 var speed_normal_button: Button
 var speed_fast_button: Button
 var left_handed_button: Button
-var menu_progress_label: Label
+var performance_button: Button
+var menu_progress_label
 var level_title_label: Label
 var level_hint_label: Label
 var echo_status_label: Label
@@ -481,9 +484,12 @@ func _build_options_panel() -> void:
 	_make_label(options_panel, "SpeedHelp", Vector2(34, 164), Vector2(472, 34), "Changes how quickly the courier moves.", 13, Color(0.55, 0.68, 0.81), HORIZONTAL_ALIGNMENT_CENTER)
 	left_handed_button = _make_button(options_panel, "LeftHandedButton", Vector2(62, 218), Vector2(416, 48), "", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 15)
 	left_handed_button.pressed.connect(_toggle_left_handed_controls)
-	_make_label(options_panel, "HandedHelp", Vector2(35, 272), Vector2(470, 36), "Move the virtual joystick to the right or left side.", 12, Color(0.55, 0.68, 0.81), HORIZONTAL_ALIGNMENT_CENTER)
+	_make_label(options_panel, "HandedHelp", Vector2(35, 270), Vector2(470, 34), "Move the virtual joystick to the right or left side.", 12, Color(0.55, 0.68, 0.81), HORIZONTAL_ALIGNMENT_CENTER)
+	performance_button = _make_button(options_panel, "PerformanceButton", Vector2(62, 309), Vector2(416, 42), "PERFORMANCE MODE: ON", Color(0.02, 0.30, 0.31), Color(0.03, 0.48, 0.45), 14)
+	performance_button.tooltip_text = "Simplifies optional effects and targets a steadier 30 FPS on mobile."
+	performance_button.pressed.connect(_toggle_performance_mode)
 
-	var back := _make_button(options_panel, "OptionsBack", Vector2(150, 340), Vector2(240, 44), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 15)
+	var back := _make_button(options_panel, "OptionsBack", Vector2(150, 356), Vector2(240, 44), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 15)
 	back.pressed.connect(func():
 		options_panel.hide()
 		menu_root.show()
@@ -532,6 +538,25 @@ func _set_left_handed_controls(enabled: bool) -> void:
 	queue_redraw()
 
 
+func _toggle_performance_mode() -> void:
+	_set_performance_mode(not performance_mode)
+
+
+func _set_performance_mode(enabled: bool) -> void:
+	performance_mode = enabled
+	_apply_performance_mode()
+	_save_settings()
+	_update_options_panel()
+	queue_redraw()
+
+
+func _apply_performance_mode() -> void:
+	# Target a steadier frame rate on mobile while reducing effects. Desktop and
+	# editor sessions keep their normal pacing for development.
+	if OS.has_feature("mobile"):
+		Engine.max_fps = 30 if performance_mode else 60
+
+
 func _update_options_panel() -> void:
 	if not is_instance_valid(speed_slow_button):
 		return
@@ -539,6 +564,9 @@ func _update_options_panel() -> void:
 	speed_normal_button.text = "NORMAL  ✓" if is_equal_approx(player_move_speed, 255.0) else "NORMAL"
 	speed_fast_button.text = "FAST  ✓" if is_equal_approx(player_move_speed, 310.0) else "FAST"
 	left_handed_button.text = "LEFT-HANDED JOYSTICK: ON" if left_handed_controls else "LEFT-HANDED JOYSTICK: OFF"
+	if is_instance_valid(performance_button):
+		performance_button.text = "PERFORMANCE MODE: ON" if performance_mode else "PERFORMANCE MODE: OFF"
+		performance_button.tooltip_text = "Less background detail, simpler glow and a steadier mobile frame rate." if performance_mode else "Full neon decoration is enabled. Use Performance Mode on slower phones."
 
 
 func _update_memory_archive() -> void:
@@ -1058,6 +1086,7 @@ func _start_level(level_index: int) -> void:
 	recording_elapsed = 0.0
 	record_sample_accumulator = 0.0
 	recording_track.clear()
+	recording_hits_jammer = false
 	door_open = false
 	switch_b_latched = false
 	gate_open_timer = 0.0
@@ -1087,6 +1116,7 @@ func _on_record_pressed() -> void:
 		recording_elapsed = 0.0
 		record_sample_accumulator = 0.0
 		recording_track.clear()
+		recording_hits_jammer = false
 		_add_record_sample(0.0, player_position)
 		echo_visible = false
 		echo_playing = false
@@ -1188,7 +1218,26 @@ func _finish_recording() -> void:
 
 
 func _add_record_sample(sample_time: float, point: Vector2) -> void:
+	if level_data.has("echo_jammer") and not recording_hits_jammer:
+		var jammer_position: Vector2 = level_data["echo_jammer"]
+		var jammer_radius := float(level_data.get("echo_jammer_radius", 100.0))
+		var samples: Array = recording_track.samples
+		if samples.is_empty():
+			recording_hits_jammer = point.distance_squared_to(jammer_position) <= jammer_radius * jammer_radius
+		else:
+			var previous_point: Vector2 = samples.back()["p"]
+			recording_hits_jammer = _segment_touches_circle(previous_point, point, jammer_position, jammer_radius)
 	recording_track.add_sample(sample_time, point)
+
+
+func _segment_touches_circle(segment_start: Vector2, segment_end: Vector2, circle_center: Vector2, radius: float) -> bool:
+	var segment := segment_end - segment_start
+	var length_squared := segment.length_squared()
+	var closest_point := segment_start
+	if length_squared > 0.0001:
+		var progress := clampf((circle_center - segment_start).dot(segment) / length_squared, 0.0, 1.0)
+		closest_point = segment_start + segment * progress
+	return closest_point.distance_squared_to(circle_center) <= radius * radius
 
 
 func _track_passes_waypoint(track: Variant, waypoint: Vector2, radius: float) -> bool:
@@ -1551,9 +1600,14 @@ func _update_hud() -> void:
 		return
 	if level_data.is_empty():
 		return
-	level_title_label.text = "%02d  /  %s" % [current_level_index + 1, str(level_data["name"]).to_upper()]
-	level_hint_label.text = str(level_data["subtitle"])
-	status_label.text = status_message
+	var title_text := "%02d  /  %s" % [current_level_index + 1, str(level_data["name"]).to_upper()]
+	if level_title_label.text != title_text:
+		level_title_label.text = title_text
+	var hint_text := str(level_data["subtitle"])
+	if level_hint_label.text != hint_text:
+		level_hint_label.text = hint_text
+	if status_label.text != status_message:
+		status_label.text = status_message
 	if is_recording:
 		record_button.text = "■\n%d s" % int(ceil(MAX_RECORD_SECONDS - recording_elapsed))
 		record_button.tooltip_text = "Stop and send the recorded echo"
@@ -1571,7 +1625,9 @@ func _update_hud() -> void:
 			echo_status_label.text = "ECHO: GATE OPEN"
 		else:
 			echo_status_label.text = "ECHO: READY"
-	record_button.disabled = screen_state == ScreenState.PAUSED or screen_state == ScreenState.COMPLETE or failure_reset_timer > 0.0
+	var record_disabled := screen_state == ScreenState.PAUSED or screen_state == ScreenState.COMPLETE or failure_reset_timer > 0.0
+	if record_button.disabled != record_disabled:
+		record_button.disabled = record_disabled
 	if is_instance_valid(latch_switch_button):
 		var toggle_mode := str(level_data.get("plate_b_mode", "hold")) == "toggle"
 		latch_switch_button.visible = toggle_mode
@@ -1595,10 +1651,12 @@ func _load_settings() -> void:
 	var settings: Dictionary = SETTINGS_STORE.load_settings()
 	player_move_speed = float(settings["move_speed"])
 	left_handed_controls = bool(settings["left_handed_controls"])
+	performance_mode = bool(settings.get("performance_mode", true))
+	_apply_performance_mode()
 
 
 func _save_settings() -> void:
-	var error: int = SETTINGS_STORE.save_settings(player_move_speed, left_handed_controls)
+	var error: int = SETTINGS_STORE.save_settings(player_move_speed, left_handed_controls, SETTINGS_STORE.SETTINGS_PATH, performance_mode)
 	if error != OK:
 		push_warning("Could not save control settings. Error code: %s" % error)
 
@@ -1611,8 +1669,13 @@ func _save_progress() -> void:
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.002, 0.009, 0.019), true)
-	for star in stars:
-		draw_circle(Vector2(star.x, star.y), star.z, Color(0.08, 0.60, 0.54, 0.38))
+	if performance_mode:
+		for star_index in range(0, stars.size(), 3):
+			var reduced_star: Vector3 = stars[star_index]
+			draw_circle(Vector2(reduced_star.x, reduced_star.y), reduced_star.z, Color(0.08, 0.60, 0.54, 0.30))
+	else:
+		for star in stars:
+			draw_circle(Vector2(star.x, star.y), star.z, Color(0.08, 0.60, 0.54, 0.38))
 	if screen_state == ScreenState.MENU:
 		_draw_menu_art()
 		return
@@ -1672,36 +1735,39 @@ func _draw_room() -> void:
 	var accent: Color = level_data.get("accent", Color(0.15, 0.34, 0.45))
 	draw_rect(room_rect, Color(0.10, 0.90, 0.80, 0.70), false, 2.0)
 	draw_rect(room_rect.grow(-5.0), Color(accent.r, accent.g, accent.b, 0.16), false, 1.0)
-	for x in range(int(ROOM_LEFT + 20), int(ROOM_RIGHT), 40):
-		draw_line(Vector2(x, ROOM_TOP + 4), Vector2(x, ROOM_BOTTOM - 4), Color(0.06, 0.33, 0.32, 0.30), 1.0)
-	for y in range(int(ROOM_TOP + 20), int(ROOM_BOTTOM), 40):
-		draw_line(Vector2(ROOM_LEFT + 4, y), Vector2(ROOM_RIGHT - 4, y), Color(0.06, 0.33, 0.32, 0.30), 1.0)
+	var grid_step := 80 if performance_mode else 40
+	var grid_alpha := 0.22 if performance_mode else 0.30
+	for x in range(int(ROOM_LEFT + 20), int(ROOM_RIGHT), grid_step):
+		draw_line(Vector2(x, ROOM_TOP + 4), Vector2(x, ROOM_BOTTOM - 4), Color(0.06, 0.33, 0.32, grid_alpha), 1.0)
+	for y in range(int(ROOM_TOP + 20), int(ROOM_BOTTOM), grid_step):
+		draw_line(Vector2(ROOM_LEFT + 4, y), Vector2(ROOM_RIGHT - 4, y), Color(0.06, 0.33, 0.32, grid_alpha), 1.0)
 
-	# Circuit-tunnel corner rails echo the logo without filling the playable space.
-	var rail_pulse := 0.18 + (sin(hazard_time * 0.9) + 1.0) * 0.035
-	var rail_color := Color(0.12, 0.84, 0.78, rail_pulse)
-	var rail_dim := Color(0.07, 0.47, 0.49, rail_pulse * 0.62)
-	var rail_segments: Array[PackedVector2Array] = [
-		PackedVector2Array([Vector2(ROOM_LEFT + 14, ROOM_TOP + 62), Vector2(ROOM_LEFT + 14, ROOM_TOP + 23), Vector2(ROOM_LEFT + 66, ROOM_TOP + 23), Vector2(ROOM_LEFT + 80, ROOM_TOP + 35)]),
-		PackedVector2Array([Vector2(ROOM_RIGHT - 14, ROOM_TOP + 62), Vector2(ROOM_RIGHT - 14, ROOM_TOP + 23), Vector2(ROOM_RIGHT - 66, ROOM_TOP + 23), Vector2(ROOM_RIGHT - 80, ROOM_TOP + 35)]),
-		PackedVector2Array([Vector2(ROOM_LEFT + 14, ROOM_BOTTOM - 62), Vector2(ROOM_LEFT + 14, ROOM_BOTTOM - 23), Vector2(ROOM_LEFT + 66, ROOM_BOTTOM - 23), Vector2(ROOM_LEFT + 80, ROOM_BOTTOM - 35)]),
-		PackedVector2Array([Vector2(ROOM_RIGHT - 14, ROOM_BOTTOM - 62), Vector2(ROOM_RIGHT - 14, ROOM_BOTTOM - 23), Vector2(ROOM_RIGHT - 66, ROOM_BOTTOM - 23), Vector2(ROOM_RIGHT - 80, ROOM_BOTTOM - 35)])
-	]
-	for rail_index in range(rail_segments.size()):
-		draw_polyline(rail_segments[rail_index], rail_color if rail_index % 2 == 0 else rail_dim, 1.6, true)
-		var rail_point: Vector2 = rail_segments[rail_index][1]
-		draw_circle(rail_point, 3.0, Color(0.26, 1.0, 0.92, rail_pulse + 0.10))
-	# A restrained cyan sweep gives the playfield a live-signal feel; low opacity
-	# keeps the switches, route and hazards more legible than the decoration.
-	var scan_y := ROOM_TOP + fposmod(hazard_time * 30.0, ROOM_BOTTOM - ROOM_TOP)
-	draw_line(Vector2(ROOM_LEFT + 8, scan_y), Vector2(ROOM_RIGHT - 8, scan_y), Color(0.16, 0.89, 0.82, 0.035), 1.0, true)
+	# Moving rails and scan sweep are optional. Structural geometry and every
+	# gameplay cue remain visible in Performance Mode.
+	if not performance_mode:
+		var rail_pulse := 0.18 + (sin(hazard_time * 0.9) + 1.0) * 0.035
+		var rail_color := Color(0.12, 0.84, 0.78, rail_pulse)
+		var rail_dim := Color(0.07, 0.47, 0.49, rail_pulse * 0.62)
+		var rail_segments: Array[PackedVector2Array] = [
+			PackedVector2Array([Vector2(ROOM_LEFT + 14, ROOM_TOP + 62), Vector2(ROOM_LEFT + 14, ROOM_TOP + 23), Vector2(ROOM_LEFT + 66, ROOM_TOP + 23), Vector2(ROOM_LEFT + 80, ROOM_TOP + 35)]),
+			PackedVector2Array([Vector2(ROOM_RIGHT - 14, ROOM_TOP + 62), Vector2(ROOM_RIGHT - 14, ROOM_TOP + 23), Vector2(ROOM_RIGHT - 66, ROOM_TOP + 23), Vector2(ROOM_RIGHT - 80, ROOM_TOP + 35)]),
+			PackedVector2Array([Vector2(ROOM_LEFT + 14, ROOM_BOTTOM - 62), Vector2(ROOM_LEFT + 14, ROOM_BOTTOM - 23), Vector2(ROOM_LEFT + 66, ROOM_BOTTOM - 23), Vector2(ROOM_LEFT + 80, ROOM_BOTTOM - 35)]),
+			PackedVector2Array([Vector2(ROOM_RIGHT - 14, ROOM_BOTTOM - 62), Vector2(ROOM_RIGHT - 14, ROOM_BOTTOM - 23), Vector2(ROOM_RIGHT - 66, ROOM_BOTTOM - 23), Vector2(ROOM_RIGHT - 80, ROOM_BOTTOM - 35)])
+		]
+		for rail_index in range(rail_segments.size()):
+			draw_polyline(rail_segments[rail_index], rail_color if rail_index % 2 == 0 else rail_dim, 1.6, true)
+			var rail_point: Vector2 = rail_segments[rail_index][1]
+			draw_circle(rail_point, 3.0, Color(0.26, 1.0, 0.92, rail_pulse + 0.10))
+		var scan_y := ROOM_TOP + fposmod(hazard_time * 30.0, ROOM_BOTTOM - ROOM_TOP)
+		draw_line(Vector2(ROOM_LEFT + 8, scan_y), Vector2(ROOM_RIGHT - 8, scan_y), Color(0.16, 0.89, 0.82, 0.035), 1.0, true)
 
 	if level_data.has("echo_jammer"):
 		var jammer_position: Vector2 = level_data["echo_jammer"]
 		var jammer_radius := float(level_data.get("echo_jammer_radius", 100.0))
 		draw_circle(jammer_position, jammer_radius, Color(0.035, 0.035, 0.13, 0.88))
-		draw_arc(jammer_position, jammer_radius, 0.0, TAU, 72, Color(0.76, 0.36, 1.0, 0.96), 4.0, true)
-		draw_arc(jammer_position, jammer_radius * 0.72, 0.0, TAU, 64, Color(0.39, 0.22, 0.72, 0.78), 2.0, true)
+		draw_arc(jammer_position, jammer_radius, 0.0, TAU, 28 if performance_mode else 72, Color(0.76, 0.36, 1.0, 0.96), 4.0, true)
+		if not performance_mode:
+			draw_arc(jammer_position, jammer_radius * 0.72, 0.0, TAU, 48, Color(0.39, 0.22, 0.72, 0.78), 2.0, true)
 		draw_circle(jammer_position, 18.0, Color(0.68, 0.28, 0.96, 0.95))
 		draw_line(jammer_position + Vector2(-12.0, 0.0), jammer_position + Vector2(12.0, 0.0), Color(0.95, 0.85, 1.0, 0.95), 3.0)
 		draw_line(jammer_position + Vector2(0.0, -12.0), jammer_position + Vector2(0.0, 12.0), Color(0.95, 0.85, 1.0, 0.95), 3.0)
@@ -1743,11 +1809,7 @@ func _draw_room() -> void:
 	# Show the player's route as it is being recorded, so the ghost mechanic feels tangible.
 	if is_recording and not recording_track.samples.is_empty():
 		var live_route_tint := Color(0.18, 0.98, 0.83, 0.84)
-		if level_data.has("echo_jammer") and _track_passes_waypoint(
-			recording_track,
-			level_data["echo_jammer"],
-			float(level_data.get("echo_jammer_radius", 100.0))
-		):
+		if recording_hits_jammer:
 			live_route_tint = Color(1.0, 0.28, 0.43, 0.88)
 		_draw_track_path(recording_track, live_route_tint, 3.5)
 		var route_start: Vector2 = recording_track.samples.front()["p"]
@@ -1788,8 +1850,9 @@ func _draw_echo_waypoint(position: Vector2, label: String = "RELAY", linked: boo
 	# Amber means not reached; green means the current route has linked this checkpoint in order.
 	var glow := Color(0.24, 1.0, 0.72) if linked else Color(1.0, 0.66, 0.25)
 	draw_circle(position, 34.0, Color(glow.r, glow.g, glow.b, 0.10 if linked else 0.08))
-	draw_arc(position, 25.0, 0.0, TAU, 48, Color(glow.r, glow.g, glow.b, 0.92 if linked else 0.84), 2.5, true)
-	draw_arc(position, 15.0, 0.0, TAU, 48, Color(glow.r, glow.g, glow.b, 0.70 if linked else 0.65), 1.5, true)
+	draw_arc(position, 25.0, 0.0, TAU, 24 if performance_mode else 48, Color(glow.r, glow.g, glow.b, 0.92 if linked else 0.84), 2.5, true)
+	if not performance_mode:
+		draw_arc(position, 15.0, 0.0, TAU, 40, Color(glow.r, glow.g, glow.b, 0.70 if linked else 0.65), 1.5, true)
 	var diamond := PackedVector2Array([
 		position + Vector2(0, -13),
 		position + Vector2(11, 0),
@@ -1807,7 +1870,7 @@ func _draw_echo_waypoint(position: Vector2, label: String = "RELAY", linked: boo
 func _draw_memory_shard(position: Vector2) -> void:
 	# Optional collectible: a luminous violet crystal, distinct from both switches.
 	draw_circle(position, 30.0, Color(0.72, 0.44, 1.0, 0.08))
-	draw_arc(position, 20.0, 0.0, TAU, 48, Color(0.76, 0.50, 1.0, 0.72), 2.0, true)
+	draw_arc(position, 20.0, 0.0, TAU, 24 if performance_mode else 48, Color(0.76, 0.50, 1.0, 0.72), 2.0, true)
 	var diamond := PackedVector2Array([
 		position + Vector2(0, -15),
 		position + Vector2(12, 0),
@@ -1827,7 +1890,7 @@ func _draw_switch(position: Vector2, letter: String, tint: Color, active: bool) 
 	var color := tint if active else tint.darkened(0.45)
 	draw_circle(position, 35, Color(tint.r, tint.g, tint.b, 0.09))
 	draw_circle(position, 26, Color(tint.r, tint.g, tint.b, 0.12 if active else 0.05))
-	draw_arc(position, 25, 0, TAU, 48, color, 3.0, true)
+	draw_arc(position, 25, 0, TAU, 24 if performance_mode else 48, color, 3.0, true)
 	draw_circle(position, 13, color if active else Color(0.12, 0.18, 0.24))
 	draw_circle(position, 5, Color(0.92, 0.98, 1.0) if active else color)
 	draw_string(ThemeDB.fallback_font, position + Vector2(-5, 5), letter, HORIZONTAL_ALIGNMENT_CENTER, 12, 13, Color(0.02, 0.08, 0.13) if active else Color(0.82, 0.91, 0.98))
@@ -1838,10 +1901,10 @@ func _draw_gate() -> void:
 	if door_open:
 		var gate_tint := Color(1.0, 0.75, 0.34) if gate_open_timer > 0.0 else Color(0.25, 1.0, 0.75)
 		draw_line(Vector2(GATE_X, ROOM_TOP + 18), Vector2(GATE_X, ROOM_BOTTOM - 18), Color(gate_tint.r, gate_tint.g, gate_tint.b, 0.30), 4.0, true)
-		draw_arc(Vector2(GATE_X, 365), 49, -PI / 2, PI / 2, 48, Color(gate_tint.r, gate_tint.g, gate_tint.b, 0.85), 3.0, true)
+		draw_arc(Vector2(GATE_X, 365), 49, -PI / 2, PI / 2, 24 if performance_mode else 48, Color(gate_tint.r, gate_tint.g, gate_tint.b, 0.85), 3.0, true)
 	else:
 		draw_line(Vector2(GATE_X, ROOM_TOP + 18), Vector2(GATE_X, ROOM_BOTTOM - 18), Color(0.36, 0.52, 0.64, 0.75), 5.0, true)
-		for y in range(170, 590, 28):
+		for y in range(170, 590, 42 if performance_mode else 28):
 			draw_line(Vector2(GATE_X - 10, y), Vector2(GATE_X + 10, y + 15), Color(0.18, 0.29, 0.38, 0.9), 3.0, true)
 		draw_rect(Rect2(GATE_X - 17, 312, 34, 105), Color(0.08, 0.15, 0.22), true)
 		draw_rect(Rect2(GATE_X - 17, 312, 34, 105), Color(0.22, 0.64, 0.79), false, 2.0)
@@ -1851,16 +1914,24 @@ func _draw_gate() -> void:
 func _draw_portal(position: Vector2, powered: bool) -> void:
 	var tint := Color(0.28, 1.0, 0.76) if powered else Color(0.21, 0.45, 0.55)
 	draw_circle(position, 37, Color(tint.r, tint.g, tint.b, 0.08))
-	draw_arc(position, 29, 0, TAU, 64, tint, 4.0, true)
-	draw_arc(position, 19, 0, TAU, 64, Color(tint.r, tint.g, tint.b, 0.50), 2.0, true)
+	draw_arc(position, 29, 0, TAU, 28 if performance_mode else 64, tint, 4.0, true)
+	if not performance_mode:
+		draw_arc(position, 19, 0, TAU, 48, Color(tint.r, tint.g, tint.b, 0.50), 2.0, true)
 	draw_line(position + Vector2(-8, -14), position + Vector2(9, 14), tint, 3.0, true)
 	draw_line(position + Vector2(9, -14), position + Vector2(-8, 14), tint, 3.0, true)
 
 
 func _draw_robot(position: Vector2, tint: Color, scale_factor: float) -> void:
-	# Match the app mark: a luminous signal-orb wrapped in an orbital route.
-	# Draw the orbit first so the core appears to sit above the ring.
 	var alpha := tint.a
+	if performance_mode:
+		# Compact signal orb keeps a glass highlight and orbit rim without per-frame arrays.
+		draw_arc(position, 22.0 * scale_factor, -0.28, TAU - 0.28, 24, Color(0.10, 0.91, 0.83, 0.56 * alpha), 2.2 * scale_factor, true)
+		draw_circle(position, 19.0 * scale_factor, Color(0.05, 0.95, 0.86, 0.10 * alpha))
+		draw_circle(position, 15.5 * scale_factor, Color(0.01, 0.08, 0.12, 0.96 * alpha))
+		draw_circle(position, 12.5 * scale_factor, Color(tint.r * 0.28, tint.g * 0.72, tint.b * 0.78, 0.96 * alpha))
+		draw_circle(position + Vector2(-4.5, -5.5) * scale_factor, 3.8 * scale_factor, Color(0.90, 1.0, 0.99, 0.62 * alpha))
+		return
+	# Full detail retains the app-mark orb for faster devices.
 	var orbit_points := PackedVector2Array()
 	for i in range(49):
 		var angle := TAU * float(i) / 48.0
@@ -1901,14 +1972,17 @@ func _draw_joystick() -> void:
 func _draw_track_path(track: Variant, tint: Color, line_width: float) -> void:
 	if track.samples.size() < 2:
 		return
-	# Three restrained passes make the path feel like the glowing orbit in the logo:
-	# a broad aura, a saturated halo, then a crisp core line.
+	# Batch the route into polylines. Low-end phones use one draw call per route
+	# instead of three separate draw_line calls for every recorded segment.
+	var points := PackedVector2Array()
+	for sample in track.samples:
+		points.append(sample["p"])
+	if performance_mode:
+		draw_polyline(points, Color(tint.r, tint.g, tint.b, minf(1.0, tint.a * 0.82)), maxf(2.0, line_width * 0.72), true)
+		return
 	var aura := Color(tint.r, tint.g, tint.b, tint.a * 0.09)
 	var halo := Color(tint.r, tint.g, tint.b, tint.a * 0.28)
-	for i in range(1, track.samples.size()):
-		var from_point: Vector2 = track.samples[i - 1]["p"]
-		var to_point: Vector2 = track.samples[i]["p"]
-		draw_line(from_point, to_point, aura, line_width * 4.0, true)
-		draw_line(from_point, to_point, halo, line_width * 2.0, true)
-		draw_line(from_point, to_point, tint, line_width, true)
+	draw_polyline(points, aura, line_width * 4.0, true)
+	draw_polyline(points, halo, line_width * 2.0, true)
+	draw_polyline(points, tint, line_width, true)
 
