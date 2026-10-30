@@ -1533,7 +1533,7 @@ func _complete_level() -> void:
 	else:
 		unlocked_level = LEVELS.size() - 1
 		complete_title_label.text = "THE SIGNAL CONTINUES"
-		complete_body_label.text = "You finished this early campaign.\nYour route is now part of the journey."
+		complete_body_label.text = "You restored both signal chapters.\nThe courier network remembers your route."
 		next_level_button.text = "RESTART CAMPAIGN"
 	_save_progress()
 	_update_menu_progress()
@@ -1598,7 +1598,8 @@ func _update_chapter_buttons() -> void:
 	for i in range(chapter_buttons.size()):
 		var button := chapter_buttons[i]
 		var prefix := "UNLOCKED" if i <= unlocked_level else "LOCKED"
-		button.text = "%02d   %s   •   %s" % [i + 1, str(LEVELS[i]["name"]).to_upper(), prefix]
+		var chapter_tag := "CH. II  •  " if int(LEVELS[i].get("chapter", 1)) > 1 else ""
+		button.text = "%s%02d   %s   •   %s" % [chapter_tag, i + 1, str(LEVELS[i]["name"]).to_upper(), prefix]
 		button.disabled = i > unlocked_level
 
 

@@ -35,6 +35,7 @@ func _run_tests() -> void:
 	_test_dead_air_protocol(game)
 	_test_echo_jammer_route(game)
 	_test_timed_gate_requires_crossing(game)
+	_test_second_chapter_campaign(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
@@ -965,13 +966,41 @@ func _test_ambient_background(game: Control) -> void:
 		_check(background.get_width() >= 360 and background.get_height() >= 203, "The bundled ECHO nebula background should have enough resolution for the mobile landscape layout.")
 		_check(absf(float(background.get_width()) / float(background.get_height()) - (16.0 / 9.0)) < 0.01, "The ECHO nebula wallpaper should preserve its cinematic 16:9 aspect ratio.")
 	var particles: Array = game.get("stars")
-	_check(particles.size() == 96, "The ambient background should create a deterministic field of 78 twinkling stars.")
+	_check(particles.size() == 96, "The ambient background should create a deterministic field of 96 twinkling stars.")
 	_check(not particles.is_empty() and particles[0] is Vector4, "Each star should store normalized position, size and twinkle phase.")
 	var previous_time := float(game.get("particle_time"))
 	game.set("screen_state", 0)
 	game.call("_process", 0.016)
 	_check(float(game.get("particle_time")) > previous_time, "Ambient stars should keep blinking while the main menu is visible.")
 
+
+
+func _test_second_chapter_campaign(game: Control) -> void:
+	_check(LevelCatalog.LEVELS.size() == 16, "Chapter II should expand the campaign to sixteen chambers.")
+	var errors: PackedStringArray = LevelCatalog.validate_levels()
+	_check(errors.is_empty(), "All Chapter II room layouts should pass campaign validation: %s" % "\n".join(errors))
+	var last_room: Dictionary = LevelCatalog.get_level(15)
+	_check(int(last_room.get("chapter", 0)) == 2, "The final chamber should be marked as part of Chapter II.")
+	_check(last_room.has("echo_jammer") and last_room.has("echo_waypoints") and last_room.has("gate_open_seconds") and bool(last_room.get("hazard", false)), "The final chamber should combine relay order, an echo jammer, a sentinel and a pulse gate.")
+	game.call("_update_chapter_buttons")
+	var buttons: Array = game.get("chapter_buttons")
+	if buttons.size() == 16:
+		_check(str((buttons[12] as Button).text).begins_with("CH. II"), "Chapter II chambers should be clearly marked in chamber select.")
+
+	# Verify the authored four-relay route can pass around the jammer and reach A
+	# within the eight-second recording cap.
+	var route = EchoTrackScript.new()
+	route.add_sample(0.0, Vector2(150, 520))
+	route.add_sample(1.05, Vector2(290, 300))
+	route.add_sample(1.70, Vector2(430, 230))
+	route.add_sample(2.76, Vector2(700, 230))
+	route.add_sample(3.79, Vector2(850, 450))
+	route.add_sample(4.38, Vector2(980, 520))
+	_check(route.duration() <= 8.0, "The final four-relay route should fit inside the recording limit.")
+	_check(game.call("_track_passes_waypoints_in_order", route, last_room["echo_waypoints"], 40.0), "The final authored relay route should visit all four relays in order.")
+	_check(not game.call("_track_passes_waypoint", route, last_room["echo_jammer"], float(last_room["echo_jammer_radius"])), "The final authored route should bypass the echo jammer.")
+	game.call("_start_level", 15)
+	_check(int(game.get("current_level_index")) == 15 and bool((game.get("level_data") as Dictionary).get("hazard", false)), "The final Chapter II room should load its sentinel and gate rules.")
 
 func _test_premium_mobile_ui(game: Control) -> void:
 	var previous_handedness := bool(game.get("left_handed_controls"))
