@@ -1866,17 +1866,17 @@ func _update_hud() -> void:
 			echo_text = "ECHO: %.1fs LEFT" % maxf(0.0, echo_linger_left)
 		elif door_open:
 			echo_text = "ECHO: GATE OPEN"
+	if multi_echo:
+		echo_text = "ECHOES: %d/2 LINKED" % echo_slots_recorded
+		if is_recording:
+			echo_text = "RECORDING ECHO %d" % (recording_slot_index + 1)
 	if record_button.text != record_text:
 		record_button.text = record_text
 	if record_button.tooltip_text != record_tooltip:
 		record_button.tooltip_text = record_tooltip
 	if echo_status_label.text != echo_text:
 		echo_status_label.text = echo_text
-	if multi_echo:
-		echo_text = "ECHOES: %d/2 LINKED" % echo_slots_recorded
-		if is_recording:
-			echo_text = "RECORDING ECHO %d" % (recording_slot_index + 1)
-		var record_disabled := screen_state == ScreenState.PAUSED or screen_state == ScreenState.COMPLETE or failure_reset_timer > 0.0 or (multi_echo and echo_slots_recorded >= 2 and not is_recording)
+	var record_disabled := screen_state == ScreenState.PAUSED or screen_state == ScreenState.COMPLETE or failure_reset_timer > 0.0 or (multi_echo and echo_slots_recorded >= 2 and not is_recording)
 	if record_button.disabled != record_disabled:
 		record_button.disabled = record_disabled
 	if is_instance_valid(latch_switch_button):

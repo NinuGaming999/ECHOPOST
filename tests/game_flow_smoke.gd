@@ -1060,6 +1060,7 @@ func _test_multi_echo_puzzles(game: Control) -> void:
 	_check(str(twin_room.get("name", "")) == "Twin Signal", "Chamber 20 should teach recording two independent echoes.")
 	_check(int(twin_room.get("echo_slots", 0)) == 2 and twin_room.get("plate_c") is Vector2, "Twin Signal should define two echo slots and Switch C.")
 	game.call("_start_level", 19)
+	_check(str(game.get("echo_status_label").text).begins_with("ECHOES: 0/2"), "Two-echo HUD should show the linked echo count before recording.")
 	var spawn: Vector2 = twin_room["spawn"]
 	var plate_a: Vector2 = twin_room["plate_a"]
 	var plate_c: Vector2 = twin_room["plate_c"]
