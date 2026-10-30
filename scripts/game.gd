@@ -1,7 +1,7 @@
 extends Control
 
 ## ECHOPOST - mobile-first 2D echo puzzle adventure.
-## This file deliberately uses procedural art so the project runs without external assets.
+## Bundled ECHO nebula artwork and lightweight procedural particles keep the game fully offline.
 
 enum ScreenState { MENU, PLAYING, PAUSED, COMPLETE }
 
@@ -25,7 +25,7 @@ const LEVEL_CATALOG = preload("res://scripts/data/level_catalog.gd")
 const LEVELS: Array[Dictionary] = LEVEL_CATALOG.LEVELS
 const PROGRESS_STORE = preload("res://scripts/data/progress_store.gd")
 const SETTINGS_STORE = preload("res://scripts/data/settings_store.gd")
-const BACKGROUND_IMAGE_PATH := "res://assets/echo_nebula_background.svg"
+const BACKGROUND_IMAGE_PATH := "res://assets/echo_nebula_background.jpg"
 
 var screen_state: ScreenState = ScreenState.MENU
 var current_level_index: int = 0
@@ -262,7 +262,7 @@ func _update_joystick(point: Vector2) -> void:
 
 
 func _load_background_texture() -> void:
-	# Godot imports this local SVG as a texture; no runtime download or decode is needed.
+	# The compressed generated JPEG is bundled locally for offline use.
 	var loaded_background := load(BACKGROUND_IMAGE_PATH)
 	if loaded_background is Texture2D:
 		background_texture = loaded_background
@@ -1688,19 +1688,25 @@ func _save_progress() -> void:
 func _draw() -> void:
 	var screen_rect := Rect2(Vector2.ZERO, size)
 	if background_texture != null:
+		var texture_size := Vector2(background_texture.get_width(), background_texture.get_height())
+		var cover_scale := maxf(size.x / maxf(texture_size.x, 1.0), size.y / maxf(texture_size.y, 1.0))
+		var cover_size := texture_size * cover_scale
+		var cover_rect := Rect2((size - cover_size) * 0.5, cover_size)
 		var background_tint := Color(0.58, 0.80, 0.92, 0.92) if performance_mode else Color(0.72, 0.88, 1.0, 0.94)
-		draw_texture_rect(background_texture, screen_rect, false, background_tint)
+		draw_texture_rect(background_texture, cover_rect, false, background_tint)
 	else:
 		draw_rect(screen_rect, Color(0.002, 0.009, 0.019), true)
 	# A navy veil keeps the photo atmospheric rather than competing with the puzzles.
 	draw_rect(screen_rect, Color(0.002, 0.009, 0.019, 0.34), true)
+	# Twinkling particles live between the wallpaper and gameplay geometry. They
+	# never cover a relay, switch, player, echo route or circular touch control.
+	_draw_ambient_particles()
 	if screen_state == ScreenState.MENU:
 		_draw_menu_art()
 	else:
 		_draw_room()
 		if screen_state == ScreenState.PAUSED:
 			draw_rect(Rect2(0, 100, size.x, 520), Color(0.002, 0.012, 0.02, 0.38), true)
-	_draw_ambient_particles()
 
 
 func _draw_ambient_particles() -> void:
@@ -1712,7 +1718,9 @@ func _draw_ambient_particles() -> void:
 		var pulse := 0.5 + 0.5 * sin(particle_time * (0.85 + star.z * 0.45) + star.w)
 		var alpha := (0.14 + pulse * 0.48) * (0.78 if performance_mode else 1.0)
 		var star_color := Color(0.22, 0.78, 1.0, alpha)
-		if star_index % 7 == 0:
+		if star_index % 13 == 0:
+			star_color = Color(0.58, 0.48, 1.0, alpha * 0.82)
+		elif star_index % 7 == 0:
 			star_color = Color(0.18, 1.0, 0.88, alpha)
 		var position := Vector2(star.x * size.x, star.y * size.y)
 		var radius := star.z * (0.72 + pulse * 0.38)
