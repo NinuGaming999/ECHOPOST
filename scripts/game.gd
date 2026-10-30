@@ -1756,7 +1756,7 @@ func _complete_level() -> void:
 	else:
 		unlocked_level = LEVELS.size() - 1
 		complete_title_label.text = "THE SIGNAL CONTINUES"
-		complete_body_label.text = "You restored both signal chapters.\nThe courier network remembers your route."
+		complete_body_label.text = "You restored all four signal chapters.\nThe courier network remembers your route."
 		next_level_button.text = "RESTART CAMPAIGN"
 	_save_progress()
 	_update_menu_progress()
@@ -1853,7 +1853,7 @@ func _update_hud() -> void:
 	var multi_echo := int(level_data.get("echo_slots", 1)) > 1
 	var next_slot_name := "C" if echo_slots_recorded == 1 else "A"
 	var record_text := "■\n%d s" % int(ceil(MAX_RECORD_SECONDS - recording_elapsed)) if is_recording else ("✓\nSYNC" if multi_echo and echo_slots_recorded >= 2 else ("●\nREC " + next_slot_name if multi_echo else "●\nREC"))
-	var record_tooltip := "Stop and send Echo %d to its switch" % (recording_slot_index + 1) if is_recording else ("Record Echo %d ending on Switch %s" % [echo_slots_recorded + 1, next_slot_name] if multi_echo else "Record a route, then stop and send the echo")
+	var record_tooltip := "Stop and send Echo %d to its switch" % (recording_slot_index + 1) if is_recording else ("Both echoes are set. Restart the room to record a new pair." if multi_echo and echo_slots_recorded >= 2 else ("Record Echo %d ending on Switch %s" % [echo_slots_recorded + 1, next_slot_name] if multi_echo else "Record a route, then stop and send the echo"))
 	var echo_text := "ECHO: RECORDING" if is_recording else "ECHO: READY"
 	if not is_recording:
 		if door_open and gate_open_timer > 0.0:
@@ -1867,7 +1867,7 @@ func _update_hud() -> void:
 		elif door_open:
 			echo_text = "ECHO: GATE OPEN"
 	if multi_echo:
-		echo_text = "ECHOES: %d/2 LINKED" % echo_slots_recorded
+		echo_text = "ECHOES: %d/2 RECORDED" % echo_slots_recorded
 		if is_recording:
 			echo_text = "RECORDING ECHO %d" % (recording_slot_index + 1)
 	if record_button.text != record_text:

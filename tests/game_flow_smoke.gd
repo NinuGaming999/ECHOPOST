@@ -1098,6 +1098,9 @@ func _test_multi_echo_puzzles(game: Control) -> void:
 	_check(bool(game.get("door_open")), "Echoes holding A and C plus the player on B should open Twin Signal's gate.")
 	_check(bool(game.get("record_button").disabled), "The record button should lock after both echo slots have been captured.")
 	_check(not (game.get("secondary_echo_track").samples as Array).is_empty(), "Echo 2 should retain its own independent route samples.")
+	game.call("_start_level", 19)
+	_check(int(game.get("echo_slots_recorded")) == 0 and not bool(game.get("echo_visible")) and not bool(game.get("secondary_echo_visible")), "Restarting a duet room should clear both echo slots and both playback states.")
+	_check((game.get("secondary_echo_track").samples as Array).is_empty(), "Restarting a duet room should clear Echo 2's independent route data.")
 
 	var convergence_room: Dictionary = LevelCatalog.get_level(20)
 	_check(str(convergence_room.get("name", "")) == "Convergent Signal", "Chamber 21 should combine two echoes with a pulse gate.")
