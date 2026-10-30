@@ -1711,7 +1711,7 @@ func _draw() -> void:
 
 
 func _draw_ambient_particles() -> void:
-	# Twinkling signal-stars: 78 deterministic points in full mode, one third on
+	# Twinkling signal-stars: 96 deterministic points in full mode, one third on
 	# weak devices. No nodes, textures or per-particle timers are created.
 	var particle_step := 3 if performance_mode else 1
 	for star_index in range(0, stars.size(), particle_step):

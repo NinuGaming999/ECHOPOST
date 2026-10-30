@@ -103,8 +103,9 @@ func _test_level_catalog() -> void:
 			if level.has("echo_waypoints") and level["echo_waypoints"] is Array and level["echo_waypoints"].size() >= 3:
 				relay_timer_combo_found = true
 				if bool(level.get("hazard", false)) and level["echo_waypoints"].size() >= 4:
+					# Both Dead Air Protocol and The Last Chorus intentionally use this
+					# advanced combination; the named-room checks below remain specific.
 					four_relay_hunt_found = true
-					_check(str(level_name) == "Dead Air Protocol", "The four-relay sentinel/timed-gate challenge should be named Dead Air Protocol.")
 			var gate_duration: Variant = level["gate_open_seconds"]
 			_check(gate_duration is int or gate_duration is float, "Timed gate duration must be numeric.")
 			if gate_duration is int or gate_duration is float:
