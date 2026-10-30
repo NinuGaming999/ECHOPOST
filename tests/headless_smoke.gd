@@ -207,14 +207,14 @@ func _test_settings_store() -> void:
 	var defaults: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
 	_check(is_equal_approx(float(defaults["move_speed"]), 255.0), "Missing settings should default to normal movement speed.")
 	_check(not bool(defaults["left_handed_controls"]), "Missing settings should default to the standard left-side joystick.")
- 	_check(bool(defaults["performance_mode"]), "New settings should default to Performance Mode for weak-device headroom.")
+	_check(bool(defaults["performance_mode"]), "New settings should default to Performance Mode for weak-device headroom.")
 
 	var save_error := SettingsStore.save_settings(200.0, true, TEST_SETTINGS_PATH, false)
 	_check(save_error == OK, "Control settings should save to their own preferences file.")
 	var saved: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
 	_check(is_equal_approx(float(saved["move_speed"]), 200.0), "Settings should preserve the selected slow movement preset.")
 	_check(bool(saved["left_handed_controls"]), "Settings should preserve left-handed joystick preference.")
- 	_check(not bool(saved["performance_mode"]), "Settings should preserve the selected full-visual mode.")
+	_check(not bool(saved["performance_mode"]), "Settings should preserve the selected full-visual mode.")
 
 	# Unsupported values are normalized to the nearest supported preset rather than saved as arbitrary speeds.
 	save_error = SettingsStore.save_settings(999.0, false, TEST_SETTINGS_PATH)
@@ -222,7 +222,7 @@ func _test_settings_store() -> void:
 	var normalized: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
 	_check(is_equal_approx(float(normalized["move_speed"]), 310.0), "Out-of-range movement speeds should normalize to the fast preset.")
 	_check(not bool(normalized["left_handed_controls"]), "Left-handed preference should be independently changeable.")
- 	_check(bool(normalized["performance_mode"]), "An omitted Performance Mode value should safely default to ON.")
+	_check(bool(normalized["performance_mode"]), "An omitted Performance Mode value should safely default to ON.")
 
 	var user_directory := DirAccess.open("user://")
 	if user_directory != null:
