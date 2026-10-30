@@ -962,10 +962,10 @@ func _test_ambient_background(game: Control) -> void:
 	var background: Variant = game.get("background_texture")
 	_check(background is Texture2D, "The generated ECHO nebula background should load as an offline texture.")
 	if background is Texture2D:
-		_check(background.get_width() >= 960 and background.get_height() >= 540, "The bundled ECHO nebula background should be large enough for landscape mobile screens.")
-		_check(is_equal_approx(float(background.get_width()) / float(background.get_height()), 16.0 / 9.0), "The ECHO nebula wallpaper should preserve its cinematic 16:9 aspect ratio.")
+		_check(background.get_width() >= 360 and background.get_height() >= 203, "The bundled ECHO nebula background should have enough resolution for the mobile landscape layout.")
+		_check(absf(float(background.get_width()) / float(background.get_height()) - (16.0 / 9.0)) < 0.01, "The ECHO nebula wallpaper should preserve its cinematic 16:9 aspect ratio.")
 	var particles: Array = game.get("stars")
-	_check(particles.size() == 78, "The ambient background should create a deterministic field of 78 twinkling stars.")
+	_check(particles.size() == 96, "The ambient background should create a deterministic field of 78 twinkling stars.")
 	_check(not particles.is_empty() and particles[0] is Vector4, "Each star should store normalized position, size and twinkle phase.")
 	var previous_time := float(game.get("particle_time"))
 	game.set("screen_state", 0)

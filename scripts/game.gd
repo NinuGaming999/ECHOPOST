@@ -273,7 +273,7 @@ func _load_background_texture() -> void:
 func _create_stars() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 812731
-	for _i in range(78):
+	for _i in range(96):
 		# Store normalized positions so the star field follows every aspect ratio.
 		stars.append(Vector4(rng.randf(), rng.randf(), rng.randf_range(0.7, 1.7), rng.randf_range(0.0, TAU)))
 
