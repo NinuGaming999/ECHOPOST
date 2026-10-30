@@ -23,9 +23,9 @@ Make players feel that a successful run leaves a useful trace in the world. The 
 5. The gate opens; reach the portal to complete the room.
 6. Unlock the next chamber; progress is stored locally.
 
-## Current campaign: nineteen chambers across three signal chapters
+## Current campaign: twenty-one chambers across four signal chapters
 
-The first thirteen chambers establish the two-switch echo rule, sentinels, ordered relays, a latched switch, timed gates and the echo-only jammer. Chapter II adds four synthesis rooms that combine established rules. Chapter III teaches moving-platform support and pulse-timed switches. The campaign remains a content foundation, not a finished game.
+The first thirteen chambers establish the two-switch echo rule, sentinels, ordered relays, a latched switch, timed gates and the echo-only jammer. Chapter II adds four synthesis rooms that combine established rules. Chapter III teaches moving-platform support and pulse-timed switches. Chapter IV introduces two independently recorded echoes and a third switch. The campaign remains a content foundation, not a finished game.
 
 - **The First Echo:** a safe introduction to recording, echo playback, and both switches.
 - **Long Memory:** introduces the roaming sentinel and separates Switch A from the real player's destination.
@@ -46,21 +46,23 @@ The first thirteen chambers establish the two-switch echo rule, sentinels, order
 - **The Last Chorus:** the Chapter II finale combines four ordered relays, a jammer bypass, a moving sentinel and a 2.8-second gate window.
 - **Drift Bridge:** a full-height void gap blocks ordinary movement. A moving platform shuttles across it; the real player can steer while being carried, and the recorded echo replays its saved world positions.
 - **Phase Relay:** Switch B activates only during a repeating 2.1-second pulse in a 5.5-second cycle. Both switches must be linked during the live phase, then a 3.2-second gate window begins.
+- **Twin Signal:** records two independent echoes. Echo 1 must finish and settle on Switch A before the player can record Echo 2 from their current location to Switch C. The real player then occupies Switch B; both echoes remain as separate playback actors and must hold their own plates at the same time.
+- **Convergent Signal:** repeats the two-echo A/C setup and adds a pulse-timed Switch B. The player must reach B during its repeating 2.5-second active phase in a 6-second cycle; the gate then stays open for only 2.4 seconds.
 
-The chapter selector scrolls so future rooms do not collide with the navigation controls. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. Moving platforms, multi-echo puzzles, checkpoints and more varied puzzle rules remain future work; the nineteen current rooms are still a foundation rather than a finished campaign.
+The chapter selector scrolls so future rooms do not collide with the navigation controls. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. More multi-echo combinations, checkpoints and varied puzzle rules remain future work; the twenty-one current rooms are still a foundation rather than a finished campaign.
 
 ## Echo rules
 
-- A recording contains timestamped player positions. A route is accepted only when the final position is on Switch A, so a failed route is explained and can be retried.
+- A recording contains timestamped player positions. In standard rooms a route is accepted only when it finishes on Switch A. In two-echo rooms, slot 1 must finish on A and slot 2 on C; the first echo must settle on A before the second recording can begin.
 - Recording duration is capped to avoid unbounded memory and impossible-to-read paths.
 - Echo playback follows recorded samples in time order.
-- When playback ends, the echo holds its final recorded position temporarily.
+- When playback ends, each echo holds its own final recorded position temporarily. In duet rooms both independent ghosts must still be present on their assigned plates when the player activates B; starting Echo 2 does not erase Echo 1.
 - Echoes press switches by occupying their active area; they do not push the real player or change the recording.
 - **Null Corridor echo jammer:** `echo_jammer` and `echo_jammer_radius` define a circular dead zone for recorded routes only. The route is tested against each segment between samples, so even a fast pass through the field is rejected. A crossing route loses its take and triggers a same-room reset; the real player has no movement collision with the field.
 - A room may require route checkpoints. Static Bloom's `echo_waypoint` requires crossing one Relay Beacon; Chorus Route requires Relay 1 then Relay 2, and Triune Relay requires Relay 1, Relay 2, then Relay 3, all in path order. The game checks the nearest point on each sample-to-sample line segment so crossings between samples count. Wrong order or a missed checkpoint is rejected with explicit feedback that names every required relay in the correct order.
 - Pulse Lock defines `gate_open_seconds`. When both switches activate it, the timer ticks only during PLAYING state; timeout closes the gate if the player has not crossed the barrier. A missed attempt stays latched until the player leaves a switch, so standing still cannot immediately reopen the gate. Crossing the barrier before timeout permanently powers the portal for that room.
 - Sentinel contact is a full room failure. The current take is discarded immediately and a brief SIGNAL LOST card explains the cause; after a short visual countdown, the same chamber starts fresh with the echo, switches, gate, timer and recording state cleared. In rooms with required Relay Beacons, a missing/out-of-order relay or a route that ends away from Switch A also triggers this automatic room reset. Ordinary non-relay endpoint mistakes remain retryable without resetting the whole room.
-- Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. The Memory Archive can revisit a recovered fragment later. Recovering all nineteen shards reveals a final “signal restored” reward in the play status and Archive. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
+- Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. The Memory Archive can revisit a recovered fragment later. Recovering all twenty-one shards reveals a final “signal restored” reward in the play status and Archive. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
 - Save schema version 2 stores the collected room indices. Version 1 saves remain loadable and begin with no Memory Shards collected; duplicate, negative, and out-of-campaign indices are filtered during loading.
 - A future online version must validate uploaded recordings and isolate them from executable code. A recording should be data only, never a script.
 
@@ -84,12 +86,12 @@ A network of abandoned courier stations has lost its original inhabitants. A sma
 - **Act I — Signal:** learn movement, recording, latching switches, doors, and safe resets.
 - **Act II — Interference:** moving sentinels, timed platforms, one-way routes, and rooms where the recording must take a longer path.
 - **Act I extension — Relay sequence:** Chorus Route introduces an ordered pair of Relay Beacons; Triune Relay asks the player to plan three distinct checkpoints before ending on Switch A; Fracture Clock combines that sequence with a timed gate; Dead Air Protocol asks for four checkpoints while the sentinel hunts the player and then tests a 1.8-second gate window.
-- **Act III — Relay:** multi-echo puzzles, multiple recording anchors, and chained rooms that reinterpret earlier mechanics.
+- **Act III — Relay:** multi-echo puzzles, multiple recording anchors, and chained rooms that reinterpret earlier mechanics; Twin Signal and Convergent Signal are the first two-echo implementations.
 - **Post-launch — Shared traces:** player-created echoes, curated community challenges, and a daily featured puzzle, contingent on moderation and backend capacity.
 
 ### Future mechanics
 
-- Multiple recording slots with explicit limits.
+- Multiple recording slots with explicit limits: the first two-slot implementation is active in Twin Signal and Convergent Signal, with Echo 1 held on A while Echo 2 is captured and held on C.
 - Moving platforms and switch types (hold, toggle, timed, sequence); Latch Protocol is the first toggle-switch implementation.
 - Ordered multi-relay route checkpoints and a retryable timed gate; the first implementations are Chorus Route and Pulse Lock, with more combinations planned only after usability testing.
 - Echo-safe surfaces and echo-only sensors.

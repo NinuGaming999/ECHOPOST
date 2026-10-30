@@ -1,13 +1,65 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
-> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current nineteen-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
+
+## 0. Latest verified handoff — Chapter IV multi-echo
+
+**Current gameplay source commit:** `376d365c15c7acb80917781472711c992a1e7a6f`  
+**Current repository documentation will be updated in the next commit; the gameplay hashes below are from this verified source commit.**
+
+Chapter IV adds two independently recorded echo slots without changing the existing single-echo rooms:
+
+- **Chamber 20 — Twin Signal:** Echo 1 is recorded to Switch A and must finish replaying and settle before Echo 2 can be recorded. Echo 2 is recorded to Switch C. The real player must hold Switch B while both echoes hold their own switches.
+- **Chamber 21 — Convergent Signal:** repeats the duet and adds a repeating pulse on Switch B plus a 2.4-second timed gate crossing.
+- The mobile Record button guides the player through REC A / REC C and reports the two-echo state. Echo 1 remains alive while Echo 2 is captured; both routes, playback clocks, positions and linger times are independent.
+- Existing rooms continue to use the original one-echo flow. The save format has not changed; all 21 optional Memory Shards continue to be indexed by room.
+
+### Exact current source map
+
+- `scripts/game.gd` — blob `c9ab2037db3c9bff96e7e4da62c6c0d50de6e62f`, 2322 lines:
+  - **L42–L59:** independent primary/secondary echo state and active recording-slot index.
+  - **L1091–L1138:** room initialization and cleanup of both echoes.
+  - **L1148–L1190:** record-button flow, sequential slot selection and protection against recording Echo 2 before Echo 1 settles.
+  - **L1220–L1310:** endpoint/relay/jammer validation, independent track release, and slot-specific clear helper.
+  - **L1552–L1580:** independent replay and linger timers.
+  - **L1665–L1724:** duet gate requirements and pulse/timer compatibility.
+  - **L1840–L1890:** REC A / REC C guidance, duet counter and button lock after both tracks are stored.
+  - **L2013 onward:** Switch C, secondary echo path and violet ghost rendering.
+- `scripts/data/level_catalog.gd` — blob `3a148fbc1211bcc0920bc9d02db718d39a1bf9cd`, 656 lines:
+  - **L329–L375:** Twin Signal and Convergent Signal data.
+  - **L411–L656:** campaign validator, including supported two-slot schema, Switch C type/bounds/spacing.
+- `tests/game_flow_smoke.gd` — blob `905b46ee15a2b38b66b925b67f8cc01d83b622d9`, 1322 lines:
+  - **L980–L1007:** campaign and four-chapter selector regression.
+  - **L1009–L1053:** Chapter III bridge/pulse regressions with the 21-room count.
+  - **L1055–L1135:** two-echo sequence, Echo 1 settle requirement, Echo 1 persistence while recording Echo 2, simultaneous A/C/B gate and pulse duet timer.
+- `tests/headless_smoke.gd` — blob `131fa0b7bb95cb1e8baa485905bc799b6055c3d6`, 278 lines:
+  - **L50–L157:** campaign data assertions for both Chapter IV rooms and the two-slot schema.
+  - **L159 onward:** malformed two-slot drafts are rejected.
+
+### Verification of this gameplay revision
+
+- **Godot CI:** [run 41131642479](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41131642479) — success on Godot 4.4.0 and 4.7.2. Both imported/parsed the project and passed data + full gameplay smoke tests.
+- **Android APK:** [run 41131642680](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41131642680) — success; exported, ZIP/package checked, uploaded and published the nightly APK.
+- **Current nightly APK:** [ECHOPOST-android.apk](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk), 29,305,280 bytes, SHA-256 `8b68b969920374a9b50968c5e7548011bdae1b37f32ddb4a54cc9f188f6586f6`.
+- **Limitations:** this is a debug-signed testing build. No physical Android device QA has been performed in this pass; install/test touch controls, two-echo readability, safe areas, save persistence and app lifecycle on hardware.
+
+### Next development tasks
+
+1. Play Twin Signal and Convergent Signal manually and confirm the routes and timing feel fair on a phone.
+2. Add a third Echo/slot only after the two-slot flow is intuitive; avoid increasing cognitive load too quickly.
+3. Continue campaign content toward 24–26 rooms and diversify challenge geometry without raising rendering cost on weaker devices.
+4. Continue art/audio, accessibility and physical-device QA. Keep offline play independent of any future online features.
+
+---
+
+
+> **This file is the continuity record for future ECHOPOST development.** Read it before changing code. The game is deliberately an unfinished long-running project; do not treat the current twenty-one-room prototype as complete. After every meaningful code, test, gameplay, or build change, update this file with what changed, why, exact file/line references, current verification results, and the next actionable tasks.
 
 **Repository:** https://github.com/NinuGaming999/ECHOPOST  
 **Working branch:** `main`  
 **Project root:** repository root; main scene is `res://scenes/main.tscn`  
 **Engine:** Godot 4.x; CI tests Godot 4.4.0 and 4.7.2  
 **Target:** Android-first landscape game; desktop builds support development and testing  
-**Current main commit:** `b0dc1a2257de272e7501f078737cb26ec739fd20` — Chapter II expansion and regression-test correction.  
+**Current main gameplay commit (before this documentation refresh):** `376d365c15c7acb80917781472711c992a1e7a6f` — two independently recorded echoes, Chapter IV rooms and updated regression tests.  
 **Recording-cap code commit:** `b5f36b6a4f764a595e5dd930e8d6b3cebd5ce3a8`  
 **Gameplay-test commit:** `11c3b30de34323c536b0b8302eb8604259248d52`  
 **Options source fix commit:** `45ee5b1b5b6854fea8f17934897a539a47abd0da`  
@@ -24,12 +76,12 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Current main controller source blob:** `dd9ff0cb64e7927c889832eb9bb34343f2c4bf62` (2203 lines)  
-**Current gameplay regression-test blob:** `1febbbf3da6775365ccb24661c20a32a860020f9` (1234 lines)  
+**Current main controller source blob:** `c9ab2037db3c9bff96e7e4da62c6c0d50de6e62f` (2322 lines)  
+**Current gameplay regression-test blob:** `905b46ee15a2b38b66b925b67f8cc01d83b622d9` (1322 lines)  
 **Current settings-store blob:** `ae2c241920849d9db196a8462d1caadc5f820048` (43 lines); schema v2 stores Performance Mode separately from campaign progress.  
 **Low-end rendering commits:** saved Performance Mode preference [30f1189](https://github.com/NinuGaming999/ECHOPOST/commit/30f1189f7f8c03805b1c58fabf4abc94d5cd9c06), render/route optimization [1904ad8](https://github.com/NinuGaming999/ECHOPOST/commit/1904ad8f9b34a56c30873fba47258ef10e7cc0a1), regression tests [9297624](https://github.com/NinuGaming999/ECHOPOST/commit/929762484dd228eb3ca1d22da3c2ca41d8dc66bf), and final joystick/HUD cleanup [36622a5](https://github.com/NinuGaming999/ECHOPOST/commit/36622a5488f3cb4073b8692ae85a768b62710d43).  
-**Latest Godot CI:** [run 41128769256](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41128769256) passed on Godot 4.4.0 and 4.7.2 for the 19-room Chapter III revision.  
-**Latest Android APK export:** [run 41128769076](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41128769076) succeeded for the same tested source revision and refreshed the nightly APK.  
+**Latest Godot CI for multi-echo source:** [run 41131642479](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41131642479) passed on Godot 4.4.0 and 4.7.2 for the 21-room Chapter IV revision.  
+**Latest Android APK export:** [run 41131642680](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41131642680) succeeded for the 21-room multi-echo gameplay revision and refreshed the nightly APK.  
 **Round-glass in-game action HUD:** source [`eeca6c96eed7783176ef704d8889f5f57fe35d52`](https://github.com/NinuGaming999/ECHOPOST/commit/eeca6c96eed7783176ef704d8889f5f57fe35d52), responsive size/minimum fix [`dc7538dc2702e64ac097978c683b26dd5200749d`](https://github.com/NinuGaming999/ECHOPOST/commit/dc7538dc2702e64ac097978c683b26dd5200749d), status/hint safe-lane layout [`7537dcf7f6222b9cdb9d98fe344ccc997d1bc306`](https://github.com/NinuGaming999/ECHOPOST/commit/7537dcf7f6222b9cdb9d98fe344ccc997d1bc306), circular HUD regression tests [`36f598d08cc667d1b610a3c0bbacca88f09d5133`](https://github.com/NinuGaming999/ECHOPOST/commit/36f598d08cc667d1b610a3c0bbacca88f09d5133)  
 **Latest Godot CI for the round-control revision:** [run 40860534243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40860534243) passed on Godot 4.4.0 and 4.7.2.  
 **Latest Android APK export for the same code/test commit:** [run 40860534080](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40860534080) succeeded and refreshed the nightly APK.  
