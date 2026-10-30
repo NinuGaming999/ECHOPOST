@@ -38,6 +38,7 @@ func _run_tests() -> void:
 	_test_second_chapter_campaign(game)
 	_test_chapter_three_mechanics(game)
 	_test_multi_echo_puzzles(game)
+	_test_chapter_five_mechanics(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
@@ -978,7 +979,7 @@ func _test_ambient_background(game: Control) -> void:
 
 
 func _test_second_chapter_campaign(game: Control) -> void:
-	_check(LevelCatalog.LEVELS.size() == 21, "Chapter IV should preserve the nineteen-room campaign and add two multi-echo chambers.")
+	_check(LevelCatalog.LEVELS.size() == 24, "Chapter V should preserve the twenty-one-room campaign and add three new chambers.")
 	var errors: PackedStringArray = LevelCatalog.validate_levels()
 	_check(errors.is_empty(), "All Chapter II and later room layouts should pass campaign validation: %s" % "\n".join(errors))
 	var last_room: Dictionary = LevelCatalog.get_level(16)
@@ -986,10 +987,11 @@ func _test_second_chapter_campaign(game: Control) -> void:
 	_check(last_room.has("echo_jammer") and last_room.has("echo_waypoints") and last_room.has("gate_open_seconds") and bool(last_room.get("hazard", false)), "The final Chapter II chamber should combine relay order, an echo jammer, a sentinel and a pulse gate.")
 	game.call("_update_chapter_buttons")
 	var buttons: Array = game.get("chapter_buttons")
-	if buttons.size() == 21:
+	if buttons.size() == 24:
 		_check(str((buttons[13] as Button).text).begins_with("CH. II"), "Chapter II chambers should be clearly marked in chamber select.")
 		_check(str((buttons[17] as Button).text).begins_with("CH. III"), "Chapter III chambers should be clearly marked in chamber select.")
 		_check(str((buttons[19] as Button).text).begins_with("CH. IV"), "Chapter IV chambers should be clearly marked in chamber select.")
+		_check(str((buttons[21] as Button).text).begins_with("CH. V"), "Chapter V chambers should be clearly marked in chamber select.")
 
 	# Verify the authored four-relay route can pass around the jammer and reach A
 	# within the eight-second recording cap.
@@ -1007,7 +1009,7 @@ func _test_second_chapter_campaign(game: Control) -> void:
 	_check(int(game.get("current_level_index")) == 16 and bool((game.get("level_data") as Dictionary).get("hazard", false)), "The final Chapter II room should load its sentinel and gate rules.")
 
 func _test_chapter_three_mechanics(game: Control) -> void:
-	_check(LevelCatalog.LEVELS.size() == 21, "The campaign should contain twenty-one chambers after Chapter IV is added.")
+	_check(LevelCatalog.LEVELS.size() == 24, "The campaign should contain twenty-four chambers after Chapter V is added.")
 	var errors: PackedStringArray = LevelCatalog.validate_levels()
 	_check(errors.is_empty(), "Chapter III platform and pulse-switch layouts should pass validation: %s" % "\n".join(errors))
 
@@ -1053,7 +1055,7 @@ func _test_chapter_three_mechanics(game: Control) -> void:
 
 
 func _test_multi_echo_puzzles(game: Control) -> void:
-	_check(LevelCatalog.LEVELS.size() == 21, "Chapter IV should add two independently recorded two-echo chambers.")
+	_check(LevelCatalog.LEVELS.size() == 24, "Chapter IV should retain its two-echo chambers in the expanded campaign.")
 	var validation_errors: PackedStringArray = LevelCatalog.validate_levels()
 	_check(validation_errors.is_empty(), "Two-echo rooms should pass catalog validation: %s" % "\n".join(validation_errors))
 
@@ -1139,6 +1141,92 @@ func _test_multi_echo_puzzles(game: Control) -> void:
 	_check(bool(game.get("door_open")), "Both settled echoes and the player on B during its pulse should open the gate.")
 	_check(is_equal_approx(float(game.get("gate_open_timer")), 2.4), "The duet pulse gate should start its short 2.4-second crossing timer.")
 	game.call("_start_level", 0)
+
+
+func _test_chapter_five_mechanics(game: Control) -> void:
+	_check(LevelCatalog.LEVELS.size() == 24, "Chapter V should contain three new chambers, bringing the campaign to twenty-four.")
+
+	var orbit_room: Dictionary = LevelCatalog.get_level(21)
+	_check(str(orbit_room.get("name", "")) == "Orbit Crossing", "Chamber 22 should be the double moving-bridge introduction.")
+	game.call("_start_level", 21)
+	var orbit_platforms: Array[Vector2] = game.call("_get_moving_platform_positions", 0.0)
+	_check(orbit_platforms.size() == 2, "Orbit Crossing should calculate both moving bridges.")
+	if orbit_platforms.size() == 2:
+		_check(bool(game.call("_is_position_supported", orbit_platforms[0], orbit_platforms)), "A point on either moving bridge should remain supported over the void.")
+	_check(not bool(game.call("_is_position_supported", Vector2(700, 390), orbit_platforms)), "The space between the two bridge decks should remain unsafe.")
+	game.set("hazard_time", 0.5)
+	_check(bool(game.call("_is_pulse_switch_active")), "Orbit Crossing should expose its first readable B-switch pulse.")
+	game.set("hazard_time", 3.8)
+	_check(not bool(game.call("_is_pulse_switch_active")), "Orbit Crossing should include an off-cycle between pulses.")
+	var orbit_route: Variant = _make_test_route(orbit_room["spawn"], orbit_room["echo_waypoints"], orbit_room["plate_a"])
+	_check(float(orbit_route.duration()) <= 8.0, "Orbit Crossing's ordered echo route should fit inside the recording cap.")
+	_check(bool(game.call("_track_passes_waypoints_in_order", orbit_route, orbit_room["echo_waypoints"], 40.0)), "Orbit Crossing's echo route should visit both relays in order.")
+
+	var tandem_room: Dictionary = LevelCatalog.get_level(22)
+	_check(str(tandem_room.get("name", "")) == "Tandem Relay", "Chamber 23 should combine two echoes with shared relay checkpoints.")
+	game.call("_start_level", 22)
+	var tandem_first: Variant = _make_test_route(tandem_room["spawn"], tandem_room["echo_waypoints"], tandem_room["plate_a"])
+	var tandem_second: Variant = _make_test_route(tandem_room["plate_a"], tandem_room["echo_waypoints"], tandem_room["plate_c"])
+	_check(float(tandem_first.duration()) <= 8.0 and float(tandem_second.duration()) <= 8.0, "Both Tandem Relay recordings should fit inside the eight-second recording cap.")
+	_check(bool(game.call("_track_passes_waypoints_in_order", tandem_first, tandem_room["echo_waypoints"], 40.0)), "Tandem Relay's first echo should reach both relays in order.")
+	_check(bool(game.call("_track_passes_waypoints_in_order", tandem_second, tandem_room["echo_waypoints"], 40.0)), "Tandem Relay's second echo should repeat the same relay sequence.")
+	_check(not bool(game.call("_track_passes_waypoint", tandem_first, tandem_room["echo_jammer"], float(tandem_room["echo_jammer_radius"]))), "Tandem Relay's first route should avoid the echo jammer.")
+	_check(not bool(game.call("_track_passes_waypoint", tandem_second, tandem_room["echo_jammer"], float(tandem_room["echo_jammer_radius"]))), "Tandem Relay's second route should avoid the echo jammer.")
+
+	var final_room: Dictionary = LevelCatalog.get_level(23)
+	_check(str(final_room.get("name", "")) == "The Last Duet", "Chamber 24 should be the final duet gauntlet.")
+	game.call("_start_level", 23)
+	var final_first: Variant = _make_test_route(final_room["spawn"], final_room["echo_waypoints"], final_room["plate_a"])
+	var final_second: Variant = _make_test_route(final_room["plate_a"], final_room["echo_waypoints"], final_room["plate_c"])
+	_check(float(final_first.duration()) <= 8.0 and float(final_second.duration()) <= 8.0, "Both final routes should fit inside the recording cap.")
+	_check(bool(game.call("_track_passes_waypoints_in_order", final_first, final_room["echo_waypoints"], 40.0)), "The final Echo 1 route should visit all four relays.")
+	_check(bool(game.call("_track_passes_waypoints_in_order", final_second, final_room["echo_waypoints"], 40.0)), "The final Echo 2 route should revisit all four relays.")
+	_check(not bool(game.call("_track_passes_waypoint", final_first, final_room["echo_jammer"], float(final_room["echo_jammer_radius"]))), "The final Echo 1 route should bypass the blackout.")
+	_check(not bool(game.call("_track_passes_waypoint", final_second, final_room["echo_jammer"], float(final_room["echo_jammer_radius"]))), "The final Echo 2 route should bypass the blackout.")
+
+	# Exercise the complete final duet: Echo 1 settles on A, Echo 2 settles on C,
+	# and the player catches B during its pulse to activate the timed gate.
+	game.set("player_position", final_room["spawn"])
+	game.call("_on_record_pressed")
+	game.set("recording_track", final_first)
+	game.set("recording_elapsed", final_first.duration())
+	game.set("player_position", final_room["plate_a"])
+	game.call("_finish_recording")
+	_check(int(game.get("echo_slots_recorded")) == 1 and bool(game.get("echo_playing")), "The final Echo 1 should release successfully.")
+	game.call("_update_echo", float(final_first.duration()) + 0.05)
+	_check(bool(game.get("echo_visible")) and not bool(game.get("echo_playing")), "The final Echo 1 should settle on Switch A.")
+	game.call("_on_record_pressed")
+	_check(bool(game.get("is_recording")) and int(game.get("recording_slot_index")) == 1, "The final Echo 2 recording should unlock after Echo 1 settles.")
+	game.set("recording_track", final_second)
+	game.set("recording_elapsed", final_second.duration())
+	game.set("player_position", final_room["plate_c"])
+	game.call("_finish_recording")
+	_check(int(game.get("echo_slots_recorded")) == 2 and bool(game.get("secondary_echo_playing")), "The final Echo 2 should release independently.")
+	game.call("_update_echo", float(final_second.duration()) + 0.05)
+	game.set("player_position", final_room["plate_b"])
+	game.set("hazard_time", 0.5)
+	_check(bool(game.call("_is_pulse_switch_active")), "The final B switch should have a deterministic live window for the regression test.")
+	game.call("_check_puzzle_state")
+	_check(bool(game.get("door_open")), "Both settled echoes plus the live pulse should open the final gate.")
+	_check(is_equal_approx(float(game.get("gate_open_timer")), 4.2), "The final duet should start its authored 4.2-second crossing timer.")
+	game.call("_start_level", 0)
+
+
+func _make_test_route(start_position: Vector2, waypoint_values: Array, end_position: Vector2) -> Variant:
+	var route = EchoTrackScript.new()
+	var previous_position := start_position
+	var elapsed := 0.0
+	route.add_sample(elapsed, previous_position)
+	for waypoint_value in waypoint_values:
+		if not (waypoint_value is Vector2):
+			continue
+		var waypoint_position: Vector2 = waypoint_value
+		elapsed += previous_position.distance_to(waypoint_position) / 255.0
+		route.add_sample(elapsed, waypoint_position)
+		previous_position = waypoint_position
+	elapsed += previous_position.distance_to(end_position) / 255.0
+	route.add_sample(elapsed, end_position)
+	return route
 
 
 func _test_premium_mobile_ui(game: Control) -> void:

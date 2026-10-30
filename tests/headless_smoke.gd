@@ -15,6 +15,7 @@ var failures: int = 0
 func _initialize() -> void:
 	_test_echo_track()
 	_test_level_catalog()
+	_test_chapter_five_campaign()
 	_test_progress_store()
 	_test_settings_store()
 	if failures == 0:
@@ -154,6 +155,27 @@ func _test_level_catalog() -> void:
 	isolated_copy["name"] = "Changed only in this test copy"
 	_check(str(LevelCatalog.LEVELS[0]["name"]) == original_name, "Level reads must not mutate canonical campaign data.")
 	_test_level_validator_rejects_bad_drafts()
+
+
+func _test_chapter_five_campaign() -> void:
+	_check(LevelCatalog.LEVELS.size() == 24, "Chapter V should expand the campaign to twenty-four chambers.")
+	var orbit_room: Dictionary = LevelCatalog.get_level(21)
+	_check(str(orbit_room.get("name", "")) == "Orbit Crossing", "Chamber 22 should introduce the double moving-bridge crossing.")
+	_check(orbit_room.get("moving_platforms") is Array and orbit_room["moving_platforms"].size() == 2, "Orbit Crossing should define two independently phased moving bridges.")
+	_check(orbit_room.get("void_zones") is Array and orbit_room["void_zones"].size() == 1, "Orbit Crossing should keep the bridge-only void corridor.")
+	_check(str(orbit_room.get("plate_b_mode", "")) == "pulse" and is_equal_approx(float(orbit_room.get("gate_open_seconds", 0.0)), 3.8), "Orbit Crossing should combine the pulse switch with its 3.8-second crossing window.")
+
+	var tandem_room: Dictionary = LevelCatalog.get_level(22)
+	_check(str(tandem_room.get("name", "")) == "Tandem Relay", "Chamber 23 should teach shared ordered relays across two echoes.")
+	_check(int(tandem_room.get("echo_slots", 0)) == 2 and tandem_room.get("plate_c") is Vector2, "Tandem Relay should retain the supported two-echo schema.")
+	_check(tandem_room.get("echo_waypoints") is Array and tandem_room["echo_waypoints"].size() == 2 and tandem_room.get("echo_jammer") is Vector2, "Both Tandem Relay recordings should have ordered relays and an echo-only blackout.")
+
+	var final_room: Dictionary = LevelCatalog.get_level(23)
+	_check(str(final_room.get("name", "")) == "The Last Duet", "Chamber 24 should be the final Chapter V duet.")
+	_check(int(final_room.get("echo_slots", 0)) == 2 and final_room.get("echo_waypoints") is Array and final_room["echo_waypoints"].size() == 4, "The Last Duet should require two echoes and four ordered relays.")
+	_check(final_room.get("echo_jammer") is Vector2 and str(final_room.get("plate_b_mode", "")) == "pulse", "The Last Duet should combine the echo jammer with a pulse switch.")
+	_check(is_equal_approx(float(final_room.get("gate_open_seconds", 0.0)), 4.2), "The Last Duet should preserve its 4.2-second final gate window.")
+	_check(LevelCatalog.validate_levels().is_empty(), "All five chapters should pass catalog validation after the new rooms are added.")
 
 
 func _test_level_validator_rejects_bad_drafts() -> void:
