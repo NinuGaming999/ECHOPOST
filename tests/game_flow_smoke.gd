@@ -36,6 +36,7 @@ func _run_tests() -> void:
 	_test_echo_jammer_route(game)
 	_test_timed_gate_requires_crossing(game)
 	_test_second_chapter_campaign(game)
+	_test_chapter_three_mechanics(game)
 	game.call("_start_level", 0)
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
@@ -976,7 +977,7 @@ func _test_ambient_background(game: Control) -> void:
 
 
 func _test_second_chapter_campaign(game: Control) -> void:
-	_check(LevelCatalog.LEVELS.size() == 17, "Chapter II should expand the campaign to seventeen chambers.")
+	_check(LevelCatalog.LEVELS.size() == 19, "Chapter III should expand the campaign to nineteen chambers.")
 	var errors: PackedStringArray = LevelCatalog.validate_levels()
 	_check(errors.is_empty(), "All Chapter II room layouts should pass campaign validation: %s" % "\n".join(errors))
 	var last_room: Dictionary = LevelCatalog.get_level(16)
@@ -984,8 +985,9 @@ func _test_second_chapter_campaign(game: Control) -> void:
 	_check(last_room.has("echo_jammer") and last_room.has("echo_waypoints") and last_room.has("gate_open_seconds") and bool(last_room.get("hazard", false)), "The final chamber should combine relay order, an echo jammer, a sentinel and a pulse gate.")
 	game.call("_update_chapter_buttons")
 	var buttons: Array = game.get("chapter_buttons")
-	if buttons.size() == 17:
+	if buttons.size() == 19:
 		_check(str((buttons[13] as Button).text).begins_with("CH. II"), "Chapter II chambers should be clearly marked in chamber select.")
+		_check(str((buttons[17] as Button).text).begins_with("CH. III"), "Chapter III chambers should be clearly marked in chamber select.")
 
 	# Verify the authored four-relay route can pass around the jammer and reach A
 	# within the eight-second recording cap.
@@ -1001,6 +1003,52 @@ func _test_second_chapter_campaign(game: Control) -> void:
 	_check(not game.call("_track_passes_waypoint", route, last_room["echo_jammer"], float(last_room["echo_jammer_radius"])), "The final authored route should bypass the echo jammer.")
 	game.call("_start_level", 16)
 	_check(int(game.get("current_level_index")) == 16 and bool((game.get("level_data") as Dictionary).get("hazard", false)), "The final Chapter II room should load its sentinel and gate rules.")
+
+func _test_chapter_three_mechanics(game: Control) -> void:
+	_check(LevelCatalog.LEVELS.size() == 19, "The campaign should contain nineteen chambers after Chapter III is added.")
+	var errors: PackedStringArray = LevelCatalog.validate_levels()
+	_check(errors.is_empty(), "Chapter III platform and pulse-switch layouts should pass validation: %s" % "\n".join(errors))
+
+	var drift_room: Dictionary = LevelCatalog.get_level(17)
+	_check(str(drift_room.get("name", "")) == "Drift Bridge", "Chamber 18 should introduce the moving bridge.")
+	game.call("_start_level", 17)
+	var drift_platform: Dictionary = (drift_room["moving_platforms"] as Array)[0]
+	var platform_start: Vector2 = drift_platform["from"]
+	game.set("player_position", platform_start)
+	game.set("hazard_time", 0.0)
+	game.set("platform_positions", game.call("_get_moving_platform_positions", 0.0))
+	game.call("_update_player", 0.1)
+	var carried_position: Vector2 = game.get("player_position")
+	_check(carried_position.x > platform_start.x + 5.0, "Standing on the bridge should carry the real player with its movement.")
+	var stationary_platforms: Array[Vector2] = game.call("_get_moving_platform_positions", 0.0)
+	var no_bridge_support: bool = game.call("_is_position_supported", Vector2(700, 365), stationary_platforms)
+	_check(not no_bridge_support, "The void gap should block movement when no platform is underneath.")
+	var crossing_platforms: Array[Vector2] = game.call("_get_moving_platform_positions", 1.8)
+	var bridge_support: bool = game.call("_is_position_supported", crossing_platforms[0], crossing_platforms)
+	_check(bridge_support, "The moving bridge should provide safe ground while it crosses the void.")
+
+	var phase_room: Dictionary = LevelCatalog.get_level(18)
+	_check(str(phase_room.get("name", "")) == "Phase Relay", "Chamber 19 should introduce the pulse Switch B.")
+	game.call("_start_level", 18)
+	var phase_data: Dictionary = game.get("level_data")
+	var phase_a: Vector2 = phase_data["plate_a"]
+	var phase_b: Vector2 = phase_data["plate_b"]
+	game.set("echo_visible", true)
+	game.set("echo_playing", false)
+	game.set("echo_position", phase_a)
+	game.set("player_position", phase_b)
+	game.set("hazard_time", 3.0)
+	_check(not bool(game.call("_is_pulse_switch_active")), "Phase Relay should have a real off-cycle when the pulse switch is not lit.")
+	game.call("_check_puzzle_state")
+	_check(not bool(game.get("door_open")), "Standing on Switch B outside its pulse window must not open the gate.")
+	game.set("hazard_time", 4.3)
+	_check(bool(game.call("_is_pulse_switch_active")), "Phase Relay should expose a deterministic live pulse window.")
+	game.call("_check_puzzle_state")
+	_check(bool(game.get("door_open")), "Echo on A plus the player on B during the pulse should open the gate.")
+	_check(is_equal_approx(float(game.get("gate_open_timer")), float(phase_data["gate_open_seconds"])), "The pulse switch should start the authored gate-crossing timer.")
+	_check(not bool(game.get("latch_switch_button").visible), "Pulse Switch B should not expose the toggle-latch control.")
+	game.call("_start_level", 0)
+
 
 func _test_premium_mobile_ui(game: Control) -> void:
 	var previous_handedness := bool(game.get("left_handed_controls"))

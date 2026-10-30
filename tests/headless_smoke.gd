@@ -61,6 +61,8 @@ func _test_level_catalog() -> void:
 	var dead_air_room_found := false
 	var four_relay_hunt_found := false
 	var echo_jammer_room_found := false
+	var moving_platform_room_found := false
+	var pulse_switch_room_found := false
 	for index in range(LevelCatalog.LEVELS.size()):
 		var level: Dictionary = LevelCatalog.get_level(index)
 		var level_name := str(level.get("name", ""))
@@ -78,6 +80,14 @@ func _test_level_catalog() -> void:
 			_check(bool(level.get("hazard", false)), "Dead Air Protocol should keep its active sentinel.")
 			_check(is_equal_approx(float(level.get("gate_open_seconds", 0.0)), 1.8), "Dead Air Protocol should use a 1.8-second gate window.")
 			_check(is_equal_approx(float(level.get("linger", 0.0)), 6.5), "Dead Air Protocol should use its shorter 6.5-second echo linger.")
+		if level_name == "Drift Bridge":
+			moving_platform_room_found = true
+			_check(level.get("moving_platforms") is Array and level["moving_platforms"].size() == 1, "Drift Bridge should define one moving platform.")
+			_check(level.get("void_zones") is Array and level["void_zones"].size() == 1, "Drift Bridge should define one void gap.")
+		if level_name == "Phase Relay":
+			pulse_switch_room_found = true
+			_check(str(level.get("plate_b_mode", "")) == "pulse", "Phase Relay should use the new pulse Switch B type.")
+			_check(float(level.get("pulse_active_seconds", 0.0)) < float(level.get("pulse_period", 0.0)), "Pulse Switch active window must be shorter than its cycle.")
 		if level_name == "Null Corridor":
 			echo_jammer_room_found = true
 			_check(level.get("echo_jammer") is Vector2, "Null Corridor should define an echo-only jammer position.")
@@ -127,6 +137,8 @@ func _test_level_catalog() -> void:
 	_check(dead_air_room_found, "The campaign should include the named Dead Air Protocol challenge.")
 	_check(four_relay_hunt_found, "The campaign should combine four ordered relays, an active sentinel, and a timed gate.")
 	_check(echo_jammer_room_found, "The campaign should include Null Corridor as a named echo-jammer challenge.")
+	_check(moving_platform_room_found, "The campaign should include Drift Bridge as a moving-platform challenge.")
+	_check(pulse_switch_room_found, "The campaign should include Phase Relay as a pulse-switch challenge.")
 	var original_name := str(LevelCatalog.LEVELS[0]["name"])
 	var isolated_copy: Dictionary = LevelCatalog.get_level(0)
 	isolated_copy["name"] = "Changed only in this test copy"
@@ -160,6 +172,18 @@ func _test_level_validator_rejects_bad_drafts() -> void:
 	_check(_has_error(errors, "echo_jammer must be a Vector2"), "Validator should reject malformed jammer positions.")
 	_check(_has_error(errors, "echo_jammer_radius must be between 40 and 180 units"), "Validator should reject invalid jammer radii.")
 	_check(_has_error(errors, "gate_open_seconds must be between 1 and 15 seconds"), "Validator should reject invalid timed-gate durations.")
+
+	var broken_platform_room := LevelCatalog.get_level(17)
+	var broken_platforms: Array = broken_platform_room["moving_platforms"]
+	broken_platforms[0]["speed"] = 0.0
+	broken_platform_room["moving_platforms"] = broken_platforms
+	var broken_platform_errors: PackedStringArray = LevelCatalog.validate_level_list([broken_platform_room])
+	_check(_has_error(broken_platform_errors, "speed must be between 20 and 180"), "Validator should reject unsafe moving-platform speeds.")
+
+	var broken_pulse_room := LevelCatalog.get_level(18)
+	broken_pulse_room["pulse_active_seconds"] = 9.0
+	var broken_pulse_errors: PackedStringArray = LevelCatalog.validate_level_list([broken_pulse_room])
+	_check(_has_error(broken_pulse_errors, "shorter than its period"), "Validator should reject a pulse window that is longer than its full cycle.")
 
 
 func _has_error(errors: PackedStringArray, fragment: String) -> bool:
