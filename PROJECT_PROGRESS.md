@@ -7,6 +7,7 @@
 **Project root:** repository root; main scene is `res://scenes/main.tscn`  
 **Engine:** Godot 4.x; CI tests Godot 4.4.0 and 4.7.2  
 **Target:** Android-first landscape game; desktop builds support development and testing  
+**Current main commit:** `b0dc1a2257de272e7501f078737cb26ec739fd20` — Chapter II expansion and regression-test correction.  
 **Recording-cap code commit:** `b5f36b6a4f764a595e5dd930e8d6b3cebd5ce3a8`  
 **Gameplay-test commit:** `11c3b30de34323c536b0b8302eb8604259248d52`  
 **Options source fix commit:** `45ee5b1b5b6854fea8f17934897a539a47abd0da`  
@@ -23,12 +24,12 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Current main controller source blob for the exact line map below:** `f7c75cdd825e4d12335202319fecdb366f0f6423` (1991 lines)  
-**Current gameplay regression-test blob:** `cdf19da99cca0d296e0facaf2a239c9060f1bb59` (1141 lines)  
+**Current main controller source blob:** `2f6c7a04ef45606315033b1ef7f52e5a42eb86e5` (2039 lines)  
+**Current gameplay regression-test blob:** `d77eef16b1f5e086b5a625960871f2fa7cd9ff50` (1186 lines)  
 **Current settings-store blob:** `ae2c241920849d9db196a8462d1caadc5f820048` (43 lines); schema v2 stores Performance Mode separately from campaign progress.  
 **Low-end rendering commits:** saved Performance Mode preference [30f1189](https://github.com/NinuGaming999/ECHOPOST/commit/30f1189f7f8c03805b1c58fabf4abc94d5cd9c06), render/route optimization [1904ad8](https://github.com/NinuGaming999/ECHOPOST/commit/1904ad8f9b34a56c30873fba47258ef10e7cc0a1), regression tests [9297624](https://github.com/NinuGaming999/ECHOPOST/commit/929762484dd228eb3ca1d22da3c2ca41d8dc66bf), and final joystick/HUD cleanup [36622a5](https://github.com/NinuGaming999/ECHOPOST/commit/36622a5488f3cb4073b8692ae85a768b62710d43).  
-**Latest Godot CI:** [run 41091283098](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41091283098) passed on Godot 4.4.0 and 4.7.2.  
-**Latest Android APK export:** [run 41091282986](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41091282986) succeeded and refreshed the nightly APK for the exact tested source revision.  
+**Latest Godot CI:** [run 41122626449](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41122626449) passed on Godot 4.4.0 and 4.7.2 for the 17-room Chapter II revision.  
+**Latest Android APK export:** [run 41122626539](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41122626539) succeeded for the same tested source revision and refreshed the nightly APK.  
 **Round-glass in-game action HUD:** source [`eeca6c96eed7783176ef704d8889f5f57fe35d52`](https://github.com/NinuGaming999/ECHOPOST/commit/eeca6c96eed7783176ef704d8889f5f57fe35d52), responsive size/minimum fix [`dc7538dc2702e64ac097978c683b26dd5200749d`](https://github.com/NinuGaming999/ECHOPOST/commit/dc7538dc2702e64ac097978c683b26dd5200749d), status/hint safe-lane layout [`7537dcf7f6222b9cdb9d98fe344ccc997d1bc306`](https://github.com/NinuGaming999/ECHOPOST/commit/7537dcf7f6222b9cdb9d98fe344ccc997d1bc306), circular HUD regression tests [`36f598d08cc667d1b610a3c0bbacca88f09d5133`](https://github.com/NinuGaming999/ECHOPOST/commit/36f598d08cc667d1b610a3c0bbacca88f09d5133)  
 **Latest Godot CI for the round-control revision:** [run 40860534243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40860534243) passed on Godot 4.4.0 and 4.7.2.  
 **Latest Android APK export for the same code/test commit:** [run 40860534080](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40860534080) succeeded and refreshed the nightly APK.  
@@ -38,8 +39,8 @@
 **Latest visual refinement commits:** orbit-orb/route glow [`dfa3672fd57cafb7b7b537d57ea606f1272b3004`](https://github.com/NinuGaming999/ECHOPOST/commit/dfa3672fd57cafb7b7b537d57ea606f1272b3004), polished orb renderer [`e7d8edabf723104767f00f176e3e741cc25e74ad`](https://github.com/NinuGaming999/ECHOPOST/commit/e7d8edabf723104767f00f176e3e741cc25e74ad), circuit rails/signal sweep [`204f37d2c12858a590491bb959f57782138a61c8`](https://github.com/NinuGaming999/ECHOPOST/commit/204f37d2c12858a590491bb959f57782138a61c8), logo regression assertions [`42f31a31811570bc224004f833ba4ab333eddbda`](https://github.com/NinuGaming999/ECHOPOST/commit/42f31a31811570bc224004f833ba4ab333eddbda)  
 **Latest verified Godot CI:** [run 40851002676](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40851002676) passed on Godot 4.4.0 and 4.7.2.  
 **Latest verified Android APK:** [run 40851002626](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40851002626) succeeded for the same source/test commit.  
-**Current level catalog blob:** `b36787a5440912eafb7b800331e890ab3c51d74e` (382 lines)  
-**Current data smoke-test blob:** `75df36b96e483b5db939297939fe9702226c7399` (233 lines)  
+**Current level catalog blob:** `416bc2d88c1e3ac9b024a5915d89edfe919a62b0` (463 lines; 17 rooms across two chapters)  
+**Current data smoke-test blob:** `1c3b8ff559adc403d0faee8118ee2be9d52d5e22` (237 lines; permits multiple four-relay/sentinel/timed-gate rooms)  
 **Supplied ECHO logo:** `assets/echopost_logo.jpg` (blob `7dd3e438e5cd152eb0120e59833c25611f0036f1`)  
 **Matching SVG identity icon:** `assets/echopost_icon.svg` (67 lines; blob `0eaae23f67fc11c19a101c2eec6ef3a88f06a543`)  
 **Current project-settings blob:** `aaf2ca779d5ca128ec5d41b25f33102d883e045c` (44 lines; project icon uses the supplied ECHO logo)  
@@ -188,7 +189,7 @@ The menu identity uses the supplied ECHO logo and a matching cyan geometric SVG 
 - `scripts/data/level_catalog.gd:L289–L316`: the schema validator checks the jammer position type, requires a numeric radius paired with a position, limits radius to 40–180 units, requires separation from spawn/switches/shard, and applies normal room-bound checks.
 - `scripts/game.gd:L948–L1009`: `_finish_recording()` rejects a route if any recorded line segment comes within the jammer radius using the existing nearest-point route checker. It clears the echo/take, explains **ECHO DEAD ZONE**, and schedules the same-room reset with reason **ECHO JAMMED**. The live robot itself is not collision-tested against the jammer.
 - `scripts/game.gd:L1441–L1538`: the room renderer draws a dark violet field, two rings, a core marker and an **ECHO DEAD ZONE** label. During recording, a route that crosses the jammer changes from amber to red so the player can see the mistake before sending.
-- `tests/headless_smoke.gd:L50–L161`: asserts the thirteen-room campaign, Null Corridor metadata and jammer radius, and rejects malformed jammer position/radius drafts.
+- `tests/headless_smoke.gd:L50–L161`: validates the 17-room campaign, Null Corridor metadata, Chapter II combinations, and malformed jammer/route drafts.
 - `tests/game_flow_smoke.gd:L772–L815`: confirms the direct route intersects the field, fails to release an echo and schedules an automatic reset; after reset, a curved route through (330, 300) and (700, 300) stays outside the field and creates a working echo.
 - Data commit: [`96d29593ff0d613bc838bc9d9673072272973893`](https://github.com/NinuGaming999/ECHOPOST/commit/96d29593ff0d613bc838bc9d9673072272973893); gameplay/render commit: [`9edd2f74ce9008ea13b5c001ef222bc7f44f0698`](https://github.com/NinuGaming999/ECHOPOST/commit/9edd2f74ce9008ea13b5c001ef222bc7f44f0698); schema tests: [`8e81c985b2b95a98a03313f8cc4467165818c571`](https://github.com/NinuGaming999/ECHOPOST/commit/8e81c985b2b95a98a03313f8cc4467165818c571); gameplay integration test: [`0fa845518310f1d022af98bbc219a96c58a5d48b`](https://github.com/NinuGaming999/ECHOPOST/commit/0fa845518310f1d022af98bbc219a96c58a5d48b).
 - **Godot verification:** [run 40550158187](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40550158187) passed project parse/import, data smoke tests and gameplay-flow smoke tests on both Godot 4.4.0 and 4.7.2. The gameplay test verifies both a rejected route and a safe bypass.
@@ -215,7 +216,7 @@ The menu identity uses the supplied ECHO logo and a matching cyan geometric SVG 
 - **Touch-zone test setup root cause:** the wide-view test enabled left-handed joystick mode and accidentally carried that state into the following compact left-side assertion. `tests/game_flow_smoke.gd:L851–L912` now explicitly resets handedness before compact left-zone checks, then tests the right-zone case separately. The compact menu assertion includes measured positions in its failure message for easier diagnosis. Test commit: `d64199633af306574298e3ce5972630ff3379b88`.
 - **Verification:** [Godot CI run 40493513243](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513243) passed all import/parse, data smoke and game-flow smoke steps on both Godot 4.4.0 and 4.7.2 at source/test commit `d64199633af306574298e3ce5972630ff3379b88`.
 - **Android export:** [Android APK run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) completed successfully for that same source/test commit. Godot exported the APK, `unzip -t` validated the package, and GitHub Actions uploaded/published `ECHOPOST-android.apk` to the [ECHOPOST Nightly Release](https://github.com/NinuGaming999/ECHOPOST/releases/tag/nightly) (about 28.6 MB).
-- **Important boundary:** this confirms export and APK archive integrity, **not** installation or gameplay on a physical phone. The APK is a debug-signed testing build, not a production-signed Google Play release. Do not mark real-device QA complete until installation, touch controls, lifecycle pause/resume, saving and all thirteen rooms have been checked on hardware.
+- **Important boundary:** this confirms export and APK archive integrity, **not** installation or gameplay on a physical phone. The APK is a debug-signed testing build, not a production-signed Google Play release. Do not mark real-device QA complete until installation, touch controls, lifecycle pause/resume, saving and all seventeen rooms have been checked on hardware.
 
 ### Automatic room resets and premium, responsive touch UI
 **Current feature pass. Changed:** `scripts/game.gd`, `tests/game_flow_smoke.gd`, README, design, roadmap and build-status docs.
@@ -498,7 +499,7 @@ This change is covered by an automated headless integration test. It is **not ye
 | `scripts/data/level_catalog.gd` | Thirteen room dictionaries, optional shard positions/lore, single/ordered relay requirements, toggle switch, timed-gate and sentinel combinations, plus the echo-only jammer challenge. The defensive-copy accessor and canonical/draft validator cover schema, names, jammer radius/spacing, bounds and hazard/timer tuning. |
 | `scripts/data/progress_store.gd` | Version-2 local save boundary (`user://echopost_save.cfg`) using `ConfigFile`; preserves v1 campaign progress and stores normalized Memory Shard room indices. |
 | `scripts/data/settings_store.gd` | Separate preference store (`user://echopost_settings.cfg`) for speed and joystick handedness, defaulting safely and normalizing unsupported movement values. |
-| `tests/headless_smoke.gd` | Data tests for echo interpolation/copying, thirteen-room schema including Null Corridor's echo jammer, shard/waypoint/toggle data, named Triune Relay and Fracture Clock, Dead Air Protocol's four-relay/sentinel/timed-gate combination, malformed jammer/draft validation, v2 shard persistence/sanitization, v1-save compatibility, campaign clamping and isolated control-preference persistence/normalization. |
+| `tests/headless_smoke.gd` | Data tests for echo interpolation/copying, 17-room schema including Chapter II's relay/jammer combinations, shard/waypoint/toggle data, Triune Relay, Fracture Clock, Dead Air Protocol and The Last Chorus, malformed jammer/draft validation, v2 shard persistence/sanitization, v1-save compatibility, campaign clamping and isolated control-preference persistence/normalization. |
 | `tests/game_flow_smoke.gd` | Main-scene tests for chapter/archive/options UI, supplied logo load/visibility and responsive restoration, Memory Shards, settings, lifecycle pause, recording limits, sentinel/reset, portal completion, Latch Protocol, ordered relays, Fracture Clock, Dead Air Protocol, Null Corridor and timed gates. |
 | `RUN_TESTS.bat` | Windows shortcut to run both headless smoke tests if Godot is on PATH. |
 | `.github/workflows/godot-checks.yml` | Imports/parses project then runs both tests on a Godot 4.4.0 / 4.7.2 matrix. |
@@ -585,7 +586,7 @@ This map matches controller blob SHA `f7c75cdd825e4d12335202319fecdb366f0f6423` 
 - **L23–L28:** Persist control settings independently from campaign progress.
 - **L31–L39:** Normalize the requested speed to a supported preset.
 
-### `tests/headless_smoke.gd` (233 lines, current blob SHA `75df36b96e483b5db939297939fe9702226c7399`)
+### `tests/headless_smoke.gd` (237 lines, current blob SHA `1c3b8ff559adc403d0faee8118ee2be9d52d5e22`)
 - **L1–L12:** test runner/preloads and isolated temporary save/settings paths.
 - **L15–L25:** run grouped tests and exit nonzero on failed assertions.
 - **L28–L47:** timestamp order, interpolation, endpoint hold, script identity and copy independence.
@@ -652,7 +653,7 @@ This map matches controller blob SHA `f7c75cdd825e4d12335202319fecdb366f0f6423` 
 
 - **Latest completed Godot CI:** [run 41091283098](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41091283098) passed on Godot 4.4.0 and 4.7.2 at commit `36622a5488f3cb4073b8692ae85a768b62710d43`. Both versions passed import/parse, data smoke and gameplay-flow tests, including Performance Mode persistence/toggling, route-segment collision math and mobile UI regressions.
 - **Latest Android APK export:** [run 41091282986](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41091282986) succeeded for the same tested revision. Export, ZIP integrity, artifact upload and nightly publication passed. [Direct APK](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk).
-- **Current code/test hashes:** `scripts/game.gd` = `f7c75cdd825e4d12335202319fecdb366f0f6423` (1991 lines); `scripts/data/settings_store.gd` = `ae2c241920849d9db196a8462d1caadc5f820048` (43 lines); `tests/game_flow_smoke.gd` = `cdf19da99cca0d296e0facaf2a239c9060f1bb59` (1141 lines); `tests/headless_smoke.gd` = `df2d8fa7b4604ba224b9078f3b4ad307bd61daa7` (236 lines).
+- **Current code/test hashes:** `scripts/game.gd` = `2f6c7a04ef45606315033b1ef7f52e5a42eb86e5` (2039 lines); `scripts/data/level_catalog.gd` = `416bc2d88c1e3ac9b024a5915d89edfe919a62b0` (463 lines); `scripts/data/settings_store.gd` = `ae2c241920849d9db196a8462d1caadc5f820048` (43 lines); `tests/game_flow_smoke.gd` = `d77eef16b1f5e086b5a625960871f2fa7cd9ff50` (1186 lines); `tests/headless_smoke.gd` = `1c3b8ff559adc403d0faee8118ee2be9d52d5e22` (237 lines).
 - **Performance measurement boundary:** no physical low-end handset or GPU profiler was available. The code-level workload is reduced and CI is green, but actual FPS, battery and thermals still need measurement on hardware.
 - **Device QA:** touch reach, safe areas/cutouts, save persistence after relaunch, and background/foreground behavior still need physical-device testing.
 - **Release boundary:** nightly APK is debug-signed for direct testing, not a production signing key or Google Play-ready release.
@@ -674,7 +675,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 
 1. **Mobile sizing / safe areas:** menu/HUD/modal layout and joystick hit regions now reflow for viewport changes, but the playfield drawing/positions remain designed around 1280×720. Safe areas, display cutouts, very short screens, and real-device button reach are not validated.
 2. **Controller size:** `scripts/game.gd` owns UI construction, gameplay state, input, persistence coordination and drawing. Refactor only incrementally; add tests first so game behavior does not regress.
-3. **Small content set:** thirteen room dictionaries and thirteen optional Memory Shards now exist, but the core two-switch pattern is still the foundation and there is no full campaign or final narrative ending.
+3. **Small content set:** seventeen room dictionaries and seventeen optional Memory Shards now exist, but the core two-switch pattern is still the foundation and there is no full campaign or final narrative ending.
 4. **Procedural placeholder visuals:** no authored robot animations, environmental tilesets, VFX or transition animations.
 5. **No sound:** recording, rejected route, sentinel hits, gate opening and portal have text/visual feedback only. No SFX, music, mixer, or audio options exist.
 6. **Pause behavior needs real device QA:** lifecycle logic and timer freeze are headlessly tested, but actual Android app-switch lifecycle/focus behavior are unverified. The player must tap RESUME after returning.
@@ -744,7 +745,7 @@ godot --headless --path . --script res://tests/game_flow_smoke.gd
 - [x] Automate debug APK export, ZIP integrity checking, workflow artifact upload and nightly GitHub Release publication. [Android APK run 40493513100](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40493513100) succeeded.
 - [x] Confirm the latest mobile-layout-fix APK exported and refreshed the nightly release from commit `662d1ce3736513d2afc11ffad49e390694d53ef5`: [Android APK run 40546560892](https://github.com/NinuGaming999/ECHOPOST/actions/runs/40546560892).
 - [ ] Configure protected production signing and complete privacy/storefront disclosures before any public store release.
-- [ ] Install the debug APK on a real Android device and verify lifecycle, controls, saves and all thirteen rooms.
+- [ ] Install the debug APK on a real Android device and verify lifecycle, controls, saves and all seventeen rooms.
 - [ ] Run release QA and a closed beta before public distribution.
 - [ ] Only later design online sharing with route bounds validation, upload limits, moderation/reporting, privacy and backend cost controls.
 
