@@ -962,7 +962,7 @@ func _test_ambient_background(game: Control) -> void:
 	var background: Variant = game.get("background_texture")
 	_check(background is Texture2D, "The generated ECHO nebula background should load as an offline texture.")
 	if background is Texture2D:
-		_check(background.get_width() == 320 and background.get_height() == 180, "The compressed background texture should retain its 16:9 landscape dimensions.")
+		_check(background.get_width() == 1280 and background.get_height() == 720, "The ECHO nebula illustration should retain its 16:9 landscape dimensions.")
 	var particles: Array = game.get("stars")
 	_check(particles.size() == 78, "The ambient background should create a deterministic field of 78 twinkling stars.")
 	_check(not particles.is_empty() and particles[0] is Vector4, "Each star should store normalized position, size and twinkle phase.")

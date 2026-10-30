@@ -25,7 +25,7 @@ const LEVEL_CATALOG = preload("res://scripts/data/level_catalog.gd")
 const LEVELS: Array[Dictionary] = LEVEL_CATALOG.LEVELS
 const PROGRESS_STORE = preload("res://scripts/data/progress_store.gd")
 const SETTINGS_STORE = preload("res://scripts/data/settings_store.gd")
-const BACKGROUND_IMAGE_PATH := "res://assets/echo_nebula_background.jpg"
+const BACKGROUND_IMAGE_PATH := "res://assets/echo_nebula_background.svg"
 
 var screen_state: ScreenState = ScreenState.MENU
 var current_level_index: int = 0
@@ -262,21 +262,12 @@ func _update_joystick(point: Vector2) -> void:
 
 
 func _load_background_texture() -> void:
-	# Decode the small generated JPEG exactly once at startup. Keeping it as a
-	# local project asset means the background also works fully offline.
-	if not FileAccess.file_exists(BACKGROUND_IMAGE_PATH):
-		push_warning("ECHOPOST background image is missing: " + BACKGROUND_IMAGE_PATH)
-		return
-	var image_bytes := FileAccess.get_file_as_bytes(BACKGROUND_IMAGE_PATH)
-	if image_bytes.is_empty():
-		push_warning("ECHOPOST background image is empty.")
-		return
-	var image := Image.new()
-	var load_error := image.load_jpg_from_buffer(image_bytes)
-	if load_error != OK:
-		push_warning("Could not decode ECHOPOST background image. Error: %s" % load_error)
-		return
-	background_texture = ImageTexture.create_from_image(image)
+	# Godot imports this local SVG as a texture; no runtime download or decode is needed.
+	var loaded_background := load(BACKGROUND_IMAGE_PATH)
+	if loaded_background is Texture2D:
+		background_texture = loaded_background
+	else:
+		push_warning("Could not load ECHOPOST background texture: " + BACKGROUND_IMAGE_PATH)
 
 
 func _create_stars() -> void:

@@ -30,7 +30,7 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 
 ## Visual identity
 
-The supplied ECHO logo sets a dark navy and neon-cyan theme. The menu uses a geometric tunnel backdrop; the player and echo are glowing orbit-orbs; recorded paths have a layered cyan glow. The UI is intentionally restrained so routes, relays, the red sentinel and Null Corridor's violet jammer stay readable.
+The supplied ECHO logo sets a dark navy and neon-cyan theme. A new 16:9 cosmic-nebula backdrop adds a ringed signal planet, distant cyan skyline and orbital horizon; twinkling cyan/teal stars animate over the scene. The player and echo remain glowing orbit-orbs; recorded paths retain their layered cyan glow. Performance Mode reduces the ambient star count and skips glint rays so the backdrop stays lightweight.
 
 ## Core puzzle
 
