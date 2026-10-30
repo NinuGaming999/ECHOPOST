@@ -33,8 +33,8 @@
 
 ## Verification status
 
-- **Latest Godot CI for the current gameplay source:** [run 41131642479](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41131642479) passed on Godot 4.4.0 and 4.7.2 at commit `376d365c15c7acb80917781472711c992a1e7a6f`. Both versions passed import/parse, data-layer smoke tests and main-scene gameplay tests, including independent echo recording, both ghosts holding A/C, the real player on B, and the pulse-duet crossing.
-- **Latest Android APK export:** [run 41131642680](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41131642680) succeeded for the same gameplay source. APK export, package integrity, artifact upload and nightly publication passed. [Direct APK](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk).
+- **Latest Godot CI for the current gameplay source:** [run 41132293123](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293123) passed on Godot 4.4.0 and 4.7.2 at commit `6c33f62e71d00216fcfee3d7e5b2992e52753bd3`. Both versions passed import/parse, data-layer smoke tests and main-scene gameplay tests, including independent echo recording, both ghosts holding A/C, the real player on B, pulse-duet timing, restart cleanup and final chapter HUD copy.
+- **Latest Android APK export:** [run 41132293283](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293283) succeeded for the same gameplay source. APK export, package integrity, artifact upload and nightly publication passed. [Direct APK](https://github.com/NinuGaming999/ECHOPOST/releases/download/nightly/ECHOPOST-android.apk).
 - **Performance boundary:** no physical low-end phone/GPU benchmark was possible in this pass. The new mode reduces scripted draw work and caps mobile rendering to 30 FPS, but actual FPS, battery and thermals still need measurement on a device.
 - **Release signing:** the nightly APK is debug-signed for direct testing, not a production signing key or Google Play-ready release.
 
