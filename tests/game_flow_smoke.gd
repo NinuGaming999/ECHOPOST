@@ -21,7 +21,6 @@ func _run_tests() -> void:
 
 	_test_ambient_background(game)
 	_test_chapter_visual_themes(game)
-	# Landmark clearance has a dedicated follow-up test; keep the main gameplay smoke pass focused.
 	_test_chapter_select_layout(game)
 	_test_touch_joystick_comfort(game)
 	_test_premium_mobile_ui(game)
