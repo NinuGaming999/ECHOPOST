@@ -49,13 +49,13 @@ This roadmap is the intended path from the initial project foundation to a relea
 ## Milestone 3 — Art, animation, and audio
 
 - [x] Establish an initial ECHO logo/neon-cyan visual identity: supplied logo, dark navy panels, matching geometric SVG icon and cyan-to-red route feedback. Detailed authored room art packs and production audio remain future work.
-- [ ] Replace temporary procedural robot drawing with a consistent character asset set.
+- [x] Replace temporary procedural robot drawing with an original six-frame vector sprite set for idle hover, left/right drift, recording and echo playback.
 - [x] Add five low-cost chapter-specific room environments with separate palettes and motifs; keep puzzle objects readable and reduce details under Performance Mode.
 - [x] Add one matching chapter landmark per room at a safe corner, with objective/relay/jammer clearance and lower-detail rendering for weaker devices.
 - [x] Add low-cost procedural courier hover, steering lean, a recording pulse and echo-playback shimmer; Performance Mode remains node-free and Reduced Motion freezes these decorative motions.
 - [x] Add sentinel-contact impact feedback, a short gate activation flare and a powered-portal proximity halo, with static Reduced Motion alternatives.
 - [x] Add a brief portal completion signal burst that runs behind the completion panel, has a fixed Reduced Motion version, and cannot restart from repeated portal checks.
-- [ ] Replace the procedural placeholder with a cohesive sprite/animation set and expand authored environment art.
+- [ ] Expand authored environment art with more detailed non-blocking chapter props and room-specific storytelling.
 - [x] Add locally generated ambient music and event-driven puzzle SFX, separate Music/SFX toggles, optional Haptics (OFF by default), and Android VIBRATE export permission.
 - [x] Add separate saved 0–100% Music/SFX volume sliders with immediate preview while adjusting.
 - [ ] Compose/commission richer production audio and verify haptics/audio levels on physical devices.
