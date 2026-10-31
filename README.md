@@ -23,7 +23,7 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 - **Record Echo:** begin recording your route; press again to release the echo.
 - **Restart Room:** restart the current puzzle.
 - **Pause:** freeze or resume play.
-- **Options:** choose slow/normal/fast movement, mirror the joystick/actions for left-handed play, and toggle **Performance Mode**. It is ON by default, reduces optional effects and route-rendering work, and targets 30 FPS on mobile. Turn it OFF on faster devices to restore the full neon effects and 60 FPS mobile cap.
+- **Options:** choose slow/normal/fast movement, mirror the joystick/actions for left-handed play, toggle **Performance Mode**, and enable **Reduced Motion**. Performance Mode is ON by default, reduces optional effects and route-rendering work, and targets 30 FPS on mobile. Reduced Motion freezes decorative stars, disables the background scan sweep and skips button scale animations while keeping moving platforms, sentinels and pulse switches working normally. Turn it OFF on faster devices to restore the full neon effects and 60 FPS mobile cap.
 - **Latch Switch B / E:** in Latch Protocol, stand near Switch B after the echo holds A, then tap LATCH SWITCH B or press E. The switch stays latched when you leave it.
 - **Touch movement:** touch and drag anywhere on the left side of the playfield to move (right side when left-handed mode is enabled). A floating, dead-zone joystick gives fine control with short drags and eases in/out so movement does not snap or drift. The top HUD, center gutter and bottom action row are protected from movement input.
 - **Touch actions:** use the large translucent round **REC** button on the right to record/send an echo; the optional Switch B latch is the smaller round control beside it. Round **Pause**, **Menu** and **Restart** controls stay at the top/bottom edges. In left-handed mode, the Record/Latch cluster mirrors to the left.
@@ -98,7 +98,7 @@ The Android workflow builds the APK and attaches it to that versioned release. B
 
 ## Saves
 
-Campaign progress and collected memories are stored at `user://echopost_save.cfg`. Control and graphics preferences are stored separately at `user://echopost_settings.cfg`, so changing speed, joystick side or Performance Mode does not reset progress. Cloud save and online echo-sharing features are future milestones. See `docs/ROADMAP.md` and `docs/GAME_DESIGN.md`.
+Campaign progress and collected memories are stored at `user://echopost_save.cfg`. Control and graphics preferences are stored separately at `user://echopost_settings.cfg`, so changing speed, joystick side, Performance Mode or Reduced Motion does not reset progress. Cloud save and online echo-sharing features are future milestones. See `docs/ROADMAP.md` and `docs/GAME_DESIGN.md`.
 
 ## Contributing
 
