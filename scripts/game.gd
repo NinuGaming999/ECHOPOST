@@ -20,6 +20,7 @@ const RECORD_SAMPLE_STEP := 0.05
 const MIN_RECORD_SECONDS := 0.7
 const MAX_RECORD_SECONDS := 8.0
 const FAILURE_RESET_DURATION := 0.85
+const COMPLETION_EFFECT_DURATION := 1.15
 const ECHO_TRACK_SCRIPT = preload("res://scripts/core/echo_track.gd")
 const LEVEL_CATALOG = preload("res://scripts/data/level_catalog.gd")
 const LEVELS: Array[Dictionary] = LEVEL_CATALOG.LEVELS
@@ -88,6 +89,7 @@ var failure_reset_timer: float = 0.0
 var failure_reset_reason: String = ""
 var failure_impact_position: Vector2 = Vector2.ZERO
 var gate_flash_timer: float = 0.0
+var completion_effect_timer: float = 0.0
 var status_message: String = "Your route can become someone else's solution."
 var stars: Array[Vector4] = []
 
@@ -192,6 +194,8 @@ func _process(delta: float) -> void:
 	# Static ambience remains visible when Reduced Motion is enabled.
 	if not reduced_motion:
 		particle_time = fposmod(particle_time + minf(delta, 0.05), 4096.0)
+	if completion_effect_timer > 0.0:
+		completion_effect_timer = maxf(0.0, completion_effect_timer - minf(delta, 0.05))
 	if screen_state != ScreenState.PLAYING:
 		queue_redraw()
 		return
@@ -1318,6 +1322,7 @@ func _start_level(level_index: int) -> void:
 	switch_b_latched = false
 	gate_open_timer = 0.0
 	gate_flash_timer = 0.0
+	completion_effect_timer = 0.0
 	failure_impact_position = Vector2.ZERO
 	timed_gate_failed = false
 	hazard_time = 0.0
@@ -1955,6 +1960,7 @@ func _complete_level() -> void:
 		return
 	screen_state = ScreenState.COMPLETE
 	is_recording = false
+	completion_effect_timer = COMPLETION_EFFECT_DURATION
 	_play_feedback("complete", 58, 0.36)
 	rooms_completed += 1
 	if current_level_index < LEVELS.size() - 1:
@@ -2688,6 +2694,21 @@ func _draw_portal(position: Vector2, powered: bool) -> void:
 		var entry_alpha := 0.34 if reduced_motion else 0.24 + (sin(particle_time * 3.6) + 1.0) * 0.07
 		draw_circle(position, entry_radius, Color(tint.r, tint.g, tint.b, entry_alpha * 0.16))
 		draw_arc(position, entry_radius, 0.0 if reduced_motion else particle_time * 0.8, TAU if reduced_motion else particle_time * 0.8 + PI * 1.55, 24 if performance_mode else 48, Color(tint.r, tint.g, tint.b, entry_alpha), 2.0, true)
+	if screen_state == ScreenState.COMPLETE and completion_effect_timer > 0.0:
+		# Completion is a short portal signal burst. Reduced Motion keeps a fixed,
+		# still ring; Performance Mode lowers the number of decorative spokes.
+		var completion_progress := 0.0 if reduced_motion else clampf(1.0 - completion_effect_timer / COMPLETION_EFFECT_DURATION, 0.0, 1.0)
+		var completion_radius := 64.0 if reduced_motion else lerpf(50.0, 116.0, completion_progress)
+		var completion_alpha := 0.36 if reduced_motion else (1.0 - completion_progress) * 0.52
+		var completion_tint := Color(tint.r, tint.g, tint.b, completion_alpha)
+		var completion_angle := 0.0 if reduced_motion else completion_progress * PI * 0.16
+		draw_circle(position, 39.0, Color(tint.r, tint.g, tint.b, completion_alpha * 0.12))
+		draw_arc(position, completion_radius, completion_angle, TAU + completion_angle, 28 if performance_mode else 56, completion_tint, 2.8, true)
+		draw_arc(position, completion_radius * 0.76, -completion_angle, PI * 1.35 - completion_angle, 20 if performance_mode else 40, Color(tint.r, tint.g, tint.b, completion_alpha * 0.72), 1.8, true)
+		var completion_spokes := 6 if performance_mode else 10
+		for spoke_index in range(completion_spokes):
+			var spoke_direction := Vector2.RIGHT.rotated(TAU * float(spoke_index) / float(completion_spokes))
+			draw_line(position + spoke_direction * (completion_radius + 5.0), position + spoke_direction * (completion_radius + 13.0), Color(tint.r, tint.g, tint.b, completion_alpha * 0.82), 1.5, true)
 	draw_line(position + Vector2(-8, -14), position + Vector2(9, 14), tint, 3.0, true)
 	draw_line(position + Vector2(9, -14), position + Vector2(-8, 14), tint, 3.0, true)
 
