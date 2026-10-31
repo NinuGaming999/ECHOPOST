@@ -302,12 +302,12 @@ func _test_chapter_landmarks(game: Control) -> void:
 			_check(bool(game.call("_is_chapter_landmark_clear", landmark_position)), "A visible landmark must pass the authored-object clearance check.")
 			for key in ["spawn", "plate_a", "plate_b", "plate_c", "memory_shard", "echo_waypoint"]:
 				var reserved: Variant = room_data.get(key, null)
-				if reserved is Vector2:
+				if typeof(reserved) == TYPE_VECTOR2:
 					_check(landmark_position.distance_to(reserved) >= 94.0, "A background landmark must stay clear of %s." % key)
 			var waypoints: Variant = room_data.get("echo_waypoints", [])
 			if waypoints is Array:
 				for waypoint in waypoints:
-					if waypoint is Vector2:
+					if typeof(waypoint) == TYPE_VECTOR2:
 						_check(landmark_position.distance_to(waypoint) >= 94.0, "A background landmark must stay clear of every relay checkpoint.")
 			if room_data.has("echo_jammer"):
 				var jammer: Vector2 = room_data["echo_jammer"]
