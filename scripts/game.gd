@@ -126,10 +126,14 @@ func _notification(what: int) -> void:
 	# Modal cards stay centered as a phone rotates or the desktop viewport is resized.
 	if what == NOTIFICATION_RESIZED:
 		call_deferred("_layout_responsive_ui")
-	# Stop gameplay time when Android/iOS suspends the app, or when the app loses focus.
-	# We intentionally do not auto-resume: the player must explicitly tap RESUME.
+	# Pause sound while the app is backgrounded. Gameplay still requires an explicit tap to resume.
 	elif what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		if is_instance_valid(audio_manager):
+			audio_manager.call("set_app_suspended", true)
 		_pause_for_lifecycle()
+	elif what == NOTIFICATION_APPLICATION_RESUMED or what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		if is_instance_valid(audio_manager):
+			audio_manager.call("set_app_suspended", false)
 
 
 func _pause_for_lifecycle() -> void:
