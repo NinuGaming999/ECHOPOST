@@ -1,5 +1,56 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
+## 0. Latest verified handoff — Five chapter-specific room environments
+
+**Current main merge commit:** `41b23650ae615938a8da3c5b05829386521e2f77`  
+**Merged pull request:** [#7 — Add five distinct chapter room environments](https://github.com/NinuGaming999/ECHOPOST/pull/7)  
+**Godot verification:** [run 41219226030](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41219226030) — success on Godot **4.4.0** and **4.7.2**. Both jobs imported/parsed the project, passed the data-layer smoke tests, and passed the full gameplay smoke tests.
+
+### What changed
+
+- All five chapters now have a distinct procedural room-backdrop palette and geometry motif:
+  - **Chapter I — Signal Origins:** cyan circuit traces and contact nodes.
+  - **Chapter II — Signal Synthesis:** violet/blue linked constellation marks and relay rings.
+  - **Chapter III — Drift & Phase:** paired travel rails and phase rings.
+  - **Chapter IV — Twin Signal:** mirrored orbit stations with a connecting signal line.
+  - **Chapter V — Final Orbit:** opposing orbital arcs framing the chamber.
+- The theme geometry is drawn immediately after the room's base surface/border and before the grid, switches, relays, hazards, gates, couriers and route trails. It remains background decoration rather than another puzzle cue.
+- Themes use shared palette metadata and a small motif selector; no new scene nodes, imported textures, external dependencies or per-frame polygon arrays were added.
+- **Performance Mode** uses lower-opacity marks and fewer arc segments where applicable. **Reduced Motion** freezes the decorative phase offset while leaving bridges, sentinels, pulse switches, timers, player movement and echo playback untouched.
+- All five themes are explicitly checked for their names, unique motif IDs, two distinct accent colors, unique primary colors and safe fallback behavior for out-of-range chapter numbers. The tests also verify that the 24-room catalog contains rooms in all five chapters.
+- README, game-design notes and roadmap now describe the five room environments and remaining detailed-art work.
+
+### Exact current source map
+
+- `scripts/game.gd` — blob `99addebc13f09749ec600e6529b299b2d09996d0`, 2708 lines:
+  - **L30–L36:** the five shared theme names, palette pairs and motif IDs.
+  - **L2219–L2221:** clamped chapter-theme lookup.
+  - **L2223–L2302:** low-cost procedural background motifs, Performance Mode detail reduction, Reduced Motion phase freeze, and five chapter-specific drawing branches.
+  - **L2304:** chapter environment is invoked at the start of room rendering, before puzzle objects.
+- `tests/game_flow_smoke.gd` — blob `ab52ee3aaf83b18151b05e94b20c7a01ca066bea`, 1612 lines:
+  - **L23:** five-theme regression suite is part of the full gameplay smoke run.
+  - **L253–L283:** theme names, motif IDs, Color-typed accent fields, palette distinction, out-of-range fallback, and 24-room/five-chapter coverage.
+- `tests/headless_smoke.gd` — blob `2fe303a8ef421a73f4cc75135949619d9d8de918`, 363 lines; unchanged data/settings validation.
+- `README.md` — blob `afa4265fcd64fb8ec6c4bdf145cdf88ec6e4a299`, 122 lines; **L43–L47** describes the five chapter environments.
+- `docs/GAME_DESIGN.md` — blob `d307302def6cc3eb8b8f86aabc8601883c9accc5`, 129 lines; **L114–L116** describes the art direction and five motif families.
+- `docs/ROADMAP.md` — blob `cdb937ebc9b82a3abb13e443a9f8130a3f18708a`, 92 lines; **L53** marks the five chapter environments complete.
+
+### Verification and remaining limits
+
+- **Godot CI:** run 41219226030 passed both Godot 4.4.0 and 4.7.2, including project import/parse, data tests and complete gameplay smoke tests. No test failures were reported.
+- **Android APK:** the Android export for merge commit `41b23650ae615938a8da3c5b05829386521e2f77` has not been confirmed here. Do not assume the nightly APK includes this update until the Android workflow's export and archive check succeed.
+- **Physical-device QA:** not performed. Inspect chapter motifs at normal phone scale, confirm Reduced Motion and Performance Mode behavior, and measure actual low-end-device frame rate, battery and heat.
+- **Art scope:** these are subtle procedural backdrops, not five fully authored background illustrations. Detailed room sets, more environmental storytelling, sentinel-contact reactions and gate/portal effects remain future work.
+
+### Next development tasks
+
+1. Confirm the post-merge Android APK export and install it on a real phone for visual, touch, save and lifecycle checks.
+2. Add small chapter-specific environmental props or silhouettes only where they do not compete with puzzle geometry.
+3. Add sentinel-contact, gate-opening and portal-entry feedback, with Reduced Motion alternatives.
+4. Continue physical-device QA and measure actual low-end performance rather than inferring it from CI.
+
+---
+
 ## 0. Latest verified handoff — Procedural courier animation polish
 
 **Current main merge commit:** `59e024b6323b398ae9efa685ac81dc2ea7371024`  
