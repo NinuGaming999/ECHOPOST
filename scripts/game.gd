@@ -2361,7 +2361,7 @@ func _draw_chapter_environment(room_rect: Rect2, chapter: int) -> void:
 	var right := room_rect.end.x
 	var bottom := room_rect.end.y
 
-	_draw_chapter_landmarks(room_rect, int(style["motif"]), primary_ink, secondary_ink)
+	# Chapter landmarks are kept out of the draw loop until the low-end rendering pass is verified.
 
 	match int(style["motif"]):
 		1:
