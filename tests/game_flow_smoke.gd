@@ -20,6 +20,7 @@ func _run_tests() -> void:
 	await process_frame
 
 	_test_ambient_background(game)
+	_test_chapter_visual_themes(game)
 	_test_chapter_select_layout(game)
 	_test_touch_joystick_comfort(game)
 	_test_premium_mobile_ui(game)
@@ -247,6 +248,39 @@ func _test_portal_completion_is_idempotent(game: Control) -> void:
 	game.set("rooms_completed", previous_completed)
 	game.call("_save_progress")
 	game.call("_update_menu_progress")
+
+
+func _test_chapter_visual_themes(game: Control) -> void:
+	var expected_names: Array[String] = [
+		"SIGNAL ORIGINS",
+		"SIGNAL SYNTHESIS",
+		"DRIFT & PHASE",
+		"TWIN SIGNAL",
+		"FINAL ORBIT"
+	]
+	var previous_primary := Color.TRANSPARENT
+	var seen_chapters: Dictionary = {}
+	for chapter in range(1, 6):
+		var style: Dictionary = game.call("_get_chapter_theme_style", chapter)
+		_check(str(style.get("name", "")) == expected_names[chapter - 1], "Chapter %d should have its own named visual identity." % chapter)
+		_check(int(style.get("motif", 0)) == chapter, "Chapter %d should select its matching procedural motif." % chapter)
+		_check(typeof(style.get("primary")) == TYPE_COLOR and typeof(style.get("secondary")) == TYPE_COLOR, "Each chapter theme should define both background accent colors.")
+		var primary: Color = style["primary"]
+		var secondary: Color = style["secondary"]
+		_check(primary != secondary, "Chapter %d should use two distinct visual accents." % chapter)
+		_check(primary != previous_primary, "Every chapter should have a distinct primary palette color.")
+		previous_primary = primary
+		seen_chapters[chapter] = true
+	var first_fallback: Dictionary = game.call("_get_chapter_theme_style", 0)
+	var last_fallback: Dictionary = game.call("_get_chapter_theme_style", 99)
+	_check(str(first_fallback.get("name", "")) == expected_names[0], "Invalid low chapter numbers should safely use the first theme.")
+	_check(str(last_fallback.get("name", "")) == expected_names[4], "Invalid high chapter numbers should safely use the final theme.")
+
+	var catalog_chapters: Dictionary = {}
+	for room in LevelCatalog.LEVELS:
+		catalog_chapters[int(room.get("chapter", 1))] = true
+	_check(catalog_chapters.size() == 5, "The 24-room campaign should include rooms in all five themed chapters.")
+	_check(seen_chapters.size() == 5, "All five theme styles should be available to the room renderer.")
 
 
 func _test_chapter_select_layout(game: Control) -> void:
