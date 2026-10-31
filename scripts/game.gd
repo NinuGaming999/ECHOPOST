@@ -27,6 +27,13 @@ const PROGRESS_STORE = preload("res://scripts/data/progress_store.gd")
 const SETTINGS_STORE = preload("res://scripts/data/settings_store.gd")
 const AUDIO_MANAGER_SCRIPT = preload("res://scripts/core/audio_manager.gd")
 const BACKGROUND_IMAGE_PATH := "res://assets/echo_nebula_background.jpg"
+const CHAPTER_THEME_STYLES: Array[Dictionary] = [
+	{"name": "SIGNAL ORIGINS", "primary": Color(0.18, 0.84, 0.94), "secondary": Color(0.20, 1.0, 0.82), "motif": 1},
+	{"name": "SIGNAL SYNTHESIS", "primary": Color(0.65, 0.48, 1.0), "secondary": Color(0.24, 0.66, 1.0), "motif": 2},
+	{"name": "DRIFT & PHASE", "primary": Color(1.0, 0.68, 0.30), "secondary": Color(0.18, 0.88, 0.80), "motif": 3},
+	{"name": "TWIN SIGNAL", "primary": Color(0.38, 0.76, 1.0), "secondary": Color(0.86, 0.52, 1.0), "motif": 4},
+	{"name": "FINAL ORBIT", "primary": Color(0.30, 1.0, 0.76), "secondary": Color(1.0, 0.62, 0.32), "motif": 5}
+]
 
 var screen_state: ScreenState = ScreenState.MENU
 var current_level_index: int = 0
@@ -2209,12 +2216,92 @@ func _get_gate_timer_ratio() -> float:
 	return clampf(gate_open_timer / gate_duration, 0.0, 1.0)
 
 
+func _get_chapter_theme_style(chapter: int) -> Dictionary:
+	return CHAPTER_THEME_STYLES[clampi(chapter - 1, 0, CHAPTER_THEME_STYLES.size() - 1)]
+
+
+func _draw_chapter_environment(room_rect: Rect2, chapter: int) -> void:
+	var style := _get_chapter_theme_style(chapter)
+	var primary: Color = style["primary"]
+	var secondary: Color = style["secondary"]
+	# These are background-only marks, deliberately kept near the room perimeter.
+	# Performance Mode uses fewer/dimmer details; Reduced Motion freezes the
+	# decorative phase while preserving the chapter identity.
+	var theme_alpha := 0.052 if performance_mode else 0.092
+	var secondary_alpha := theme_alpha * 0.72
+	var drift_phase := 0.0 if reduced_motion else sin(particle_time * 0.72) * 4.0
+	var primary_ink := Color(primary.r, primary.g, primary.b, theme_alpha)
+	var secondary_ink := Color(secondary.r, secondary.g, secondary.b, secondary_alpha)
+	var left := room_rect.position.x
+	var top := room_rect.position.y
+	var right := room_rect.end.x
+	var bottom := room_rect.end.y
+
+	match int(style["motif"]):
+		1:
+			# Chapter I — first signal: simple corner traces and clear contact nodes.
+			var trace_start := Vector2(left + 26.0, top + 54.0)
+			draw_line(trace_start, trace_start + Vector2(0.0, 34.0), primary_ink, 2.0, true)
+			draw_line(trace_start + Vector2(0.0, 34.0), trace_start + Vector2(54.0, 34.0), primary_ink, 2.0, true)
+			draw_line(trace_start + Vector2(54.0, 34.0), trace_start + Vector2(70.0, 48.0), secondary_ink, 1.6, true)
+			draw_circle(trace_start + Vector2(70.0, 48.0), 3.0, secondary_ink)
+			var return_start := Vector2(right - 26.0, bottom - 54.0)
+			draw_line(return_start, return_start + Vector2(0.0, -34.0), primary_ink, 2.0, true)
+			draw_line(return_start + Vector2(0.0, -34.0), return_start + Vector2(-54.0, -34.0), primary_ink, 2.0, true)
+			draw_circle(return_start + Vector2(-54.0, -34.0), 3.0, secondary_ink)
+			draw_arc(Vector2(left + 122.0, bottom - 28.0), 15.0, -0.8, 1.8, 20, secondary_ink, 1.2, true)
+		2:
+			# Chapter II — synthesis: linked constellation nodes and relay geometry.
+			var node_a := Vector2(left + 44.0, top + 58.0)
+			var node_b := Vector2(left + 108.0, top + 35.0)
+			var node_c := Vector2(left + 150.0, top + 88.0)
+			draw_line(node_a, node_b, primary_ink, 1.8, true)
+			draw_line(node_b, node_c, primary_ink, 1.8, true)
+			draw_line(node_c, node_a, secondary_ink, 1.2, true)
+			draw_circle(node_a, 4.0, secondary_ink)
+			draw_circle(node_b, 3.0, primary_ink)
+			draw_circle(node_c, 4.0, secondary_ink)
+			draw_arc(Vector2(right - 86.0, bottom - 64.0), 35.0, -PI * 0.82, PI * 0.22, 28, primary_ink, 1.8, true)
+			draw_arc(Vector2(right - 86.0, bottom - 64.0), 22.0, PI * 0.18, PI * 1.18, 24, secondary_ink, 1.2, true)
+		3:
+			# Chapter III — drift and phase: paired travel rails with a quiet phase marker.
+			for lane in range(3):
+				var y := top + 74.0 + float(lane) * 12.0 + drift_phase
+				draw_line(Vector2(left + 28.0, y), Vector2(left + 176.0, y + 7.0), secondary_ink, 1.5, true)
+				var lower_y := bottom - 74.0 - float(lane) * 12.0 - drift_phase
+				draw_line(Vector2(right - 28.0, lower_y), Vector2(right - 176.0, lower_y - 7.0), primary_ink, 1.5, true)
+			draw_arc(Vector2(left + 210.0, top + 80.0), 24.0 + absf(drift_phase), -PI * 0.72, PI * 0.72, 24, primary_ink, 1.5, true)
+			draw_arc(Vector2(right - 210.0, bottom - 80.0), 24.0 + absf(drift_phase), PI * 0.28, PI * 1.72, 24, secondary_ink, 1.5, true)
+		4:
+			# Chapter IV — twin signal: mirrored orbit stations connected by a thin link.
+			var orbit_left := Vector2(left + 150.0, top + 84.0)
+			var orbit_right := Vector2(right - 150.0, top + 84.0)
+			draw_line(orbit_left + Vector2(46.0, 0.0), orbit_right - Vector2(46.0, 0.0), secondary_ink, 1.2, true)
+			draw_arc(orbit_left, 42.0, -0.35, TAU - 0.35, 40 if not performance_mode else 24, primary_ink, 1.8, true)
+			draw_arc(orbit_left, 29.0, 0.5, PI * 1.45, 24, secondary_ink, 1.2, true)
+			draw_arc(orbit_right, 42.0, 0.35, TAU + 0.35, 40 if not performance_mode else 24, secondary_ink, 1.8, true)
+			draw_arc(orbit_right, 29.0, PI * 1.55, PI * 2.5, 24, primary_ink, 1.2, true)
+			draw_circle(orbit_left + Vector2(0.0, -42.0), 3.0, primary_ink)
+			draw_circle(orbit_right + Vector2(0.0, 42.0), 3.0, secondary_ink)
+		5:
+			# Chapter V — final orbit: opposing orbital arcs frame the chamber.
+			var upper_orbit := Vector2(left + 18.0, top + 18.0)
+			var lower_orbit := Vector2(right - 18.0, bottom - 18.0)
+			draw_arc(upper_orbit, 108.0, -0.10, PI * 0.78, 48 if not performance_mode else 28, primary_ink, 2.0, true)
+			draw_arc(upper_orbit, 82.0, PI * 0.18, PI * 0.88, 36 if not performance_mode else 20, secondary_ink, 1.3, true)
+			draw_arc(lower_orbit, 108.0, PI * 1.12, PI * 1.92, 48 if not performance_mode else 28, secondary_ink, 2.0, true)
+			draw_arc(lower_orbit, 82.0, PI * 1.16, PI * 1.82, 36 if not performance_mode else 20, primary_ink, 1.3, true)
+			draw_circle(upper_orbit + Vector2(96.0, 50.0), 3.5, secondary_ink)
+			draw_circle(lower_orbit + Vector2(-96.0, -50.0), 3.5, primary_ink)
+
+
 func _draw_room() -> void:
 	var room_rect := Rect2(ROOM_LEFT, ROOM_TOP, ROOM_RIGHT - ROOM_LEFT, ROOM_BOTTOM - ROOM_TOP)
 	draw_rect(room_rect, Color(0.006, 0.025, 0.036, 0.80), true)
 	var accent: Color = level_data.get("accent", Color(0.15, 0.34, 0.45))
 	draw_rect(room_rect, Color(0.10, 0.90, 0.80, 0.70), false, 2.0)
 	draw_rect(room_rect.grow(-5.0), Color(accent.r, accent.g, accent.b, 0.16), false, 1.0)
+	_draw_chapter_environment(room_rect, int(level_data.get("chapter", 1)))
 	var grid_step := 80 if performance_mode else 40
 	var grid_alpha := 0.22 if performance_mode else 0.30
 	for x in range(int(ROOM_LEFT + 20), int(ROOM_RIGHT), grid_step):
