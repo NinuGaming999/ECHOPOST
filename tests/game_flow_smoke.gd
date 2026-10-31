@@ -48,6 +48,7 @@ func _run_tests() -> void:
 	_check(int(game.get("screen_state")) == 1, "Starting a chamber should switch the game to PLAYING.")
 
 	_test_lifecycle_pause(game)
+	_test_pause_screen_actions(game)
 	game.call("_start_level", 0)
 
 	_test_recording_duration_limit(game)
@@ -109,6 +110,9 @@ func _test_lifecycle_pause(game: Control) -> void:
 	game.set("joystick_direction", Vector2.RIGHT)
 	game.call("_notification", Node.NOTIFICATION_APPLICATION_PAUSED)
 	_check(int(game.get("screen_state")) == 2, "Application suspension should pause active gameplay.")
+	_check(bool((game.get("pause_panel") as Panel).visible), "Application suspension should show the pause card.")
+	_check(bool((game.get("pause_scrim") as ColorRect).visible), "The lifecycle pause scrim should block gameplay controls.")
+	_check(str((game.get("pause_detail_label") as Label).text).contains("lost focus"), "The pause card should explain that the app was backgrounded.")
 	_check(bool((game.get("audio_manager") as Node).get("app_suspended")), "Application suspension should pause background audio too.")
 	_check(game.get("joystick_direction") == Vector2.ZERO, "Lifecycle pause should clear movement input.")
 	_check(bool(game.get("is_recording")), "Lifecycle pause should preserve an in-progress recording.")
@@ -121,7 +125,40 @@ func _test_lifecycle_pause(game: Control) -> void:
 	_check(int(game.get("screen_state")) == 2, "Returning to the app should not resume gameplay without player input.")
 	game.call("_on_pause_pressed")
 	_check(int(game.get("screen_state")) == 1, "The player should be able to resume gameplay explicitly.")
+	_check(not bool((game.get("pause_panel") as Panel).visible), "Explicit resume should hide the pause card.")
+	_check(not bool((game.get("pause_scrim") as ColorRect).visible), "Explicit resume should restore gameplay touch controls.")
 	_check(not bool(game.get("joystick_mouse_active")), "Resume must not reactivate a stale joystick press.")
+
+
+func _test_pause_screen_actions(game: Control) -> void:
+	game.call("_start_level", 0)
+	game.call("_on_pause_pressed")
+	var pause_panel: Panel = game.get("pause_panel")
+	var pause_scrim: ColorRect = game.get("pause_scrim")
+	_check(int(game.get("screen_state")) == 2 and pause_panel.visible, "The pause button should open the pause card.")
+	_check(pause_scrim.visible and pause_scrim.mouse_filter == Control.MOUSE_FILTER_STOP, "The pause scrim should prevent taps from reaching gameplay behind the card.")
+	_check(pause_panel.get_node("PauseResumeButton") is Button, "The pause card should provide a prominent Resume action.")
+	_check(pause_panel.get_node("PauseRestartButton") is Button, "The pause card should provide a Restart Chamber action.")
+	_check(pause_panel.get_node("PauseMenuButton") is Button, "The pause card should provide a Return to Menu action.")
+	_check(bool((game.get("record_button") as Button).disabled), "Recording controls should remain disabled while paused.")
+
+	var resume_button := pause_panel.get_node("PauseResumeButton") as Button
+	resume_button.emit_signal("pressed")
+	_check(int(game.get("screen_state")) == 1 and not pause_panel.visible, "Resume should return to the same live chamber and close the pause card.")
+
+	game.call("_on_pause_pressed")
+	game.set("is_recording", true)
+	var restart_button := pause_panel.get_node("PauseRestartButton") as Button
+	restart_button.emit_signal("pressed")
+	_check(int(game.get("screen_state")) == 1 and not bool(game.get("is_recording")), "Restart from the pause card should reset the chamber and clear an unfinished take.")
+	_check(not pause_panel.visible and not pause_scrim.visible, "Restart should dismiss the complete pause overlay.")
+
+	game.call("_on_pause_pressed")
+	var menu_button := pause_panel.get_node("PauseMenuButton") as Button
+	menu_button.emit_signal("pressed")
+	_check(int(game.get("screen_state")) == 0, "Return to Main Menu should exit the paused chamber.")
+	_check(not pause_panel.visible and not pause_scrim.visible, "Returning to the menu should dismiss the pause overlay.")
+	game.call("_start_level", 0)
 
 
 func _test_recording_duration_limit(game: Control) -> void:
@@ -1462,13 +1499,18 @@ func _test_premium_mobile_ui(game: Control) -> void:
 	game.call("_layout_responsive_ui")
 	var options_panel: Panel = game.get("options_panel")
 	var failure_panel: Panel = game.get("failure_panel")
+	var pause_panel: Panel = game.get("pause_panel")
 	_check(options_panel.position.is_equal_approx((game.size - options_panel.size) * 0.5), "Options should remain centered when the viewport changes size.")
 	_check(failure_panel.position.is_equal_approx((game.size - failure_panel.size) * 0.5), "The failure/restart card should remain centered when the viewport changes size.")
+	_check(pause_panel.position.is_equal_approx((game.size - pause_panel.size) * 0.5), "The pause card should remain centered when the viewport changes size.")
 	game.size = Vector2(800, 360)
 	game.call("_layout_responsive_ui")
 	var fitted_options_size := options_panel.size * options_panel.scale
 	_check(fitted_options_size.x <= game.size.x - 24.0 and fitted_options_size.y <= game.size.y - 24.0, "The taller Options card should scale down to fit short landscape screens.")
 	_check(options_panel.position.is_equal_approx((game.size - options_panel.size) * 0.5), "Scaled Options should keep its center pivot aligned with the viewport.")
+	var fitted_pause_size := pause_panel.size * pause_panel.scale
+	_check(fitted_pause_size.x <= game.size.x - 24.0 and fitted_pause_size.y <= game.size.y - 24.0, "The pause card should scale down to fit short landscape screens.")
+	_check(pause_panel.position.is_equal_approx((game.size - pause_panel.size) * 0.5), "Scaled pause card should keep its center pivot aligned with the viewport.")
 	game.size = Vector2(1480, 820)
 	game.call("_layout_responsive_ui")
 	_check(record.position.x > game.size.x * 0.5 and record.position.y + record.size.y <= game.size.y - restart_button.size.y - 16.0, "Record Echo should sit on the right above bottom utility controls in the default layout.")
