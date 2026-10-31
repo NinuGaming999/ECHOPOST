@@ -2216,6 +2216,114 @@ func _get_gate_timer_ratio() -> float:
 	return clampf(gate_open_timer / gate_duration, 0.0, 1.0)
 
 
+func _get_chapter_landmark_positions(room_rect: Rect2) -> Array[Vector2]:
+	# Four small display pockets at the room corners. Individual landmarks are
+	# hidden if any authored objective, shard or relay occupies the same pocket.
+	var left := room_rect.position.x
+	var top := room_rect.position.y
+	var right := room_rect.end.x
+	var bottom := room_rect.end.y
+	return [
+		Vector2(left + 64.0, top + 48.0),
+		Vector2(right - 64.0, top + 48.0),
+		Vector2(left + 64.0, bottom - 48.0),
+		Vector2(right - 64.0, bottom - 48.0)
+	]
+
+
+func _is_chapter_landmark_clear(position: Vector2) -> bool:
+	const OBJECTIVE_CLEARANCE := 94.0
+	var reserved_points: Array[Vector2] = []
+	for key in ["spawn", "plate_a", "plate_b", "plate_c", "memory_shard", "echo_waypoint"]:
+		var value: Variant = level_data.get(key, null)
+		if value is Vector2:
+			reserved_points.append(value)
+	var waypoint_values: Variant = level_data.get("echo_waypoints", [])
+	if waypoint_values is Array:
+		for waypoint_value in waypoint_values:
+			if waypoint_value is Vector2:
+				reserved_points.append(waypoint_value)
+	for reserved_point in reserved_points:
+		if position.distance_to(reserved_point) < OBJECTIVE_CLEARANCE:
+			return false
+	if level_data.has("echo_jammer"):
+		var jammer_position: Vector2 = level_data["echo_jammer"]
+		var jammer_clearance := float(level_data.get("echo_jammer_radius", 100.0)) + 34.0
+		if position.distance_to(jammer_position) < jammer_clearance:
+			return false
+	return true
+
+
+func _get_visible_chapter_landmark_positions(room_rect: Rect2) -> Array[Vector2]:
+	var visible_positions: Array[Vector2] = []
+	for landmark_position in _get_chapter_landmark_positions(room_rect):
+		if _is_chapter_landmark_clear(landmark_position):
+			visible_positions.append(landmark_position)
+	return visible_positions
+
+
+func _draw_chapter_landmarks(room_rect: Rect2, motif: int, primary: Color, secondary: Color) -> void:
+	if performance_mode:
+		# A single structural mark per room is enough on slower devices.
+		var compact_positions := _get_visible_chapter_landmark_positions(room_rect)
+		if not compact_positions.is_empty():
+			_draw_chapter_landmark(compact_positions[0], motif, primary, secondary, 0)
+		return
+	var positions := _get_visible_chapter_landmark_positions(room_rect)
+	for index in range(positions.size()):
+		_draw_chapter_landmark(positions[index], motif, primary, secondary, index)
+
+
+func _draw_chapter_landmark(anchor: Vector2, motif: int, primary: Color, secondary: Color, index: int) -> void:
+	var mirror_x := -1.0 if index % 2 == 1 else 1.0
+	var mirror_y := -1.0 if index >= 2 else 1.0
+	var base := anchor + Vector2(0.0, 20.0 * mirror_y)
+	var silhouette := Color(primary.r, primary.g, primary.b, 0.24)
+	var highlight := Color(secondary.r, secondary.g, secondary.b, 0.44)
+	match motif:
+		1:
+			# Signal relay pylon with two short antenna arms.
+			draw_rect(Rect2(anchor + Vector2(-7.0, -22.0), Vector2(14.0, 42.0)), silhouette, true)
+			draw_rect(Rect2(anchor + Vector2(-11.0, 17.0), Vector2(22.0, 5.0)), silhouette, true)
+			draw_line(anchor + Vector2(0.0, -22.0), anchor + Vector2(0.0, -34.0), highlight, 2.0, true)
+			draw_line(anchor + Vector2(-7.0, -12.0), anchor + Vector2(-18.0, -19.0), highlight, 1.6, true)
+			draw_line(anchor + Vector2(7.0, -12.0), anchor + Vector2(18.0, -19.0), highlight, 1.6, true)
+			draw_circle(anchor + Vector2(0.0, -5.0), 4.0, highlight)
+		2:
+			# Low-poly crystal cluster: three narrow peaks with a lit seam.
+			draw_line(anchor + Vector2(-22.0 * mirror_x, 18.0 * mirror_y), anchor + Vector2(-13.0 * mirror_x, -18.0 * mirror_y), silhouette, 3.0, true)
+			draw_line(anchor + Vector2(-13.0 * mirror_x, -18.0 * mirror_y), anchor + Vector2(-3.0 * mirror_x, 18.0 * mirror_y), highlight, 2.0, true)
+			draw_line(anchor + Vector2(-3.0 * mirror_x, 18.0 * mirror_y), anchor + Vector2(7.0 * mirror_x, -28.0 * mirror_y), silhouette, 3.0, true)
+			draw_line(anchor + Vector2(7.0 * mirror_x, -28.0 * mirror_y), anchor + Vector2(20.0 * mirror_x, 18.0 * mirror_y), highlight, 2.0, true)
+			draw_line(anchor + Vector2(-25.0 * mirror_x, 19.0 * mirror_y), anchor + Vector2(24.0 * mirror_x, 19.0 * mirror_y), silhouette, 2.0, true)
+		3:
+			# Miniature bridge anchor with two towers and a suspended cable.
+			draw_line(anchor + Vector2(-25.0 * mirror_x, 20.0 * mirror_y), anchor + Vector2(25.0 * mirror_x, 20.0 * mirror_y), silhouette, 3.0, true)
+			draw_rect(Rect2(anchor + Vector2(-21.0 * mirror_x - 3.0, -17.0 * mirror_y), Vector2(6.0, 38.0 * mirror_y).abs()), silhouette, true)
+			draw_rect(Rect2(anchor + Vector2(15.0 * mirror_x - 3.0, -17.0 * mirror_y), Vector2(6.0, 38.0 * mirror_y).abs()), silhouette, true)
+			draw_line(anchor + Vector2(-21.0 * mirror_x, -17.0 * mirror_y), anchor + Vector2(0.0, -5.0 * mirror_y), highlight, 1.5, true)
+			draw_line(anchor + Vector2(0.0, -5.0 * mirror_y), anchor + Vector2(21.0 * mirror_x, -17.0 * mirror_y), highlight, 1.5, true)
+			for cable_index in range(3):
+				var cable_x := -12.0 + float(cable_index) * 12.0
+				draw_line(anchor + Vector2(cable_x * mirror_x, -9.0 * mirror_y), anchor + Vector2(cable_x * mirror_x, 16.0 * mirror_y), highlight, 1.0, true)
+		4:
+			# Twin signal antennae joined by a bridge line.
+			var antenna_left := anchor + Vector2(-16.0 * mirror_x, 4.0 * mirror_y)
+			var antenna_right := anchor + Vector2(16.0 * mirror_x, 4.0 * mirror_y)
+			draw_line(antenna_left, antenna_left + Vector2(0.0, -25.0 * mirror_y), silhouette, 3.0, true)
+			draw_line(antenna_right, antenna_right + Vector2(0.0, -25.0 * mirror_y), silhouette, 3.0, true)
+			draw_arc(antenna_left + Vector2(0.0, -25.0 * mirror_y), 9.0, -PI * 0.78, PI * 0.78, 16, highlight, 1.5, true)
+			draw_arc(antenna_right + Vector2(0.0, -25.0 * mirror_y), 9.0, PI * 0.22, PI * 1.78, 16, highlight, 1.5, true)
+			draw_line(antenna_left, antenna_right, highlight, 1.2, true)
+			draw_circle(anchor, 3.5, highlight)
+	5:
+			# A small portal arch frames the final chapter's horizon.
+			draw_line(anchor + Vector2(-25.0 * mirror_x, 20.0 * mirror_y), anchor + Vector2(-25.0 * mirror_x, -7.0 * mirror_y), silhouette, 5.0, true)
+			draw_line(anchor + Vector2(25.0 * mirror_x, 20.0 * mirror_y), anchor + Vector2(25.0 * mirror_x, -7.0 * mirror_y), silhouette, 5.0, true)
+			draw_arc(anchor + Vector2(0.0, -7.0 * mirror_y), 25.0, PI if mirror_y > 0.0 else 0.0, TAU if mirror_y > 0.0 else PI, 28, highlight, 2.4, true)
+			draw_line(base + Vector2(-29.0 * mirror_x, 0.0), base + Vector2(29.0 * mirror_x, 0.0), silhouette, 3.0, true)
+
+
 func _get_chapter_theme_style(chapter: int) -> Dictionary:
 	return CHAPTER_THEME_STYLES[clampi(chapter - 1, 0, CHAPTER_THEME_STYLES.size() - 1)]
 
@@ -2236,6 +2344,8 @@ func _draw_chapter_environment(room_rect: Rect2, chapter: int) -> void:
 	var top := room_rect.position.y
 	var right := room_rect.end.x
 	var bottom := room_rect.end.y
+
+	_draw_chapter_landmarks(room_rect, int(style["motif"]), primary_ink, secondary_ink)
 
 	match int(style["motif"]):
 		1:
