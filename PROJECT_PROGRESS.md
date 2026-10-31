@@ -1,5 +1,57 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
+## 0. Latest verified handoff — Polished pause screen
+
+**Current main merge commit:** `4c726c3941755c53b23f970dcd478ead9490fbf0`  
+**Merged pull request:** [#13 — Add a polished mobile-friendly pause screen](https://github.com/NinuGaming999/ECHOPOST/pull/13)  
+**Godot PR verification:** [run 41226634596](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41226634596) — success on Godot **4.4.0** and **4.7.2**.  
+**Godot main-branch verification:** [run 41226693058](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41226693058) — success on Godot **4.4.0** and **4.7.2** after merge.
+
+### What changed
+
+- Added a centered **SIGNAL PAUSED** card with three large touch actions: **RESUME CHAMBER**, **RESTART CHAMBER**, and **RETURN TO MAIN MENU**.
+- Added a full-screen translucent scrim with mouse/touch input blocking, preventing joystick, record, latch and other HUD touches from reaching the game while paused.
+- Manual pause opens the card with a short message that the chamber is safe. The top pause control still resumes as before, and the large Resume card button uses the same tested resume path.
+- Android application suspension/focus loss uses the same pause card and explains why play stopped. Returning to the app never auto-resumes; the player still needs to tap Resume.
+- Restarting from the card calls the existing room-start path, clearing an unfinished take and echo state as before. Returning to the menu closes the pause card and scrim. Starting any chamber also ensures the overlay is hidden.
+- The card participates in the shared centered-modal layout and scales down on compact landscape screens.
+- No movement, recording duration, echo lifetime, sentinel, bridge, gate, puzzle logic, save data, audio configuration or FPS settings changed. Pausing still freezes gameplay timers and audio is still suspended by the existing lifecycle handling.
+- Added tests for OS lifecycle pause and explicit resume, scrim input blocking, all three actions, recording reset, and pause-card centering/scaling. README, build status, design and roadmap were updated.
+
+### Exact current source map
+
+- `scripts/game.gd` — blob `a965089e8a692f9188a560910b6f5e76fa69531e`, **2,888 lines**:
+  - **L112–L114:** pause scrim, pause panel and lifecycle explanation label references.
+  - **L163–L187:** application pause/focus-out displays the pause card, clears held joystick input and preserves an in-progress recording.
+  - **L815–L838:** blocking scrim and SIGNAL PAUSED card construction, including Resume, Restart Chamber and Main Menu actions.
+  - **L1121:** pause card joins the common responsive centered-modal layout.
+  - **L1294–L1319:** returning to the main menu hides the pause overlay.
+  - **L1325–L1336:** starting a chamber hides the pause overlay and returns to PLAYING.
+  - **L2043–L2070:** manual pause/resume toggles the card and scrim through one state path.
+- `tests/game_flow_smoke.gd` — blob `31c938d54228db4c49dc70ded0999941833db999`, **1,676 lines**:
+  - **L105–L130:** OS lifecycle pause displays the same card, keeps timers/recording stable and requires explicit resume.
+  - **L133–L166:** manual pause, scrim blocking, Resume, Restart Chamber and Return to Main Menu regression checks.
+  - **L1511–L1516:** checks centered/compact pause-card layout and fit.
+- `README.md` — blob `42d98c8457da92cd03c623e02beb89d9234e91ed`, **122 lines**; pause instructions updated.
+- `docs/GAME_DESIGN.md` — blob `e9261656f3fc09689b89f42b085d8ad3b4c7080d`, **129 lines**; pause/lifecycle UX documented.
+- `docs/ROADMAP.md` — blob `0a2dda47d346f841ada4ad580527831b6c968734`, **96 lines**; pause screen milestone marked complete.
+- `docs/BUILD_STATUS.md` — blob `71eab9faa0433930abfac141b422c5cffdfdf26a`, **50 lines**; implementation summary updated.
+- This handoff follows merge commit `4c726c3941755c53b23f970dcd478ead9490fbf0`.
+
+### Verification and remaining limits
+
+- **Godot CI:** PR run 41226634596 and post-merge main run 41226693058 both passed Godot 4.4.0 and 4.7.2, including editor import/parse, data tests and full gameplay-flow tests.
+- **Android APK:** post-merge export [run 41226693021](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41226693021) was still in progress when this handoff was written. Check its export and ZIP-integrity result before claiming an APK for this pause-screen revision.
+- **Physical-device QA:** not performed. Verify screen dimming, pause-card scaling, button reach and behavior after app switching on a real landscape phone.
+
+### Next development tasks
+
+1. Confirm Android APK export for this pause-screen merge, including archive integrity, then install it on a physical phone.
+2. Continue mobile UX improvements only in small steps, with Godot 4.4.0 and 4.7.2 coverage.
+3. Keep the no-FPS-cap policy intact; Performance Mode should remain a visual-detail preset only.
+
+---
+
 ## 0. Latest verified handoff — Remove forced FPS caps
 
 **Current main merge commit:** `0b327d0c3a910aa2eaaba6d6792c69f562b636ae`  
