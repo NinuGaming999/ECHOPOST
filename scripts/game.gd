@@ -45,6 +45,8 @@ var sfx_volume: float = 0.89125094
 var audio_manager: Node
 var background_texture: Texture2D
 var particle_time: float = 0.0
+var player_animation_time: float = 0.0
+var player_visual_velocity: Vector2 = Vector2.ZERO
 var level_data: Dictionary = {}
 
 var player_position: Vector2 = Vector2(160, 365)
@@ -152,6 +154,7 @@ func _pause_for_lifecycle() -> void:
 	joystick_mouse_active = false
 	joystick_direction = Vector2.ZERO
 	joystick_applied_direction = Vector2.ZERO
+	player_visual_velocity = Vector2.ZERO
 	pause_button.text = "▶"
 	pause_button.tooltip_text = "Resume"
 	status_message = "Paused automatically because ECHOPOST lost focus. Tap PLAY to continue."
@@ -203,6 +206,8 @@ func _process(delta: float) -> void:
 		return
 
 	var safe_delta := minf(delta, 0.05)
+	if not reduced_motion:
+		player_animation_time = fposmod(player_animation_time + safe_delta, 4096.0)
 	_update_player(safe_delta)
 
 	if is_recording:
@@ -1277,6 +1282,7 @@ func _start_level(level_index: int) -> void:
 		pause_button.tooltip_text = "Pause"
 	level_data = LEVELS[current_level_index]
 	player_position = level_data["spawn"]
+	player_visual_velocity = Vector2.ZERO
 	echo_position = Vector2.ZERO
 	echo_visible = false
 	echo_playing = false
@@ -1614,6 +1620,7 @@ func _update_player(delta: float) -> void:
 		direction = joystick_applied_direction
 	else:
 		joystick_applied_direction = Vector2.ZERO
+	player_visual_velocity = direction.limit_length(1.0)
 
 	# A rider inherits the platform's world displacement while retaining steering.
 	# Echoes replay world-space points and are not carried by live platform motion.
@@ -1767,6 +1774,8 @@ func _schedule_room_reset(reason: String, detail: String) -> void:
 	joystick_touch_index = -1
 	joystick_mouse_active = false
 	joystick_direction = Vector2.ZERO
+	joystick_applied_direction = Vector2.ZERO
+	player_visual_velocity = Vector2.ZERO
 	# Discard all run state immediately; the short overlay only gives the player
 	# time to read the reason before the complete chamber state is restarted.
 	is_recording = false
@@ -1974,6 +1983,7 @@ func _on_pause_pressed() -> void:
 		joystick_mouse_active = false
 		joystick_direction = Vector2.ZERO
 		joystick_applied_direction = Vector2.ZERO
+		player_visual_velocity = Vector2.ZERO
 		pause_button.text = "▶"
 		pause_button.tooltip_text = "Resume"
 		status_message = "Paused. Tap PLAY to continue."
@@ -2317,13 +2327,13 @@ func _draw_room() -> void:
 		_draw_track_path(echo_track, Color(0.12, 0.98, 0.82, 0.20), 3.0)
 	if echo_visible:
 		var echo_alpha := 0.48 if echo_playing else 0.68
-		_draw_robot(echo_position, Color(0.24, 1.0, 0.88, echo_alpha), 0.78)
+		_draw_robot(echo_position, Color(0.24, 1.0, 0.88, echo_alpha), 0.78, player_animation_time + 0.45, Vector2.ZERO, false, true)
 	if secondary_echo_track.samples.size() > 1 and (secondary_echo_playing or secondary_echo_visible):
 		_draw_track_path(secondary_echo_track, Color(0.74, 0.47, 1.0, 0.22), 3.0)
 	if secondary_echo_visible:
 		var secondary_alpha := 0.48 if secondary_echo_playing else 0.72
-		_draw_robot(secondary_echo_position, Color(0.79, 0.55, 1.0, secondary_alpha), 0.78)
-	_draw_robot(player_position, Color(0.83, 0.95, 1.0), 1.0)
+		_draw_robot(secondary_echo_position, Color(0.79, 0.55, 1.0, secondary_alpha), 0.78, player_animation_time + 1.1, Vector2.ZERO, false, true)
+	_draw_robot(player_position, Color(0.83, 0.95, 1.0), 1.0, player_animation_time, player_visual_velocity, is_recording, false)
 
 	if joystick_touch_index != -1 or joystick_mouse_active or joystick_direction.length() > 0.05 or joystick_applied_direction.length() > 0.05:
 		_draw_joystick()
@@ -2486,36 +2496,92 @@ func _draw_portal(position: Vector2, powered: bool) -> void:
 	draw_line(position + Vector2(9, -14), position + Vector2(-8, 14), tint, 3.0, true)
 
 
-func _draw_robot(position: Vector2, tint: Color, scale_factor: float) -> void:
+func _draw_robot(
+	position: Vector2,
+	tint: Color,
+	scale_factor: float,
+	animation_time: float = 0.0,
+	travel_direction: Vector2 = Vector2.ZERO,
+	recording: bool = false,
+	echo_playback: bool = false
+) -> void:
 	var alpha := tint.a
+	var phase := 0.0 if reduced_motion else animation_time
+	var movement_strength := clampf(travel_direction.length(), 0.0, 1.0)
+	var bob := 0.0
+	var lean := 0.0
+	if not reduced_motion:
+		var bob_rate := 3.4 + movement_strength * 1.5
+		bob = sin(phase * bob_rate + (0.8 if echo_playback else 0.0)) * (1.25 + movement_strength * 1.35)
+		lean = clampf(travel_direction.x, -1.0, 1.0) * 0.10
+	var courier_position := position + Vector2(0.0, -bob) * scale_factor
+	var fin_tint := Color(tint.r, tint.g, tint.b, 0.68 * alpha)
+
+	# A short grounding shadow keeps the hovering courier readable on bright floors.
+	draw_line(
+		position + Vector2(-9.0, 18.0) * scale_factor,
+		position + Vector2(9.0, 18.0) * scale_factor,
+		Color(0.0, 0.05, 0.09, 0.32 * alpha),
+		2.6 * scale_factor,
+		true
+	)
+	# Small stabilizer fins and a rotating signal bead give the orb a recognizable
+	# courier-drone silhouette without adding sprites, nodes or imported assets.
+	var left_fin_start := courier_position + Vector2(-11.0, 4.0).rotated(lean) * scale_factor
+	var left_fin_end := courier_position + Vector2(-21.0, 9.0).rotated(lean) * scale_factor
+	var right_fin_start := courier_position + Vector2(11.0, 4.0).rotated(lean) * scale_factor
+	var right_fin_end := courier_position + Vector2(21.0, 9.0).rotated(lean) * scale_factor
+	draw_line(left_fin_start, left_fin_end, fin_tint, 3.0 * scale_factor, true)
+	draw_line(right_fin_start, right_fin_end, fin_tint, 3.0 * scale_factor, true)
+	draw_circle(left_fin_end, 2.1 * scale_factor, Color(0.54, 1.0, 0.92, 0.76 * alpha))
+	draw_circle(right_fin_end, 2.1 * scale_factor, Color(0.54, 1.0, 0.92, 0.76 * alpha))
+
+	var orbit_angle := -0.28 + phase * (0.62 if not echo_playback else -0.42)
 	if performance_mode:
-		# Compact signal orb keeps a glass highlight and orbit rim without per-frame arrays.
-		draw_arc(position, 22.0 * scale_factor, -0.28, TAU - 0.28, 24, Color(0.10, 0.91, 0.83, 0.56 * alpha), 2.2 * scale_factor, true)
-		draw_circle(position, 19.0 * scale_factor, Color(0.05, 0.95, 0.86, 0.10 * alpha))
-		draw_circle(position, 15.5 * scale_factor, Color(0.01, 0.08, 0.12, 0.96 * alpha))
-		draw_circle(position, 12.5 * scale_factor, Color(tint.r * 0.28, tint.g * 0.72, tint.b * 0.78, 0.96 * alpha))
-		draw_circle(position + Vector2(-4.5, -5.5) * scale_factor, 3.8 * scale_factor, Color(0.90, 1.0, 0.99, 0.62 * alpha))
-		return
-	# Full detail retains the app-mark orb for faster devices.
-	var orbit_points := PackedVector2Array()
-	for i in range(49):
-		var angle := TAU * float(i) / 48.0
-		var local_point := Vector2(cos(angle) * 23.0, sin(angle) * 9.0).rotated(-0.38) * scale_factor
-		orbit_points.append(position + local_point)
-	draw_polyline(orbit_points, Color(0.10, 0.91, 0.83, 0.12 * alpha), 7.0 * scale_factor, true)
-	draw_polyline(orbit_points, Color(tint.r, tint.g, tint.b, 0.78 * alpha), 1.8 * scale_factor, true)
-	# Layered circles create a lightweight faux-glass sphere without textures.
-	draw_circle(position, 25.0 * scale_factor, Color(0.05, 0.95, 0.86, 0.075 * alpha))
-	draw_circle(position, 18.0 * scale_factor, Color(0.01, 0.08, 0.12, 0.96 * alpha))
-	draw_circle(position, 14.5 * scale_factor, Color(tint.r * 0.28, tint.g * 0.72, tint.b * 0.78, 0.96 * alpha))
-	draw_arc(position, 18.0 * scale_factor, 0.0, TAU, 48, Color(tint.r, tint.g, tint.b, 0.92 * alpha), 1.7 * scale_factor, true)
-	var highlight_points := PackedVector2Array()
-	for highlight_index in range(25):
-		var highlight_angle := TAU * float(highlight_index) / 24.0
-		var highlight_point := Vector2(cos(highlight_angle) * 6.0, sin(highlight_angle) * 2.8).rotated(-0.25)
-		highlight_points.append(position + (highlight_point + Vector2(-4.5, -6.0)) * scale_factor)
-	draw_colored_polygon(highlight_points, Color(0.90, 1.0, 0.99, 0.62 * alpha))
-	draw_circle(position + Vector2(5.0, -2.5) * scale_factor, 2.3 * scale_factor, Color(0.76, 1.0, 0.97, 0.32 * alpha))
+		# Performance Mode stays on the compact no-array rendering path.
+		draw_arc(courier_position, 22.0 * scale_factor, orbit_angle, orbit_angle + TAU * 0.76, 24, Color(0.10, 0.91, 0.83, 0.56 * alpha), 2.2 * scale_factor, true)
+		draw_circle(courier_position, 19.0 * scale_factor, Color(0.05, 0.95, 0.86, 0.10 * alpha))
+		draw_circle(courier_position, 15.5 * scale_factor, Color(0.01, 0.08, 0.12, 0.96 * alpha))
+		draw_circle(courier_position, 12.5 * scale_factor, Color(tint.r * 0.28, tint.g * 0.72, tint.b * 0.78, 0.96 * alpha))
+		draw_line(courier_position + Vector2(-6.0, 0.0) * scale_factor, courier_position + Vector2(6.0, 0.0) * scale_factor, Color(0.76, 1.0, 0.98, 0.74 * alpha), 1.8 * scale_factor, true)
+		draw_circle(courier_position + Vector2(-3.7, 0.0) * scale_factor, 1.5 * scale_factor, Color(0.96, 1.0, 0.99, 0.86 * alpha))
+		draw_circle(courier_position + Vector2(3.7, 0.0) * scale_factor, 1.5 * scale_factor, Color(0.96, 1.0, 0.99, 0.86 * alpha))
+		draw_circle(courier_position + Vector2(-4.5, -5.5) * scale_factor, 3.8 * scale_factor, Color(0.90, 1.0, 0.99, 0.62 * alpha))
+	else:
+		# Full detail keeps the app-mark orbit, with a slow drift in its angle.
+		var orbit_points := PackedVector2Array()
+		for i in range(49):
+			var angle := TAU * float(i) / 48.0
+			var local_point := Vector2(cos(angle) * 23.0, sin(angle) * 9.0).rotated(-0.38 + lean + phase * 0.18) * scale_factor
+			orbit_points.append(courier_position + local_point)
+		draw_polyline(orbit_points, Color(0.10, 0.91, 0.83, 0.12 * alpha), 7.0 * scale_factor, true)
+		draw_polyline(orbit_points, Color(tint.r, tint.g, tint.b, 0.78 * alpha), 1.8 * scale_factor, true)
+		# Layered circles create a lightweight faux-glass sphere without textures.
+		draw_circle(courier_position, 25.0 * scale_factor, Color(0.05, 0.95, 0.86, 0.075 * alpha))
+		draw_circle(courier_position, 18.0 * scale_factor, Color(0.01, 0.08, 0.12, 0.96 * alpha))
+		draw_circle(courier_position, 14.5 * scale_factor, Color(tint.r * 0.28, tint.g * 0.72, tint.b * 0.78, 0.96 * alpha))
+		draw_arc(courier_position, 18.0 * scale_factor, 0.0, TAU, 48, Color(tint.r, tint.g, tint.b, 0.92 * alpha), 1.7 * scale_factor, true)
+		var highlight_points := PackedVector2Array()
+		for highlight_index in range(25):
+			var highlight_angle := TAU * float(highlight_index) / 24.0
+			var highlight_point := Vector2(cos(highlight_angle) * 6.0, sin(highlight_angle) * 2.8).rotated(-0.25)
+			highlight_points.append(courier_position + (highlight_point + Vector2(-4.5, -6.0)) * scale_factor)
+		draw_colored_polygon(highlight_points, Color(0.90, 1.0, 0.99, 0.62 * alpha))
+		draw_circle(courier_position + Vector2(5.0, -2.5) * scale_factor, 2.3 * scale_factor, Color(0.76, 1.0, 0.97, 0.32 * alpha))
+		# A small horizontal visor and two signal points make the face readable.
+		draw_line(courier_position + Vector2(-7.0, 1.0) * scale_factor, courier_position + Vector2(7.0, 1.0) * scale_factor, Color(0.76, 1.0, 0.98, 0.70 * alpha), 1.8 * scale_factor, true)
+		draw_circle(courier_position + Vector2(-3.7, 1.0) * scale_factor, 1.7 * scale_factor, Color(0.96, 1.0, 0.99, 0.90 * alpha))
+		draw_circle(courier_position + Vector2(3.7, 1.0) * scale_factor, 1.7 * scale_factor, Color(0.96, 1.0, 0.99, 0.90 * alpha))
+
+	# The orbiting beacon animates independently of the courier's movement.
+	var beacon_position := courier_position + Vector2(cos(phase * 0.9) * 17.0, -14.0 + sin(phase * 0.9) * 5.0) * scale_factor
+	draw_circle(beacon_position, 2.6 * scale_factor, Color(0.68, 1.0, 0.96, 0.88 * alpha))
+	if echo_playback:
+		draw_arc(courier_position, 27.0 * scale_factor, phase * 0.7, phase * 0.7 + PI * 0.72, 20, Color(tint.r, tint.g, tint.b, 0.34 * alpha), 1.5 * scale_factor, true)
+	if recording:
+		var record_pulse := 0.0 if reduced_motion else 0.5 + 0.5 * sin(phase * 5.0)
+		var record_radius := (28.0 + record_pulse * 1.8) * scale_factor
+		draw_arc(courier_position, record_radius, -PI * 0.92, -PI * 0.08, 24, Color(1.0, 0.72, 0.34, 0.88 * alpha), 2.2 * scale_factor, true)
 
 
 func _draw_joystick() -> void:
