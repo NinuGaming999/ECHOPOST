@@ -1,5 +1,54 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
+## 0. Latest verified handoff — Safe chapter-specific environmental landmarks
+
+**Current main merge commit:** `9424c55176aed7bd708d7a0559678b3b08fac623`  
+**Merged pull request:** [#8 — Add chapter landmarks with safe objective clearance](https://github.com/NinuGaming999/ECHOPOST/pull/8)  
+**Godot verification:** [run 41221096717](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41221096717) — success on Godot **4.4.0** and **4.7.2**. Both versions completed project import/parse, data-layer tests and the complete main-scene gameplay smoke suite.
+
+### What changed
+
+- Each chamber now draws **one small environmental landmark** matching its chapter motif: Chapter I signal relay pylon, Chapter II crystal formation, Chapter III bridge anchor, Chapter IV paired antennas, or Chapter V portal arch.
+- The renderer checks four fixed corner pockets and chooses the first one clear of the authored room's spawn, Switch A/B/C, Memory Shard, single/multiple relay checkpoints and echo jammer.
+- Objective clearance is **94 design units**; the jammer clearance uses its authored radius plus **34 units**.
+- The landmark is drawn before puzzle objects. It is background decoration and does not alter room geometry, player movement, route recording, hazards, switch positions, puzzle timing or progression.
+- The final implementation is deliberately a **single inline drawing block** in the existing chapter renderer. It adds no scene nodes, sprites, textures, imported assets, additional scripts, per-frame helper arrays or new renderer objects. Performance Mode lowers opacity and arc detail.
+- The first helper-heavy draft caused the gameplay smoke process to remain active in CI. That version was not merged. The implementation was simplified and the final inline version passed the full 4.4.0/4.7.2 suites before merging.
+- README, game design and roadmap now describe the single safe chapter landmark.
+
+### Exact current source map
+
+- `scripts/game.gd` — blob `473f9ad9172da2211c7df74b2dfbc9f1c152074f`, 2783 lines:
+  - **L30–L36:** the five chapter motif names, palette pairs and motif IDs (unchanged from the previous chapter-theme milestone).
+  - **L2223–L2274:** chapter background palette, drifting accent and four-corner landmark selection with direct objective/relay/jammer clearance.
+  - **L2240–L2279:** landmark anchor scan, first-clear-corner selection and intensity setup.
+  - **L2280–L2314:** Chapter I/II pylon and crystal drawings.
+  - **L2315–L2350:** Chapter III bridge anchor, Chapter IV paired antenna and Chapter V portal arch.
+  - **L2373–L2380:** room renderer invokes the chapter environment before grid and puzzle objects.
+- `tests/game_flow_smoke.gd` — blob `ab52ee3aaf83b18151b05e94b20c7a01ca066bea`, 1612 lines:
+  - **L23:** chapter-theme tests are part of the full gameplay smoke suite.
+  - **L253–L284:** verifies all five chapter names/motif IDs, unique palettes and 24-room/five-chapter coverage. The full smoke suite also runs with the inline landmark rendering active.
+- `tests/headless_smoke.gd` — blob `2fe303a8ef421a73f4cc75135949619d9d8de918`, 363 lines; unchanged.
+- `README.md` — blob `a75da0d14c64d704b24c2290d0215b3ac463dfb8`, 122 lines; **L43–L47** explains chapter motifs and one safe landmark per chamber.
+- `docs/GAME_DESIGN.md` — blob `bdd42d39f67e9be0abadd60b264719f58ba71330`, 129 lines; **L114–L116** describes the art direction, landmark clearance and low-cost rendering.
+- `docs/ROADMAP.md` — blob `8a7bf4b14f3fbe0ba7b4920db8e10c52d572ed44`, 93 lines; **L54** marks one matching safe landmark per chamber complete.
+
+### Verification and remaining limits
+
+- **Godot CI:** run 41221096717 passed both Godot 4.4.0 and 4.7.2, including project import/parse, data-layer tests and full gameplay smoke tests.
+- **Android APK:** the Android export for merge commit `9424c55176aed7bd708d7a0559678b3b08fac623` has not yet been confirmed here. Do not assume the nightly APK contains this change until the Android workflow export and archive check complete.
+- **Physical-device QA:** not performed. Check that small props look restrained at phone scale, never overlap authored objectives, and do not affect low-end frame rate, battery or heat.
+- **Art scope:** these are small procedural silhouettes rather than finished environment assets. More authored props, room variation, sentinel-contact reactions and gate/portal effects remain future work.
+
+### Next development tasks
+
+1. Confirm the post-merge Android APK export and inspect the single landmark on a real landscape phone.
+2. Add brief sentinel-contact and gate-opening feedback, with a Reduced Motion alternative and no gameplay timing changes.
+3. Add a portal-entry completion flourish that remains readable on short landscape screens.
+4. Continue physical-device QA and measure actual low-end performance.
+
+---
+
 ## 0. Latest verified handoff — Five chapter-specific room environments
 
 **Current main merge commit:** `41b23650ae615938a8da3c5b05829386521e2f77`  
