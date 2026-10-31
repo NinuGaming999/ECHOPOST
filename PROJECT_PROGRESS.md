@@ -1,5 +1,53 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
+## 0. Latest verified handoff — Chamber completion signal burst
+
+**Current main merge commit:** `ead7b408cd03f469c38c8c6d7eba4fc0c63e27ad`  
+**Merged pull request:** [#10 — Add a rewarding chamber completion signal burst](https://github.com/NinuGaming999/ECHOPOST/pull/10)  
+**Godot PR verification:** [run 41221849545](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41221849545) — success on Godot **4.4.0** and **4.7.2**.  
+**Godot main-branch verification:** [run 41221904385](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41221904385) — success on Godot **4.4.0** and **4.7.2** after the merge.
+
+### What changed
+
+- Completing a chamber now starts a **1.15-second portal signal burst** while the completion panel is visible. The burst expands in two restrained rings with short radial spokes, making the room finish feel more deliberate without covering the completion message.
+- The effect uses its own `completion_effect_timer`. It advances before the normal PLAYING-state early return, so the flourish completes while the result panel is open. Starting another chamber clears the timer.
+- **Reduced Motion** displays a fixed ring with no expanding radius or rotating arc. **Performance Mode** lowers arc detail and uses six spokes instead of ten.
+- The completion routine's existing idempotency guard remains first: repeat portal checks cannot add another room completion, rewrite progression, or restart the visual timer.
+- No puzzle values or gameplay behavior changed: movement, recording, echo playback, sentinel timing, gate countdown, portal radius, unlocks, save schema and completion count remain unchanged.
+- The gameplay smoke test now checks that the effect begins, ticks while the completion screen is shown, and does not restart when the portal state is checked again.
+- README, game-design notes and roadmap now describe the effect and regression coverage.
+
+### Exact current source map
+
+- `scripts/game.gd` — blob `3d92b6b7b2a8ba98c03ce9b7e2ca923a10e5321c`, **2,838 lines**:
+  - **L23:** `COMPLETION_EFFECT_DURATION = 1.15`.
+  - **L92:** independent `completion_effect_timer` state.
+  - **L197:** timer decrements before the non-PLAYING early return.
+  - **L1325:** chamber start resets the visual timer.
+  - **L1963:** the guarded completion routine starts the timer exactly once.
+  - **L2697–L2711:** portal rings and spokes; Reduced Motion uses a static ring and Performance Mode reduces detail.
+- `tests/game_flow_smoke.gd` — blob `e14a402b10528e1f3232e2c4752ac8399580c04b`, **1,623 lines**:
+  - **L244–L254:** checks the burst starts, advances on the completion screen and is not restarted by repeated portal checks.
+- `docs/ROADMAP.md` — blob `7e5c6d8ebd15195afb779738d945a5abab86f2ad`, **95 lines**; chamber-completion burst is marked complete.
+- `docs/GAME_DESIGN.md` — blob `3f28940f6d51535f8a8add18a8ee5f2af2159ba4`, **129 lines**; art direction describes the portal burst and static Reduced Motion version.
+- `README.md` — blob `5326bd5eaf41d9222905509a2712ee249f09e557`, **122 lines**; smoke-test scope includes one-shot completion-effect timing.
+- This handoff follows merge commit `ead7b408cd03f469c38c8c6d7eba4fc0c63e27ad`.
+
+### Verification and remaining limits
+
+- **Godot CI:** both the PR run and the post-merge main run passed Godot 4.4.0 and 4.7.2.
+- **Android APK:** post-merge export run [41221904394](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41221904394) was still in progress when this handoff was written. Do not claim an APK for this merge until that workflow confirms export and ZIP integrity.
+- **Physical-device QA:** not performed. Test the portal burst on a landscape phone, with Reduced Motion and Performance Mode enabled, and inspect visibility around the completion panel on a smaller screen.
+- **Scope:** this is a procedural CanvasItem effect only; no imported art, scene nodes, assets or dependencies were added.
+
+### Next development tasks
+
+1. Confirm the post-merge Android APK export for commit `ead7b408cd03f469c38c8c6d7eba4fc0c63e27ad`, then install it on a physical Android device and test the 24-room campaign, touch controls, saves, lifecycle handling and the new completion effect.
+2. Continue cohesive courier sprite/animation work only after the current procedural visual changes have been checked on hardware.
+3. Keep all further changes small, offline-capable and covered by both Godot CI versions.
+
+---
+
 ## 0. Latest verified handoff — Sentinel, gate and portal visual feedback
 
 **Current main merge commit:** `fd50bd2dde6b36782884fe8b0c3c4df1280cd702`  
