@@ -25,6 +25,7 @@ const LEVEL_CATALOG = preload("res://scripts/data/level_catalog.gd")
 const LEVELS: Array[Dictionary] = LEVEL_CATALOG.LEVELS
 const PROGRESS_STORE = preload("res://scripts/data/progress_store.gd")
 const SETTINGS_STORE = preload("res://scripts/data/settings_store.gd")
+const AUDIO_MANAGER_SCRIPT = preload("res://scripts/core/audio_manager.gd")
 const BACKGROUND_IMAGE_PATH := "res://assets/echo_nebula_background.jpg"
 
 var screen_state: ScreenState = ScreenState.MENU
@@ -36,6 +37,10 @@ var player_move_speed: float = MOVE_SPEED
 var left_handed_controls: bool = false
 var performance_mode: bool = true
 var reduced_motion: bool = false
+var music_enabled: bool = true
+var sfx_enabled: bool = true
+var haptics_enabled: bool = false
+var audio_manager: Node
 var background_texture: Texture2D
 var particle_time: float = 0.0
 var level_data: Dictionary = {}
@@ -99,6 +104,9 @@ var speed_fast_button: Button
 var left_handed_button: Button
 var performance_button: Button
 var reduced_motion_button: Button
+var music_button: Button
+var sfx_button: Button
+var haptics_button: Button
 var menu_progress_label
 var level_title_label: Label
 var level_hint_label: Label
@@ -118,10 +126,14 @@ func _notification(what: int) -> void:
 	# Modal cards stay centered as a phone rotates or the desktop viewport is resized.
 	if what == NOTIFICATION_RESIZED:
 		call_deferred("_layout_responsive_ui")
-	# Stop gameplay time when Android/iOS suspends the app, or when the app loses focus.
-	# We intentionally do not auto-resume: the player must explicitly tap RESUME.
+	# Pause sound while the app is backgrounded. Gameplay still requires an explicit tap to resume.
 	elif what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		if is_instance_valid(audio_manager):
+			audio_manager.call("set_app_suspended", true)
 		_pause_for_lifecycle()
+	elif what == NOTIFICATION_APPLICATION_RESUMED or what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		if is_instance_valid(audio_manager):
+			audio_manager.call("set_app_suspended", false)
 
 
 func _pause_for_lifecycle() -> void:
@@ -148,6 +160,10 @@ func _ready() -> void:
 	_load_background_texture()
 	_load_progress()
 	_load_settings()
+	audio_manager = AUDIO_MANAGER_SCRIPT.new() as Node
+	audio_manager.name = "AudioManager"
+	add_child(audio_manager)
+	audio_manager.call("configure", music_enabled, sfx_enabled, haptics_enabled)
 	_build_interface()
 	_layout_responsive_ui()
 	_show_menu()
@@ -501,28 +517,39 @@ func _open_memory_archive() -> void:
 
 func _build_options_panel() -> void:
 	options_panel = _make_panel("OptionsPanel", Vector2(370, 125), Vector2(540, 470))
-	_make_label(options_panel, "OptionsTitle", Vector2(24, 18), Vector2(492, 42), "OPTIONS", 27, Color(0.88, 0.97, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
-	_make_label(options_panel, "SpeedLabel", Vector2(38, 73), Vector2(464, 30), "MOVEMENT SPEED", 16, Color(0.72, 0.83, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
+	_make_label(options_panel, "OptionsTitle", Vector2(24, 12), Vector2(492, 38), "OPTIONS", 27, Color(0.88, 0.97, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	_make_label(options_panel, "SpeedLabel", Vector2(38, 55), Vector2(464, 25), "MOVEMENT SPEED", 15, Color(0.72, 0.83, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
 
-	speed_slow_button = _make_button(options_panel, "SpeedSlow", Vector2(36, 112), Vector2(145, 46), "SLOW", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 15)
+	speed_slow_button = _make_button(options_panel, "SpeedSlow", Vector2(36, 84), Vector2(145, 42), "SLOW", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 15)
 	speed_slow_button.pressed.connect(_set_move_speed.bind(200.0))
-	speed_normal_button = _make_button(options_panel, "SpeedNormal", Vector2(197, 112), Vector2(145, 46), "NORMAL", Color(0.06, 0.40, 0.55), Color(0.08, 0.56, 0.70), 15)
+	speed_normal_button = _make_button(options_panel, "SpeedNormal", Vector2(197, 84), Vector2(145, 42), "NORMAL", Color(0.06, 0.40, 0.55), Color(0.08, 0.56, 0.70), 15)
 	speed_normal_button.pressed.connect(_set_move_speed.bind(255.0))
-	speed_fast_button = _make_button(options_panel, "SpeedFast", Vector2(358, 112), Vector2(145, 46), "FAST", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 15)
+	speed_fast_button = _make_button(options_panel, "SpeedFast", Vector2(358, 84), Vector2(145, 42), "FAST", Color(0.12, 0.22, 0.35), Color(0.17, 0.32, 0.48), 15)
 	speed_fast_button.pressed.connect(_set_move_speed.bind(310.0))
 
-	_make_label(options_panel, "SpeedHelp", Vector2(34, 164), Vector2(472, 34), "Changes how quickly the courier moves.", 13, Color(0.55, 0.68, 0.81), HORIZONTAL_ALIGNMENT_CENTER)
-	left_handed_button = _make_button(options_panel, "LeftHandedButton", Vector2(62, 218), Vector2(416, 48), "", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 15)
+	_make_label(options_panel, "SpeedHelp", Vector2(34, 128), Vector2(472, 24), "Changes how quickly the courier moves.", 12, Color(0.55, 0.68, 0.81), HORIZONTAL_ALIGNMENT_CENTER)
+	left_handed_button = _make_button(options_panel, "LeftHandedButton", Vector2(62, 157), Vector2(416, 38), "", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 14)
 	left_handed_button.pressed.connect(_toggle_left_handed_controls)
-	_make_label(options_panel, "HandedHelp", Vector2(35, 270), Vector2(470, 34), "Move the virtual joystick to the right or left side.", 12, Color(0.55, 0.68, 0.81), HORIZONTAL_ALIGNMENT_CENTER)
-	performance_button = _make_button(options_panel, "PerformanceButton", Vector2(62, 309), Vector2(416, 42), "PERFORMANCE MODE: ON", Color(0.02, 0.30, 0.31), Color(0.03, 0.48, 0.45), 14)
+	_make_label(options_panel, "HandedHelp", Vector2(35, 197), Vector2(470, 22), "Move the virtual joystick to the right or left side.", 11, Color(0.55, 0.68, 0.81), HORIZONTAL_ALIGNMENT_CENTER)
+	performance_button = _make_button(options_panel, "PerformanceButton", Vector2(62, 224), Vector2(416, 36), "PERFORMANCE MODE: ON", Color(0.02, 0.30, 0.31), Color(0.03, 0.48, 0.45), 13)
 	performance_button.tooltip_text = "Simplifies optional effects and targets a steadier 30 FPS on mobile."
 	performance_button.pressed.connect(_toggle_performance_mode)
-	reduced_motion_button = _make_button(options_panel, "ReducedMotionButton", Vector2(62, 356), Vector2(416, 42), "REDUCED MOTION: OFF", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 14)
+	reduced_motion_button = _make_button(options_panel, "ReducedMotionButton", Vector2(62, 264), Vector2(416, 36), "REDUCED MOTION: OFF", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 13)
 	reduced_motion_button.tooltip_text = "Keeps decorative stars and UI still. Moving bridges, sentinels and pulse switches continue to work normally."
 	reduced_motion_button.pressed.connect(_toggle_reduced_motion)
 
-	var back := _make_button(options_panel, "OptionsBack", Vector2(150, 414), Vector2(240, 44), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 15)
+	_make_label(options_panel, "AudioLabel", Vector2(38, 305), Vector2(464, 22), "AUDIO & FEEDBACK", 14, Color(0.72, 0.83, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
+	music_button = _make_button(options_panel, "MusicButton", Vector2(28, 331), Vector2(154, 38), "MUSIC: ON", Color(0.02, 0.30, 0.31), Color(0.03, 0.48, 0.45), 12)
+	music_button.tooltip_text = "Toggle the quiet original ambient music."
+	music_button.pressed.connect(_toggle_music)
+	sfx_button = _make_button(options_panel, "SFXButton", Vector2(193, 331), Vector2(154, 38), "SFX: ON", Color(0.02, 0.30, 0.31), Color(0.03, 0.48, 0.45), 12)
+	sfx_button.tooltip_text = "Toggle recording, gate, memory and puzzle feedback sounds."
+	sfx_button.pressed.connect(_toggle_sfx)
+	haptics_button = _make_button(options_panel, "HapticsButton", Vector2(358, 331), Vector2(154, 38), "HAPTICS: OFF", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 12)
+	haptics_button.tooltip_text = "Optional short vibration cues on supported mobile devices. OFF by default."
+	haptics_button.pressed.connect(_toggle_haptics)
+
+	var back := _make_button(options_panel, "OptionsBack", Vector2(150, 386), Vector2(240, 42), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 14)
 	back.pressed.connect(func():
 		options_panel.hide()
 		menu_root.show()
@@ -594,6 +621,50 @@ func _set_reduced_motion(enabled: bool) -> void:
 	queue_redraw()
 
 
+func _toggle_music() -> void:
+	_set_music_enabled(not music_enabled)
+
+
+func _set_music_enabled(enabled: bool) -> void:
+	music_enabled = enabled
+	if is_instance_valid(audio_manager):
+		audio_manager.call("set_music_enabled", music_enabled)
+	_save_settings()
+	_update_options_panel()
+
+
+func _toggle_sfx() -> void:
+	_set_sfx_enabled(not sfx_enabled)
+
+
+func _set_sfx_enabled(enabled: bool) -> void:
+	sfx_enabled = enabled
+	if is_instance_valid(audio_manager):
+		audio_manager.call("set_sfx_enabled", sfx_enabled)
+	_save_settings()
+	_update_options_panel()
+
+
+func _toggle_haptics() -> void:
+	_set_haptics_enabled(not haptics_enabled)
+
+
+func _set_haptics_enabled(enabled: bool) -> void:
+	haptics_enabled = enabled
+	if is_instance_valid(audio_manager):
+		audio_manager.call("set_haptics_enabled", haptics_enabled)
+	_save_settings()
+	_update_options_panel()
+
+
+func _play_feedback(effect_name: String, haptic_duration_ms: int = 0, amplitude: float = 0.25) -> void:
+	if not is_instance_valid(audio_manager):
+		return
+	audio_manager.call("play_sfx", effect_name)
+	if haptic_duration_ms > 0:
+		audio_manager.call("pulse_haptic", haptic_duration_ms, amplitude)
+
+
 func _apply_performance_mode() -> void:
 	# Target a steadier frame rate on mobile while reducing effects. Desktop and
 	# editor sessions keep their normal pacing for development.
@@ -614,6 +685,12 @@ func _update_options_panel() -> void:
 	if is_instance_valid(reduced_motion_button):
 		reduced_motion_button.text = "REDUCED MOTION: ON" if reduced_motion else "REDUCED MOTION: OFF"
 		reduced_motion_button.tooltip_text = "Keeps decorative stars and UI still. Moving bridges, sentinels and pulse switches continue to work normally."
+	if is_instance_valid(music_button):
+		music_button.text = "MUSIC: ON" if music_enabled else "MUSIC: OFF"
+	if is_instance_valid(sfx_button):
+		sfx_button.text = "SFX: ON" if sfx_enabled else "SFX: OFF"
+	if is_instance_valid(haptics_button):
+		haptics_button.text = "HAPTICS: ON" if haptics_enabled else "HAPTICS: OFF"
 
 
 func _update_memory_archive() -> void:
@@ -1199,6 +1276,7 @@ func _on_record_pressed() -> void:
 		else:
 			recording_slot_index = 0
 		is_recording = true
+		_play_feedback("record_start", 18, 0.18)
 		recording_elapsed = 0.0
 		record_sample_accumulator = 0.0
 		recording_track.clear()
@@ -1310,6 +1388,7 @@ func _finish_recording() -> void:
 		echo_linger_left = 0.0
 		if echo_track.samples.size() > 0:
 			echo_position = echo_track.position_at(0.0)
+	_play_feedback("echo_send", 24, 0.22)
 	if multi_echo:
 		echo_slots_recorded = maxi(echo_slots_recorded, recording_slot_index + 1)
 		status_message = "ECHO 1 RELEASED — let it settle on A, then record Echo 2 to SWITCH C." if echo_slots_recorded == 1 else "ECHO 2 RELEASED — let both echoes settle on A and C, then reach SWITCH B."
@@ -1616,6 +1695,7 @@ func _schedule_room_reset(reason: String, detail: String) -> void:
 		return
 	failure_reset_reason = reason
 	failure_reset_timer = FAILURE_RESET_DURATION
+	_play_feedback("failure", 42, 0.30)
 	status_message = detail
 	joystick_touch_index = -1
 	joystick_mouse_active = false
@@ -1667,6 +1747,7 @@ func _check_memory_shard_collection() -> void:
 
 	collected_shards.append(current_level_index)
 	collected_shards.sort()
+	_play_feedback("memory", 32, 0.24)
 	var lore_fragment := str(level_data.get("shard_lore", "A memory from the courier network survived."))
 	if collected_shards.size() >= LEVELS.size():
 		status_message = "SIGNAL RESTORED — every courier memory has returned. " + lore_fragment
@@ -1720,6 +1801,7 @@ func _check_puzzle_state() -> void:
 			status_message = "PULSE GATE MISSED — leave SWITCH B and return to try again."
 			return
 		door_open = true
+		_play_feedback("gate_open", 36, 0.28)
 		gate_open_timer = maxf(0.0, float(level_data.get("gate_open_seconds", 0.0)))
 		if gate_open_timer > 0.0:
 			status_message = "PULSE GATE OPEN — cross the barrier within %.1f seconds, then reach the portal." % gate_open_timer
@@ -1780,6 +1862,7 @@ func _complete_level() -> void:
 		return
 	screen_state = ScreenState.COMPLETE
 	is_recording = false
+	_play_feedback("complete", 58, 0.36)
 	rooms_completed += 1
 	if current_level_index < LEVELS.size() - 1:
 		unlocked_level = maxi(unlocked_level, current_level_index + 1)
@@ -1937,11 +2020,14 @@ func _load_settings() -> void:
 	left_handed_controls = bool(settings["left_handed_controls"])
 	performance_mode = bool(settings.get("performance_mode", true))
 	reduced_motion = bool(settings.get("reduced_motion", false))
+	music_enabled = bool(settings.get("music_enabled", true))
+	sfx_enabled = bool(settings.get("sfx_enabled", true))
+	haptics_enabled = bool(settings.get("haptics_enabled", false))
 	_apply_performance_mode()
 
 
 func _save_settings() -> void:
-	var error: int = SETTINGS_STORE.save_settings(player_move_speed, left_handed_controls, SETTINGS_STORE.SETTINGS_PATH, performance_mode, reduced_motion)
+	var error: int = SETTINGS_STORE.save_settings(player_move_speed, left_handed_controls, SETTINGS_STORE.SETTINGS_PATH, performance_mode, reduced_motion, music_enabled, sfx_enabled, haptics_enabled)
 	if error != OK:
 		push_warning("Could not save control settings. Error code: %s" % error)
 
