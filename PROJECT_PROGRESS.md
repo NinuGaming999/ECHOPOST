@@ -1,58 +1,57 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
 
-## 0. Latest verified handoff — Chapter V 24-room campaign
+## 0. Latest verified handoff — Reduced Motion and compact mobile Options
 
-**Current main merge commit:** `a53366c3bac60b8f91da501c1736ebb352f0f96f`  
-**Merged pull request:** [#1 — Add Chapter V: bridge crossing and echo duet gauntlet](https://github.com/NinuGaming999/ECHOPOST/pull/1)  
-**Verified PR test head:** `8299c6bf28d0a3341d54d2a14c3b4e3ef706f5a4`  
-**Godot verification:** [run 41134345034](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41134345034) passed before merge; the tested source was merged unchanged.
+**Current main merge commit:** `47b17bb05758a16006c7779c17362007dcb335da`  
+**Merged pull request:** [#2 — Add Reduced Motion accessibility and compact Options layout](https://github.com/NinuGaming999/ECHOPOST/pull/2)  
+**Godot verification:** [run 41193222360](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41193222360) — success on Godot **4.4.0** and **4.7.2**. Both jobs imported/parsed the project and passed the data-layer and complete gameplay smoke tests.
 
-Chapter V extends the campaign from 21 to **24 chambers across five signal chapters**:
+### What changed
 
-- **Chamber 22 — Orbit Crossing:** two independently phased moving bridges cross one void corridor. The recorded route uses two ordered relays; the real player must ride a bridge to Switch B and catch its pulse before a 3.8-second gate closes. The violet Memory Shard sits on the upper bridge route.
-- **Chamber 23 — Tandem Relay:** Echo 1 must end on A and Echo 2 on C. Both independently recorded routes must cross the same two ordered relays and avoid the echo-only jammer.
-- **Chamber 24 — The Last Duet:** both echoes repeat four ordered relays, bypass the jammer and hold A/C while the player reaches the pulse-timed B switch. The final gate has a 4.2-second crossing window.
-
-### Implementation notes
-
-- The existing two-echo model is unchanged; no third slot, extra echo playback system, or new save format was introduced.
-- Orbit Crossing reuses the existing moving-platform and void support code. Its bridges are authored as ordinary platform data, so no additional per-frame node or particle simulation was added.
-- Tandem Relay and The Last Duet reuse the existing ordered-waypoint and echo-jammer validation for each echo recording.
-- The chapter selector now labels Chapter V, the campaign completion message references all five chapters, and the README describes all 24 rooms.
-- Memory Shards remain optional and are indexed dynamically by room count. The existing save format continues to load.
+- **Reduced Motion** is now available in Options, separately from Performance Mode. Its default is OFF.
+- The separate preference file is now **settings schema v3**. Existing v2 files still load; missing Reduced Motion values default to OFF. Settings remain separate from campaign progress.
+- When enabled, Reduced Motion freezes ambient star movement, removes the moving background scan sweep, keeps circuit rails static, suppresses button scale animations, and shows reset cards without a fade.
+- Puzzle-critical movement is deliberately unchanged: moving bridges, sentinels, echo playback, pulse switches, gate timers and room resets continue to operate.
+- Modal cards now scale down around their center pivot to fit short landscape viewports. The Options card has room for the new control but remains centered and scales to fit compact phones.
+- README, roadmap and design documentation now describe Reduced Motion and the 24-room/five-chapter campaign.
 
 ### Exact current source map
 
-- `scripts/game.gd` — blob `6e0e19d8d13361749a3f721b71ef10c31f741c7b`, 2322 lines:
-  - **L1759:** five-chapter campaign completion copy.
-  - **L1820–L1827:** Chapter V chamber labels and unlock state.
-  - Existing two-echo capture/playback and moving-platform code remains unchanged.
-- `scripts/data/level_catalog.gd` — blob `114318ea9f0c701e5db16f0c299a1345e59adf69`, 735 lines:
-  - **L396–L424:** Orbit Crossing.
-  - **L426–L446:** Tandem Relay.
-  - **L448–L473:** The Last Duet.
-  - **L475 onward:** existing level accessors and campaign validator.
-- `tests/headless_smoke.gd` — blob `0e72f3e868c09276c9a99373e56836f5b688c7a4`, 300 lines:
-  - **L160 onward:** data assertions for the new Chapter V rooms, their moving bridges, echo/relay/jammer combination, pulse gate, and overall campaign validation.
-- `tests/game_flow_smoke.gd` — blob `7b4beb0bbc1dbbb7d61226e7f80db65f45fa546a`, 1413 lines:
-  - **L1146 onward:** bridge support/pulse checks, both Tandem Relay routes, both final four-relay routes, jammer avoidance, and the complete final duet gate-unlock sequence.
-  - The chapter selector regression now checks the Chapter V label at chamber 22.
-- `README.md` — blob `92ebcb85da368a6aa1b5f8f9385c0c67d5f89434`, 110 lines; campaign and Memory Shard totals updated to 24 rooms.
+- `scripts/data/settings_store.gd` — blob `0436be3c8d171df8ea8015903778356e1d8ab59a`, 53 lines:
+  - **L10–L24:** default settings and v1/v2-compatible loading of the optional Reduced Motion value.
+  - **L27–L41:** settings schema v3 save, including the `accessibility/reduced_motion` key.
+- `scripts/game.gd` — blob `cbf3f8c4176fb04d6c621dca3b30fabd091a1c66`, 2357 lines:
+  - **L38, L158–L160:** setting state and ambient-star freeze.
+  - **L501–L525:** expanded Options card and Reduced Motion toggle.
+  - **L586–L617:** setting toggle, persistence and on/off label.
+  - **L920–L929:** center-pivot modal scaling for compact viewports.
+  - **L1083 onward:** suppress UI scale animations.
+  - **L1638 onward:** show automatic room-reset feedback without a fade when Reduced Motion is ON.
+  - **L1931–L1944:** load/save of the v3 preference.
+  - **L2063 and L2076 onward:** static decorative rail and disabled scan sweep.
+- `tests/headless_smoke.gd` — blob `dd9853a86928f89d41857afb6aaba1f0dc10f8fe`, 315 lines:
+  - **L270–L305:** default OFF, v2 compatibility, v3 persistence, and fallback behavior.
+- `tests/game_flow_smoke.gd` — blob `843703ff8a0186bffe80c385435e7d399f8cb818`, 1449 lines:
+  - **L365–L431:** Options presence, Reduced Motion toggling, button/star/reset animation suppression, continuing bridge/gameplay motion, and restoration of the saved setting.
+  - **L1285 onward:** compact Options card fit and center alignment.
+  - **L1175 onward:** Chapter V gameplay regression coverage remains in the suite.
+- `scripts/data/level_catalog.gd` — blob `114318ea9f0c701e5db16f0c299a1345e59adf69`, 735 lines; Chapters I–V and all 24 rooms.
+- `README.md` — blob `68bd2824c3d194ca1a1db1e150428e5299f2d6b5`, 110 lines; includes Reduced Motion and the 24-room campaign.
 
-### Verification
+### Verification and remaining limits
 
-- **Godot CI:** [run 41134345034](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41134345034) — passed on Godot **4.4.0** and **4.7.2**. Both versions imported/parsed the project and passed the data-layer and main-scene gameplay smoke tests.
-- **Android APK:** the Android workflow runs on pushes to `main`; the post-merge export has not yet been confirmed in this handoff. Until its run succeeds, do not assume the existing nightly APK contains Chapter V.
-- **Physical-device QA:** not performed. Test the bridges, touch zones, pulse timing, safe areas, Memory Shard pickup and save persistence on real Android hardware.
-- **Performance:** keep Performance Mode ON by default for weaker phones. No new continuous effects were added by Chapter V.
+- **Godot CI:** run 41193222360 passed both supported engine versions, including project import, data tests and the complete gameplay test suite.
+- **Android APK:** the Android workflow is configured to run on pushes to `main`, but the post-merge export for this commit has not been confirmed in this handoff. Do not assume the nightly APK already contains Reduced Motion until the export succeeds.
+- **Physical-device QA:** not performed. Test the new Option on a real Android phone, especially a short landscape screen; also verify touch targets, save persistence, and lifecycle pause/resume.
+- **Performance:** no new per-frame scene nodes or particle emitters were added. Performance Mode remains ON by default for weaker phones; Reduced Motion is independent and OFF by default.
 
 ### Next development tasks
 
-1. Test Orbit Crossing on a phone and tune bridge wait/ride timing if the player cannot board comfortably from the safe side.
-2. Play Tandem Relay and The Last Duet manually; confirm that both recorded routes are legible and that the two-echo workflow remains understandable.
-3. Check Chapter V on low-end hardware with Performance Mode ON and OFF; avoid increasing the particle or route-rendering workload unnecessarily.
-4. Continue audio, accessibility and physical-device QA. Consider any third echo slot only after two-echo usability has been proven.
+1. Install the post-merge nightly APK after its build succeeds and confirm the Reduced Motion toggle persists after closing/reopening the app.
+2. Test the Options card and touch buttons on short landscape phones and unusual aspect ratios; verify operating-system safe areas/cutouts on hardware.
+3. Play Orbit Crossing, Tandem Relay and The Last Duet on a phone to check bridge boarding, route readability, pulse timing and Memory Shard pickup.
+4. Continue the accessibility pass with color-independent cues, audio/haptics settings and reduced-flash review before adding more content.
 
 ---
 
@@ -63,7 +62,7 @@ Chapter V extends the campaign from 21 to **24 chambers across five signal chapt
 **Project root:** repository root; main scene is `res://scenes/main.tscn`  
 **Engine:** Godot 4.x; CI tests Godot 4.4.0 and 4.7.2  
 **Target:** Android-first landscape game; desktop builds support development and testing  
-**Current main gameplay commit:** `6c33f62e71d00216fcfee3d7e5b2992e52753bd3` — two independently recorded echoes, Chapter IV rooms and updated regression tests.  
+**Current main gameplay commit:** `47b17bb05758a16006c7779c17362007dcb335da` — 24-room Chapter V campaign, settings schema v3, Reduced Motion accessibility and responsive modal cards.  
 **Recording-cap code commit:** `b5f36b6a4f764a595e5dd930e8d6b3cebd5ce3a8`  
 **Gameplay-test commit:** `11c3b30de34323c536b0b8302eb8604259248d52`  
 **Options source fix commit:** `45ee5b1b5b6854fea8f17934897a539a47abd0da`  
@@ -80,9 +79,9 @@ Chapter V extends the campaign from 21 to **24 chambers across five signal chapt
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Current main controller source blob:** `7d518565ad927d6a207b1dc49ae9fc80d96686f1` (2322 lines)  
-**Current gameplay regression-test blob:** `7139149a8775daa2ceb512a0d3fe92de0499dff4` (1325 lines)  
-**Current settings-store blob:** `ae2c241920849d9db196a8462d1caadc5f820048` (43 lines); schema v2 stores Performance Mode separately from campaign progress.  
+**Current main controller source blob:** `cbf3f8c4176fb04d6c621dca3b30fabd091a1c66` (2357 lines)  
+**Current gameplay regression-test blob:** `843703ff8a0186bffe80c385435e7d399f8cb818` (1449 lines)  
+**Current settings-store blob:** `0436be3c8d171df8ea8015903778356e1d8ab59a` (53 lines); schema v3 stores Reduced Motion separately from controls and Performance Mode.  
 **Low-end rendering commits:** saved Performance Mode preference [30f1189](https://github.com/NinuGaming999/ECHOPOST/commit/30f1189f7f8c03805b1c58fabf4abc94d5cd9c06), render/route optimization [1904ad8](https://github.com/NinuGaming999/ECHOPOST/commit/1904ad8f9b34a56c30873fba47258ef10e7cc0a1), regression tests [9297624](https://github.com/NinuGaming999/ECHOPOST/commit/929762484dd228eb3ca1d22da3c2ca41d8dc66bf), and final joystick/HUD cleanup [36622a5](https://github.com/NinuGaming999/ECHOPOST/commit/36622a5488f3cb4073b8692ae85a768b62710d43).  
 **Latest Godot CI for multi-echo source:** [run 41132293123](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293123) passed on Godot 4.4.0 and 4.7.2 for the 21-room Chapter IV revision.  
 **Latest Android APK export:** [run 41132293283](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293283) succeeded for the 21-room multi-echo gameplay revision and refreshed the nightly APK.  
