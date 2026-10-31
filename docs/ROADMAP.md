@@ -51,7 +51,8 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Establish an initial ECHO logo/neon-cyan visual identity: supplied logo, dark navy panels, matching geometric SVG icon and cyan-to-red route feedback. Authored character animation, multiple room art packs and audio remain future work.
 - [ ] Replace temporary procedural robot drawing with a consistent character asset set.
 - [ ] Create several visual room themes with clear contrast and low-cost mobile rendering.
-- [ ] Animate walking, recording, echo playback, sentinel contact, gate opening, and portal entry.
+- [x] Add low-cost procedural courier hover, steering lean, a recording pulse and echo-playback shimmer; Performance Mode remains node-free and Reduced Motion freezes these decorative motions.
+- [ ] Add sentinel-contact, gate-opening and portal-entry reactions, then replace the procedural placeholder with a cohesive sprite/animation set.
 - [x] Add locally generated ambient music and event-driven puzzle SFX, separate Music/SFX toggles, optional Haptics (OFF by default), and Android VIBRATE export permission.
 - [x] Add separate saved 0–100% Music/SFX volume sliders with immediate preview while adjusting.
 - [ ] Compose/commission richer production audio and verify haptics/audio levels on physical devices.
