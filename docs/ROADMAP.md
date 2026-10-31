@@ -33,7 +33,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 ## Milestone 2 — Content foundation
 
 - [ ] Create a reusable room scene/data model and a level validation tool.
-- [ ] Build 20–24 authored puzzles that teach one new idea at a time.
+- [x] Build 20–24 authored puzzles that teach one new idea at a time.
 - [x] Add a required Relay Beacon route checkpoint to Static Bloom and an ordered two-relay route to Chorus Route, including segment-distance validation and clear rejection feedback.
 - [x] Add Pulse Lock, a timed gate with a 3.5-second crossing window, timeout/retry handling, and a portal that stays powered after a successful crossing.
 - [x] Add an echo-only signal-jammer/dead-zone room; reject recordings whose sample segments enter the field and auto-reset after failure, while allowing a safe curved route.
@@ -42,9 +42,9 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Add two independently recorded echo slots, separate playback/lifetime state, Switch C and simultaneous A/C/B gate logic; verify duet and pulse-duet rooms.
 - [ ] Add more switch types and carefully constrain puzzle complexity beyond the toggle and pulse switches, moving platforms, ordered four-relay route, and combined relay/sentinel/timed-gate gauntlet.
 - [ ] Add checkpoints, better reset messaging, and a campaign map.
-- [x] Add one optional Memory Shard per authored chamber (currently twenty-one) with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
+- [x] Add one optional Memory Shard per authored chamber (currently twenty-four) with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
 - [x] Add a non-blocking restored-signal reward when all currently authored memories are recovered, both in the play status and Memory Archive.
-- [ ] Expand narrative fragments and authored world storytelling beyond the twenty-one current introductory memories.
+- [ ] Expand narrative fragments and authored world storytelling beyond the twenty-four current introductory memories.
 
 ## Milestone 3 — Art, animation, and audio
 
