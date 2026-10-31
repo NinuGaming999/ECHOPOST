@@ -1,9 +1,70 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
 
-## 0. Latest verified handoff — Color-independent puzzle state cues
+## 0. Latest verified handoff — Procedural audio, puzzle SFX and optional haptics
 
-**Current main merge commit:** `3c4046c62a1b1b4aa5e5e97f4afb93af20adc65c`  
+**Current main merge commit:** `0e5131a8fb2d27fda134470add527a43bc50191a`  
+**Merged pull request:** [#4 — Add procedural ambient audio, puzzle SFX and haptics options](https://github.com/NinuGaming999/ECHOPOST/pull/4)  
+**Godot verification:** [run 41196446527](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41196446527) — success on Godot **4.4.0** and **4.7.2**. Both jobs imported/parsed the project and passed the data-layer and complete gameplay smoke tests.
+
+### What changed
+
+- ECHOPOST now generates a quiet **eight-second ambient music loop** locally as mono, 16-bit PCM at **22,050 Hz**. The stream is generated once at startup and looped by Godot; no downloaded music or imported audio asset is needed.
+- Seven short original feedback tones are generated once and reused: recording start, echo send, gate opening, Memory Shard pickup, room failure, chamber completion, and a small UI ping.
+- **Music** and **SFX** now have independent saved ON/OFF controls in Options. Both default to ON.
+- **Haptics** is a separate opt-in setting and defaults to OFF. Short vibration feedback is only invoked on supported Android/iOS/web builds and is clamped to a short duration.
+- Haptic use is included in the Android export preset through the standard VIBRATE permission.
+- Audio responds to mobile lifecycle changes: the ambient loop pauses and short effects stop when the app is suspended; the loop becomes available again on return. Gameplay still requires an explicit resume.
+- Settings are now **schema v4**. Existing v2 and v3 preferences still load; v3 Reduced Motion is preserved, while older files receive Music/SFX ON and Haptics OFF defaults.
+- README, roadmap and game-design notes describe the audio layer and remaining production-audio/device-QA work.
+
+### Exact current source map
+
+- `scripts/core/audio_manager.gd` — blob `b1ebe2fbc6d19f1f8ff4154066c69b1a2f1dcfa6`, 161 lines:
+  - **L1–L27:** sample rate, original note pattern and seven event-tone specifications.
+  - **L30–L80:** player setup, independent settings, SFX playback and optional haptics.
+  - **L83–L101:** pause/resume behavior for ambient audio.
+  - **L104–L161:** one-time PCM generation for the loop and short reusable effects.
+- `scripts/data/settings_store.gd` — blob `ffb5469ee782837912c6a131b006fde75b01dff6`, 66 lines:
+  - **L10–L25:** defaults and compatibility loading for older v1–v3 preferences.
+  - **L28–L53:** schema v4 persistence of Music, SFX and Haptics separately.
+- `scripts/game.gd` — blob `ac418268ba249355504ded22f97a4d06f7273b65`, 2486 lines:
+  - **L125–L136:** pause/resume audio with application lifecycle notifications.
+  - **L518–L565:** compact Options panel with Music/SFX/Haptics controls.
+  - **L622–L665:** independent setters and shared feedback hook.
+  - **L1279, L1391, L1698, L1750, L1804, L1865:** recording, echo-send, failure, memory, gate-open and chamber-complete cues.
+  - **L2017–L2031:** load/save of the complete v4 preference set.
+- `tests/headless_smoke.gd` — blob `b47aba94ed860e46bd1a612b5cf63b632eaaf2b7`, 336 lines:
+  - **L270–L332:** default values, v2/v3 compatibility, v4 persistence and schema-version assertions.
+- `tests/game_flow_smoke.gd` — blob `038d69bdff0c58814a9e716d58a26508418793e0`, 1522 lines:
+  - **L30:** audio-manager tests included in the full gameplay suite.
+  - **L100–L118:** audio is paused on application suspend and restored on return without resuming gameplay.
+  - **L369–L455:** Options exposes and persists independent audio/haptic preferences.
+  - **L459–L497:** generated WAV format/loop-size, effects, toggles and suspend/resume regression checks.
+- `export_presets.cfg` — blob `cefe781b51012533d639a6ddf3b3bed54e1c6ba2`, 68 lines; **L66** enables Android's standard VIBRATE permission.
+- `README.md` — blob `3ecd14ccbedb46ac7aac621e41184bf9138fc7cd`, 118 lines; **L26** describes the controls/defaults and **L35 onward** describes the generated audio.
+- `docs/ROADMAP.md` — blob `435c01c92755bff477f060500bdec497295cf5bf`, 90 lines; **L55 and L59** mark the prototype audio and saved toggles as completed; richer production audio and device tuning remain open.
+- `docs/GAME_DESIGN.md` — blob `39a3bab93aadf3249f30ba3bafc5ed7e6db34de6`, 129 lines; **L57 onward** describes the current prototype audio/haptic behavior and limitations.
+
+### Verification and remaining limits
+
+- **Godot CI:** run 41196446527 passed both supported engine versions, including project import/parse, data tests and the complete gameplay smoke suite.
+- **Android APK:** the post-merge Android export for commit `0e5131a8fb2d27fda134470add527a43bc50191a` has not been confirmed here. Do not assume the latest nightly APK contains these changes until the Android workflow export succeeds.
+- **Physical-device QA:** not performed. Listen to the ambient loop and event tones on an actual phone, check relative loudness and looping, and test Haptics on a supported Android device with the option explicitly enabled.
+- **Performance:** the audio buffers are generated once at startup and reused; there is no per-frame audio synthesis. Ambient PCM occupies about 345 KiB; the short effect buffers are small.
+
+### Next development tasks
+
+1. Confirm the post-merge Android APK export, install it and listen to all event cues on a physical Android phone.
+2. Test opt-in vibration on a device and verify that silent mode, system haptics settings and app suspension behave acceptably.
+3. Tune audio levels and consider user-adjustable music/SFX volume sliders after device listening tests.
+4. Continue character/room-art polish and full 24-room physical-device QA; this is still an early development build, not a release candidate.
+
+---
+
+## 0. Previous verified handoff — Color-independent puzzle state cues
+
+**Main merge commit at that handoff:** `3c4046c62a1b1b4aa5e5e97f4afb93af20adc65c`  
 **Merged pull request:** [#3 — Add color-independent puzzle state cues](https://github.com/NinuGaming999/ECHOPOST/pull/3)  
 **Godot verification:** [run 41194278050](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41194278050) — success on Godot **4.4.0** and **4.7.2**. Both jobs imported/parsed the project and passed the data-layer and complete gameplay smoke tests.
 
@@ -16,7 +77,7 @@
 - No gameplay rules, timers, room data, settings, extra scene nodes, or per-frame processing were added. Existing rendering uses the same lightweight CanvasItem drawing path.
 - README, roadmap and game-design notes describe the new accessibility behavior.
 
-### Exact current source map
+### Source map at that handoff
 
 - `scripts/game.gd` — blob `5cace96ee0cb2c5a3ccc53efc539eda760643063`, 2400 lines:
   - **L2091–L2116:** state text for Switch A, B and C, including toggle/pulse-specific messages.
@@ -127,7 +188,7 @@
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
 **Current main controller source blob:** `5cace96ee0cb2c5a3ccc53efc539eda760643063` (2400 lines)  
 **Current gameplay regression-test blob:** `b9767899deb7cf5fceef56c6af47ac5731140317` (1459 lines)  
-**Current settings-store blob:** `0436be3c8d171df8ea8015903778356e1d8ab59a` (53 lines); schema v3 stores Reduced Motion separately from controls and Performance Mode.  
+**Current settings-store blob:** `ffb5469ee782837912c6a131b006fde75b01dff6` (66 lines); schema v4 stores Performance Mode, Reduced Motion, Music, SFX and Haptics separately.  
 **Low-end rendering commits:** saved Performance Mode preference [30f1189](https://github.com/NinuGaming999/ECHOPOST/commit/30f1189f7f8c03805b1c58fabf4abc94d5cd9c06), render/route optimization [1904ad8](https://github.com/NinuGaming999/ECHOPOST/commit/1904ad8f9b34a56c30873fba47258ef10e7cc0a1), regression tests [9297624](https://github.com/NinuGaming999/ECHOPOST/commit/929762484dd228eb3ca1d22da3c2ca41d8dc66bf), and final joystick/HUD cleanup [36622a5](https://github.com/NinuGaming999/ECHOPOST/commit/36622a5488f3cb4073b8692ae85a768b62710d43).  
 **Latest Godot CI for multi-echo source:** [run 41132293123](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293123) passed on Godot 4.4.0 and 4.7.2 for the 21-room Chapter IV revision.  
 **Latest Android APK export:** [run 41132293283](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293283) succeeded for the 21-room multi-echo gameplay revision and refreshed the nightly APK.  
