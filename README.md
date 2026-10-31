@@ -38,7 +38,7 @@ ECHOPOST synthesizes a quiet eight-second ambient loop and short original event 
 
 ## Visual identity
 
-The supplied ECHO logo sets a dark navy and neon-cyan theme. A new 16:9 cosmic-nebula backdrop adds a ringed signal planet, distant cyan skyline and orbital horizon; twinkling cyan/teal stars animate over the scene. The player and echo remain glowing orbit-orbs; recorded paths retain their layered cyan glow. Performance Mode reduces the ambient star count and skips glint rays so the backdrop stays lightweight.
+The supplied ECHO logo sets a dark navy and neon-cyan theme. A new 16:9 cosmic-nebula backdrop adds a ringed signal planet, distant cyan skyline and orbital horizon; twinkling cyan/teal stars animate over the scene. The player courier and recorded echoes now read as small signal drones: the glass core gains a visor, twin stabilizer fins and a floating orbit beacon. The courier gently hovers at rest, leans into steering, adds an amber pulse while recording and gets a distinct playback shimmer as an echo. These effects are procedural draw calls rather than extra animated nodes; Performance Mode keeps its compact rendering path, and Reduced Motion freezes decorative courier motion. Recorded paths retain their layered cyan glow. Performance Mode also reduces the ambient star count and skips glint rays so the backdrop stays lightweight.
 
 ## Core puzzle
 
