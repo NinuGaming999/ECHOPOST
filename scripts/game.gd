@@ -86,6 +86,8 @@ var platform_positions: Array[Vector2] = []
 var player_on_moving_platform: bool = false
 var failure_reset_timer: float = 0.0
 var failure_reset_reason: String = ""
+var failure_impact_position: Vector2 = Vector2.ZERO
+var gate_flash_timer: float = 0.0
 var status_message: String = "Your route can become someone else's solution."
 var stars: Array[Vector4] = []
 
@@ -213,7 +215,10 @@ func _process(delta: float) -> void:
 		return
 
 	var safe_delta := minf(delta, 0.05)
-	if not reduced_motion:
+	if reduced_motion:
+		gate_flash_timer = 0.0
+	else:
+		gate_flash_timer = maxf(0.0, gate_flash_timer - safe_delta)
 		player_animation_time = fposmod(player_animation_time + safe_delta, 4096.0)
 	_update_player(safe_delta)
 
@@ -1312,6 +1317,8 @@ func _start_level(level_index: int) -> void:
 	door_open = false
 	switch_b_latched = false
 	gate_open_timer = 0.0
+	gate_flash_timer = 0.0
+	failure_impact_position = Vector2.ZERO
 	timed_gate_failed = false
 	hazard_time = 0.0
 	platform_positions = _get_moving_platform_positions(0.0)
@@ -1775,6 +1782,8 @@ func _schedule_room_reset(reason: String, detail: String) -> void:
 	if failure_reset_timer > 0.0:
 		return
 	failure_reset_reason = reason
+	if reason == "SENTINEL CONTACT":
+		failure_impact_position = player_position
 	failure_reset_timer = FAILURE_RESET_DURATION
 	_play_feedback("failure", 42, 0.30)
 	status_message = detail
@@ -1884,6 +1893,7 @@ func _check_puzzle_state() -> void:
 			status_message = "PULSE GATE MISSED — leave SWITCH B and return to try again."
 			return
 		door_open = true
+		gate_flash_timer = 0.0 if reduced_motion else 0.62
 		_play_feedback("gate_open", 36, 0.28)
 		gate_open_timer = maxf(0.0, float(level_data.get("gate_open_seconds", 0.0)))
 		if gate_open_timer > 0.0:
@@ -2474,6 +2484,17 @@ func _draw_room() -> void:
 		draw_circle(sentinel_pos + Vector2(-5, -3), 4, Color(1.0, 0.85, 0.87))
 		draw_circle(sentinel_pos + Vector2(5, -3), 4, Color(1.0, 0.85, 0.87))
 
+	# Brief red impact ring marks the collision point while the reset card is shown.
+	# Reduced Motion keeps one still ring instead of expanding it.
+	if failure_reset_timer > 0.0 and failure_reset_reason == "SENTINEL CONTACT":
+		var impact_progress := 0.0 if reduced_motion else clampf(1.0 - failure_reset_timer / FAILURE_RESET_DURATION, 0.0, 1.0)
+		var impact_radius := 38.0 if reduced_motion else 24.0 + impact_progress * 54.0
+		var impact_alpha := 0.42 if reduced_motion else 0.62 - impact_progress * 0.24
+		draw_circle(failure_impact_position, impact_radius, Color(1.0, 0.22, 0.34, impact_alpha * 0.12))
+		draw_arc(failure_impact_position, impact_radius, 0.0, TAU, 28 if performance_mode else 48, Color(1.0, 0.38, 0.46, impact_alpha), 2.8, true)
+		draw_line(failure_impact_position + Vector2(-10.0, 0.0), failure_impact_position + Vector2(10.0, 0.0), Color(1.0, 0.76, 0.78, impact_alpha), 2.0, true)
+		draw_line(failure_impact_position + Vector2(0.0, -10.0), failure_impact_position + Vector2(0.0, 10.0), Color(1.0, 0.76, 0.78, impact_alpha), 2.0, true)
+
 	# Show the player's route as it is being recorded, so the ghost mechanic feels tangible.
 	if is_recording and not recording_track.samples.is_empty():
 		var live_route_tint := Color(0.18, 0.98, 0.83, 0.84)
@@ -2639,6 +2660,12 @@ func _draw_gate() -> void:
 		var gate_tint := Color(1.0, 0.75, 0.34) if gate_open_timer > 0.0 else Color(0.25, 1.0, 0.75)
 		draw_line(Vector2(GATE_X, ROOM_TOP + 18), Vector2(GATE_X, ROOM_BOTTOM - 18), Color(gate_tint.r, gate_tint.g, gate_tint.b, 0.30), 4.0, true)
 		draw_arc(Vector2(GATE_X, 365), 49, -PI / 2, PI / 2, 24 if performance_mode else 48, Color(gate_tint.r, gate_tint.g, gate_tint.b, 0.85), 3.0, true)
+		if gate_flash_timer > 0.0 and not reduced_motion:
+			var flash_progress := clampf(1.0 - gate_flash_timer / 0.62, 0.0, 1.0)
+			var flash_radius := 58.0 + flash_progress * 22.0
+			var flash_alpha := (1.0 - flash_progress) * 0.48
+			draw_arc(Vector2(GATE_X, 365), flash_radius, 0.0, TAU, 28 if performance_mode else 52, Color(gate_tint.r, gate_tint.g, gate_tint.b, flash_alpha), 2.4, true)
+			draw_line(Vector2(GATE_X - 18.0 - flash_progress * 12.0, 365), Vector2(GATE_X + 18.0 + flash_progress * 12.0, 365), Color(gate_tint.r, gate_tint.g, gate_tint.b, flash_alpha * 0.55), 1.6, true)
 	else:
 		draw_line(Vector2(GATE_X, ROOM_TOP + 18), Vector2(GATE_X, ROOM_BOTTOM - 18), Color(0.36, 0.52, 0.64, 0.75), 5.0, true)
 		for y in range(170, 590, 42 if performance_mode else 28):
@@ -2654,6 +2681,13 @@ func _draw_portal(position: Vector2, powered: bool) -> void:
 	draw_arc(position, 29, 0, TAU, 28 if performance_mode else 64, tint, 4.0, true)
 	if not performance_mode:
 		draw_arc(position, 19, 0, TAU, 48, Color(tint.r, tint.g, tint.b, 0.50), 2.0, true)
+	if powered and player_position.distance_to(position) < 108.0:
+		# A nearby powered portal invites entry; Reduced Motion keeps the same
+		# readable halo without oscillating radius or rotating arcs.
+		var entry_radius := 42.0 if reduced_motion else 39.0 + sin(particle_time * 3.6) * 3.0
+		var entry_alpha := 0.34 if reduced_motion else 0.24 + (sin(particle_time * 3.6) + 1.0) * 0.07
+		draw_circle(position, entry_radius, Color(tint.r, tint.g, tint.b, entry_alpha * 0.16))
+		draw_arc(position, entry_radius, 0.0 if reduced_motion else particle_time * 0.8, TAU if reduced_motion else particle_time * 0.8 + PI * 1.55, 24 if performance_mode else 48, Color(tint.r, tint.g, tint.b, entry_alpha), 2.0, true)
 	draw_line(position + Vector2(-8, -14), position + Vector2(9, 14), tint, 3.0, true)
 	draw_line(position + Vector2(9, -14), position + Vector2(-8, 14), tint, 3.0, true)
 

@@ -86,6 +86,7 @@ func _run_tests() -> void:
 	game.call("_check_puzzle_state")
 	_check(bool(game.get("door_open")), "An echo on Switch A and the player on Switch B should open the gate.")
 	_check(str(game.get("status_message")).contains("GATE OPEN"), "Gate activation should provide feedback.")
+	_check(float(game.get("gate_flash_timer")) > 0.0, "Opening a gate should start its brief visual activation flare.")
 
 	game.queue_free()
 	await process_frame
@@ -159,8 +160,10 @@ func _test_sentinel_reset(game: Control) -> void:
 	game.set("player_position", Vector2(640, 380))
 	var level: Dictionary = game.get("level_data")
 	var expected_spawn: Vector2 = level["spawn"]
+	var expected_impact_position := Vector2(640, 380)
 	game.call("_check_sentinel_collision")
 	_check(game.get("player_position") == expected_spawn, "Sentinel contact should return the player to the room spawn.")
+	_check(game.get("failure_impact_position") == expected_impact_position, "Sentinel contact should preserve the exact hit location for its visual feedback ring.")
 	_check(str(game.get("status_message")).begins_with("SENTINEL CONTACT"), "Sentinel contact should explain why the player was reset.")
 	_finish_failure_reset(game)
 
@@ -1039,6 +1042,7 @@ func _test_timed_gate_requires_crossing(game: Control) -> void:
 	game.set("player_position", plate_b)
 	game.call("_check_puzzle_state")
 	_check(bool(game.get("door_open")), "Holding both switches should open the Pulse Lock gate.")
+	_check(float(game.get("gate_flash_timer")) > 0.0, "Opening a timed gate should also start the activation flare.")
 	_check(is_equal_approx(float(game.get("gate_open_timer")), gate_duration), "Opening Pulse Lock should start its authored countdown.")
 	_check(is_equal_approx(float(game.call("_get_gate_timer_ratio")), 1.0), "The visual timer bar should start completely full.")
 
