@@ -1,3 +1,6 @@
+# ECHOPOST — PROJECT PROGRESS / HANDOFF
+
+
 ## 0. Latest verified handoff — Color-independent puzzle state cues
 
 **Current main merge commit:** `3c4046c62a1b1b4aa5e5e97f4afb93af20adc65c`  
@@ -13,7 +16,7 @@
 - No gameplay rules, timers, room data, settings, extra scene nodes, or per-frame processing were added. Existing rendering uses the same lightweight CanvasItem drawing path.
 - README, roadmap and game-design notes describe the new accessibility behavior.
 
-### Source map at that handoff
+### Exact current source map
 
 - `scripts/game.gd` — blob `5cace96ee0cb2c5a3ccc53efc539eda760643063`, 2400 lines:
   - **L2091–L2116:** state text for Switch A, B and C, including toggle/pulse-specific messages.
@@ -59,7 +62,7 @@
 - Modal cards now scale down around their center pivot to fit short landscape viewports. The Options card has room for the new control but remains centered and scales to fit compact phones.
 - README, roadmap and design documentation now describe Reduced Motion and the 24-room/five-chapter campaign.
 
-### Exact current source map
+### Source map at that handoff
 
 - `scripts/data/settings_store.gd` — blob `0436be3c8d171df8ea8015903778356e1d8ab59a`, 53 lines:
   - **L10–L24:** default settings and v1/v2-compatible loading of the optional Reduced Motion value.
