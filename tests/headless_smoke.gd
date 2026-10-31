@@ -6,6 +6,7 @@ const EchoTrackScript = preload("res://scripts/core/echo_track.gd")
 const LevelCatalog = preload("res://scripts/data/level_catalog.gd")
 const ProgressStore = preload("res://scripts/data/progress_store.gd")
 const SettingsStore = preload("res://scripts/data/settings_store.gd")
+const SafeAreaLayout = preload("res://scripts/core/safe_area_layout.gd")
 const TEST_SAVE_PATH := "user://echopost_smoke_test_save.cfg"
 const TEST_SETTINGS_PATH := "user://echopost_settings_smoke_test.cfg"
 
@@ -13,6 +14,7 @@ var failures: int = 0
 
 
 func _initialize() -> void:
+	_test_safe_area_layout()
 	_test_uncapped_render_settings()
 	_test_echo_track()
 	_test_level_catalog()
@@ -25,6 +27,41 @@ func _initialize() -> void:
 	else:
 		push_error("ECHOPOST smoke tests failed: %d" % failures)
 		quit(1)
+
+
+func _test_safe_area_layout() -> void:
+	var mapped := SafeAreaLayout.to_viewport_rect(
+		Vector2(1280.0, 720.0),
+		Vector2i(100, 50),
+		Vector2i(1600, 900),
+		Rect2i(Vector2i(130, 90), Vector2i(1540, 820))
+	)
+	_check(mapped.position.is_equal_approx(Vector2(24.0, 32.0)), "Safe-area mapping should scale the left/top inset into viewport coordinates.")
+	_check(mapped.size.is_equal_approx(Vector2(1232.0, 656.0)), "Safe-area mapping should scale the usable display rectangle into viewport coordinates.")
+
+	var clipped := SafeAreaLayout.to_viewport_rect(
+		Vector2(800.0, 600.0),
+		Vector2i(200, 100),
+		Vector2i(1000, 750),
+		Rect2i(Vector2i(150, 80), Vector2i(1200, 900))
+	)
+	_check(clipped.position.is_equal_approx(Vector2.ZERO), "A safe rectangle extending beyond a window should be clipped at the window origin.")
+	_check(clipped.size.is_equal_approx(Vector2(800.0, 600.0)), "A clipped safe rectangle should never extend beyond the viewport.")
+
+	var fallback := SafeAreaLayout.to_viewport_rect(
+		Vector2(800.0, 600.0),
+		Vector2i.ZERO,
+		Vector2i(1000, 750),
+		Rect2i()
+	)
+	_check(fallback == Rect2(Vector2.ZERO, Vector2(800.0, 600.0)), "Platforms without safe-area metrics should use the full viewport.")
+	var invalid_window := SafeAreaLayout.to_viewport_rect(
+		Vector2(800.0, 600.0),
+		Vector2i.ZERO,
+		Vector2i.ZERO,
+		Rect2i(Vector2i.ZERO, Vector2i(1000, 750))
+	)
+	_check(invalid_window == Rect2(Vector2.ZERO, Vector2(800.0, 600.0)), "Missing window dimensions should safely fall back to the full viewport.")
 
 
 func _test_uncapped_render_settings() -> void:
