@@ -2253,8 +2253,8 @@ func _is_chapter_landmark_clear(position: Vector2) -> bool:
 		return false
 	if _is_chapter_landmark_near_value(position, level_data.get("echo_waypoint", null), OBJECTIVE_CLEARANCE):
 		return false
-	var waypoint_values: Variant = level_data.get("echo_waypoints", [])
-	if waypoint_values is Array:
+	if level_data.has("echo_waypoints"):
+		var waypoint_values: Array = level_data["echo_waypoints"]
 		for waypoint_value in waypoint_values:
 			if _is_chapter_landmark_near_value(position, waypoint_value, OBJECTIVE_CLEARANCE):
 				return false
