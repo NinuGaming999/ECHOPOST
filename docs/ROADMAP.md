@@ -54,6 +54,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Add one matching chapter landmark per room at a safe corner, with objective/relay/jammer clearance and lower-detail rendering for weaker devices.
 - [x] Add low-cost procedural courier hover, steering lean, a recording pulse and echo-playback shimmer; Performance Mode remains node-free and Reduced Motion freezes these decorative motions.
 - [x] Add sentinel-contact impact feedback, a short gate activation flare and a powered-portal proximity halo, with static Reduced Motion alternatives.
+- [x] Add a brief portal completion signal burst that runs behind the completion panel, has a fixed Reduced Motion version, and cannot restart from repeated portal checks.
 - [ ] Replace the procedural placeholder with a cohesive sprite/animation set and expand authored environment art.
 - [x] Add locally generated ambient music and event-driven puzzle SFX, separate Music/SFX toggles, optional Haptics (OFF by default), and Android VIBRATE export permission.
 - [x] Add separate saved 0–100% Music/SFX volume sliders with immediate preview while adjusting.
