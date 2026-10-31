@@ -52,10 +52,12 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [ ] Replace temporary procedural robot drawing with a consistent character asset set.
 - [ ] Create several visual room themes with clear contrast and low-cost mobile rendering.
 - [ ] Animate walking, recording, echo playback, sentinel contact, gate opening, and portal entry.
-- [ ] Add original SFX, ambient sound, music, and settings for audio/haptics.
+- [x] Add locally generated ambient music and event-driven puzzle SFX, separate Music/SFX toggles, optional Haptics (OFF by default), and Android VIBRATE export permission.
+- [ ] Compose/commission richer production audio, add volume sliders and verify haptics/audio on physical devices.
 - [x] Add a saved Reduced Motion setting that freezes decorative ambience and suppresses UI scale animations without stopping puzzle-critical motion.
 - [x] Add color-independent switch states and relay checkpoint labels/symbols so puzzle progress is not communicated by tint alone.
-- [ ] Add audio/haptics toggles and broader accessibility options.
+- [x] Add independent saved Music, SFX and optional Haptics toggles; audio pauses on app suspension.
+- [ ] Add finer accessibility controls and device-specific haptic intensity options.
 
 ## Milestone 4 — Mobile QA and release preparation
 
