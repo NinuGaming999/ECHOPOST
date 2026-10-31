@@ -27,6 +27,7 @@ const LEVELS: Array[Dictionary] = LEVEL_CATALOG.LEVELS
 const PROGRESS_STORE = preload("res://scripts/data/progress_store.gd")
 const SETTINGS_STORE = preload("res://scripts/data/settings_store.gd")
 const AUDIO_MANAGER_SCRIPT = preload("res://scripts/core/audio_manager.gd")
+const SAFE_AREA_LAYOUT_SCRIPT = preload("res://scripts/core/safe_area_layout.gd")
 const BACKGROUND_IMAGE_PATH := "res://assets/echo_nebula_background.jpg"
 const COURIER_SPRITE_SHEET: Texture2D = preload("res://assets/courier_sprite_sheet.svg")
 const COURIER_SPRITE_FRAME_SIZE := Vector2(128.0, 128.0)
@@ -94,6 +95,7 @@ var gate_flash_timer: float = 0.0
 var completion_effect_timer: float = 0.0
 var status_message: String = "Your route can become someone else's solution."
 var stars: Array[Vector4] = []
+var safe_layout_rect: Rect2 = Rect2(Vector2.ZERO, Vector2(1280.0, 720.0))
 
 var joystick_touch_index: int = -1
 var joystick_mouse_active: bool = false
@@ -303,14 +305,16 @@ func _input(event: InputEvent) -> void:
 
 
 func _is_joystick_area(point: Vector2) -> bool:
-	# Floating-stick pickup is intentionally generous: players may place their
-	# thumb anywhere on their half of the playfield, not only on a tiny corner pad.
+	# Touch coordinates are viewport-relative while the HUD may be inset from
+	# the display edges. Convert to safe-content coordinates before hit testing.
+	var local_point := point - safe_layout_rect.position
+	var safe_size := safe_layout_rect.size
 	# Keep the top HUD and full bottom action row out of the movement hit zone.
-	if point.y <= size.y * 0.24 or point.y >= size.y - 84.0:
+	if local_point.y <= safe_size.y * 0.24 or local_point.y >= safe_size.y - 84.0:
 		return false
 	if left_handed_controls:
-		return point.x >= size.x * 0.54
-	return point.x <= size.x * 0.46
+		return local_point.x >= safe_size.x * 0.54
+	return local_point.x <= safe_size.x * 0.46
 
 
 func _shape_touch_stick(offset: Vector2) -> Vector2:
@@ -875,28 +879,49 @@ func _build_failure_panel() -> void:
 
 
 func _layout_responsive_ui() -> void:
-	# Keep the game world in its 1280×720 design space while the interactive
-	# interface adjusts to compact landscape screens and wider desktop windows.
-	if size.x <= 0.0 or size.y <= 0.0:
+	# Keep the game world in its 1280×720 design space while fitting all
+	# interactive UI inside the OS-reported safe area (notches/camera cutouts).
+	var viewport_size := self.size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		return
-	var center_x := size.x * 0.5
-	var compact_height := size.y < 620.0
-	var width_scale := clampf(size.x / 1280.0, 0.70, 1.0)
+	safe_layout_rect = SAFE_AREA_LAYOUT_SCRIPT.to_viewport_rect(
+		viewport_size,
+		DisplayServer.window_get_position(),
+		DisplayServer.window_get_size(),
+		DisplayServer.get_display_safe_area()
+	)
+	var layout_size := safe_layout_rect.size
+	if layout_size.x <= 0.0 or layout_size.y <= 0.0:
+		safe_layout_rect = Rect2(Vector2.ZERO, viewport_size)
+		layout_size = viewport_size
+	if is_instance_valid(menu_root):
+		menu_root.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+		menu_root.position = safe_layout_rect.position
+		menu_root.size = layout_size
+	if is_instance_valid(game_hud):
+		game_hud.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+		game_hud.position = safe_layout_rect.position
+		game_hud.size = layout_size
+	if layout_size.x <= 0.0 or layout_size.y <= 0.0:
+		return
+	var center_x := layout_size.x * 0.5
+	var compact_height := layout_size.y < 620.0
+	var width_scale := clampf(layout_size.x / 1280.0, 0.70, 1.0)
 	if is_instance_valid(menu_root):
 		var logo := menu_root.get_node_or_null("Logo") as TextureRect
 		var title := menu_root.get_node_or_null("Title") as Label
 		if logo != null:
-			logo.visible = size.y >= 620.0
-			var logo_side := 174.0 if size.y >= 620.0 else 140.0
+			logo.visible = layout_size.y >= 620.0
+			var logo_side := 174.0 if layout_size.y >= 620.0 else 140.0
 			logo.size = Vector2.ONE * logo_side
-			logo.position = Vector2(center_x - logo_side * 0.5, 7.0 if size.y >= 620.0 else 4.0)
+			logo.position = Vector2(center_x - logo_side * 0.5, 7.0 if layout_size.y >= 620.0 else 4.0)
 		if title != null:
-			title.size.x = minf(1080.0, size.x - 32.0)
-			if size.y >= 620.0:
+			title.size.x = minf(1080.0, layout_size.x - 32.0)
+			if layout_size.y >= 620.0:
 				title.size.y = 44.0
 				title.position = Vector2(center_x - title.size.x * 0.5, 184.0)
 				title.add_theme_font_size_override("font_size", clampi(roundi(36.0 * width_scale), 25, 36))
-			elif size.y >= 600.0:
+			elif layout_size.y >= 600.0:
 				title.size.y = 34.0
 				title.position = Vector2(center_x - title.size.x * 0.5, 146.0)
 				title.add_theme_font_size_override("font_size", clampi(roundi(28.0 * width_scale), 23, 28))
@@ -906,12 +931,12 @@ func _layout_responsive_ui() -> void:
 				title.add_theme_font_size_override("font_size", clampi(roundi(42.0 * width_scale), 30, 42))
 		var tagline := menu_root.get_node_or_null("Tagline") as Label
 		if tagline != null:
-			tagline.size.x = minf(920.0, size.x - 40.0)
-			if size.y >= 620.0:
+			tagline.size.x = minf(920.0, layout_size.x - 40.0)
+			if layout_size.y >= 620.0:
 				tagline.size.y = 36.0
 				tagline.position = Vector2(center_x - tagline.size.x * 0.5, 232.0)
 				tagline.add_theme_font_size_override("font_size", clampi(roundi(20.0 * width_scale), 15, 20))
-			elif size.y >= 600.0:
+			elif layout_size.y >= 600.0:
 				tagline.size.y = 28.0
 				tagline.position = Vector2(center_x - tagline.size.x * 0.5, 181.0)
 				tagline.add_theme_font_size_override("font_size", clampi(roundi(15.0 * width_scale), 12, 15))
@@ -921,14 +946,14 @@ func _layout_responsive_ui() -> void:
 				tagline.add_theme_font_size_override("font_size", clampi(roundi(22.0 * width_scale), 14, 22))
 		var intro := menu_root.get_node_or_null("Intro") as Label
 		if intro != null:
-			intro.size.x = minf(780.0, size.x - 64.0)
-			if size.y >= 620.0:
+			intro.size.x = minf(780.0, layout_size.x - 64.0)
+			if layout_size.y >= 620.0:
 				intro.text = "Record your movement. Let your echo hold the past\nwhile you find a way into the future."
 				intro.size.y = 58.0
 				intro.position = Vector2(center_x - intro.size.x * 0.5, 272.0)
 				intro.add_theme_font_size_override("font_size", clampi(roundi(17.0 * width_scale), 13, 17))
 				intro.visible = true
-			elif size.y >= 600.0:
+			elif layout_size.y >= 600.0:
 				intro.size.y = 40.0
 				intro.position = Vector2(center_x - intro.size.x * 0.5, 211.0)
 				intro.add_theme_font_size_override("font_size", clampi(roundi(13.0 * width_scale), 10, 13))
@@ -937,12 +962,12 @@ func _layout_responsive_ui() -> void:
 				intro.size.y = 48.0
 				intro.position = Vector2(center_x - intro.size.x * 0.5, 165.0)
 				intro.add_theme_font_size_override("font_size", clampi(roundi(18.0 * width_scale), 13, 18))
-				intro.visible = size.y >= 340.0
+				intro.visible = layout_size.y >= 340.0
 		var progress := menu_root.get_node_or_null("Progress") as Label
 		if progress != null:
-			progress.size.x = minf(800.0, size.x - 32.0)
-			progress.visible = size.y >= 280.0
-			progress.position = Vector2(center_x - progress.size.x * 0.5, size.y - 60.0 if compact_height else 619.0)
+			progress.size.x = minf(800.0, layout_size.x - 32.0)
+			progress.visible = layout_size.y >= 280.0
+			progress.position = Vector2(center_x - progress.size.x * 0.5, layout_size.y - 60.0 if compact_height else 619.0)
 		var menu_button_names := ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]
 		var normal_button_heights: Array[float] = [54.0, 50.0, 48.0, 42.0, 42.0]
 		var normal_button_y: Array[float] = [340.0, 404.0, 458.0, 512.0, 564.0]
@@ -950,17 +975,17 @@ func _layout_responsive_ui() -> void:
 			var centered_button := menu_root.get_node_or_null(menu_button_names[button_index]) as Button
 			if centered_button == null:
 				continue
-			centered_button.size.x = minf(330.0, size.x - 48.0)
+			centered_button.size.x = minf(330.0, layout_size.x - 48.0)
 			centered_button.pivot_offset = centered_button.size * 0.5
 			centered_button.position.x = center_x - centered_button.size.x * 0.5
 			# A compact layout may have changed height and y-position. Restore the
 			# authored full-height stack whenever the viewport grows back.
-			if size.y >= 620.0:
+			if layout_size.y >= 620.0:
 				centered_button.size.y = normal_button_heights[button_index]
 				centered_button.position.y = normal_button_y[button_index]
 		if compact_height:
 			var compact_button_names := ["StartButton", "ChaptersButton", "HowToPlayButton", "MemoryArchiveButton", "OptionsButton"]
-			if size.y < 620.0:
+			if layout_size.y < 620.0:
 				# Very short landscape phones cannot fit a single-column menu without
 				# hiding controls. Reflow into two columns with touch-sized buttons.
 				var ultra_title := menu_root.get_node_or_null("Title") as Label
@@ -978,9 +1003,9 @@ func _layout_responsive_ui() -> void:
 					intro.position.y = 80.0
 					intro.size.y = 34.0
 					intro.add_theme_font_size_override("font_size", clampi(roundi(12.0 * width_scale), 10, 12))
-					intro.visible = size.y >= 340.0
+					intro.visible = layout_size.y >= 340.0
 				var ultra_top := 136.0
-				if size.y < 340.0:
+				if layout_size.y < 340.0:
 					# On extra-short landscape screens, reclaim the intro's vertical space.
 					if ultra_title != null:
 						ultra_title.position.y = 4.0
@@ -991,7 +1016,7 @@ func _layout_responsive_ui() -> void:
 						tagline.size.y = 22.0
 						tagline.add_theme_font_size_override("font_size", clampi(roundi(12.0 * width_scale), 10, 12))
 					ultra_top = 74.0
-				var column_width := (size.x - 48.0) * 0.5
+				var column_width := (layout_size.x - 48.0) * 0.5
 				var row_heights: Array[float] = [0.0, 0.0, 0.0]
 				for i in range(compact_button_names.size()):
 					var ultra_button := menu_root.get_node_or_null(compact_button_names[i]) as Button
@@ -1003,7 +1028,7 @@ func _layout_responsive_ui() -> void:
 					ultra_button.position = Vector2(16.0 + float(column) * (column_width + 16.0), ultra_top)
 					ultra_button.pivot_offset = ultra_button.size * 0.5
 					# Godot's theme can enforce a taller real minimum than the requested
-					# size. Measure it so the following row never overlaps on any version.
+					# layout_size. Measure it so the following row never overlaps on any version.
 					row_heights[row_index] = maxf(row_heights[row_index], ultra_button.size.y)
 				var row_y := ultra_top
 				for row_index in range(row_heights.size()):
@@ -1015,10 +1040,10 @@ func _layout_responsive_ui() -> void:
 							row_button.position.y = row_y
 					row_y += row_heights[row_index] + 6.0
 				if progress != null:
-					progress.position.y = size.y - 24.0
+					progress.position.y = layout_size.y - 24.0
 					progress.size.y = 20.0
 			else:
-				var compact_top := size.y * 0.43
+				var compact_top := layout_size.y * 0.43
 				if intro != null and intro.visible:
 					# Use the actual visible intro bounds to avoid overlapping its text.
 					compact_top = maxf(compact_top, intro.position.y + intro.size.y + 20.0)
@@ -1030,7 +1055,7 @@ func _layout_responsive_ui() -> void:
 					if measured_button != null:
 						measured_button.size.y = 44.0
 						measured_button_height = maxf(measured_button_height, measured_button.size.y)
-				var compact_gap := maxf(clampf(size.y * 0.083, 44.0, 50.0), measured_button_height + 4.0)
+				var compact_gap := maxf(clampf(layout_size.y * 0.083, 44.0, 50.0), measured_button_height + 4.0)
 				if progress != null and compact_button_names.size() > 1:
 					var available_gap := (progress.position.y - compact_top - measured_button_height - 8.0) / float(compact_button_names.size() - 1)
 					compact_gap = minf(compact_gap, available_gap)
@@ -1041,35 +1066,35 @@ func _layout_responsive_ui() -> void:
 						compact_button.size.y = 44.0
 		var version_label := menu_root.get_node_or_null("Version") as Control
 		if version_label != null:
-			if size.y < 420.0:
+			if layout_size.y < 420.0:
 				version_label.hide()
 			else:
 				version_label.show()
-			version_label.position.y = size.y - 24.0
+			version_label.position.y = layout_size.y - 24.0
 	if is_instance_valid(game_hud):
 		if is_instance_valid(level_title_label):
-			level_title_label.size.x = minf(570.0, size.x * 0.43)
+			level_title_label.size.x = minf(570.0, layout_size.x * 0.43)
 		if is_instance_valid(echo_status_label):
-			echo_status_label.position.x = size.x - 475.0
+			echo_status_label.position.x = layout_size.x - 475.0
 		if is_instance_valid(pause_button):
-			pause_button.position = Vector2(size.x - 170.0, 12.0)
+			pause_button.position = Vector2(layout_size.x - 170.0, 12.0)
 		if is_instance_valid(level_hint_label):
-			level_hint_label.size.x = maxf(420.0, size.x - 380.0)
+			level_hint_label.size.x = maxf(420.0, layout_size.x - 380.0)
 		if is_instance_valid(status_label):
 			# Keep the status banner inside the central lane, clear of the circular
 			# action cluster even on narrow landscape phones.
-			status_label.size.x = minf(740.0, maxf(220.0, size.x * 0.5))
-			status_label.position = Vector2(center_x - status_label.size.x * 0.5, size.y - 110.0)
+			status_label.size.x = minf(740.0, maxf(220.0, layout_size.x * 0.5))
+			status_label.position = Vector2(center_x - status_label.size.x * 0.5, layout_size.y - 110.0)
 		var move_tip := game_hud.get_node_or_null("MoveTip") as Label
 		if move_tip != null:
-			var hint_margin := maxf(16.0, size.x * 0.025)
-			var hint_nav_diameter := clampf(size.y * 0.16, 54.0, 60.0)
-			var hint_bottom_y := size.y - hint_nav_diameter - 16.0
-			move_tip.size = Vector2(140.0, 28.0 if size.y < 620.0 else 38.0)
-			move_tip.position.x = size.x - hint_margin - move_tip.size.x if left_handed_controls else hint_margin
+			var hint_margin := maxf(16.0, layout_size.x * 0.025)
+			var hint_nav_diameter := clampf(layout_size.y * 0.16, 54.0, 60.0)
+			var hint_bottom_y := layout_size.y - hint_nav_diameter - 16.0
+			move_tip.size = Vector2(140.0, 28.0 if layout_size.y < 620.0 else 38.0)
+			move_tip.position.x = layout_size.x - hint_margin - move_tip.size.x if left_handed_controls else hint_margin
 			move_tip.position.y = hint_bottom_y - move_tip.size.y - 8.0
-			move_tip.visible = size.y >= 380.0
-			if size.y < 620.0:
+			move_tip.visible = layout_size.y >= 380.0
+			if layout_size.y < 620.0:
 				move_tip.text = "DRAG RIGHT TO MOVE" if left_handed_controls else "DRAG LEFT TO MOVE"
 				move_tip.add_theme_font_size_override("font_size", 10)
 			else:
@@ -1081,17 +1106,17 @@ func _layout_responsive_ui() -> void:
 		var reset_control := game_hud.get_node_or_null("ResetButton") as Button
 		# Menu/reset stay small and out of the way; the primary echo action lives
 		# beside the movement zone, on the opposite side for one-thumb comfort.
-		var nav_diameter := clampf(size.y * 0.16, 54.0, 60.0)
-		var side_margin := maxf(16.0, size.x * 0.025)
-		var bottom_y := size.y - nav_diameter - 16.0
-		var record_diameter := clampf(size.y * 0.13, 68.0, 96.0)
+		var nav_diameter := clampf(layout_size.y * 0.16, 54.0, 60.0)
+		var side_margin := maxf(16.0, layout_size.x * 0.025)
+		var bottom_y := layout_size.y - nav_diameter - 16.0
+		var record_diameter := clampf(layout_size.y * 0.13, 68.0, 96.0)
 		var latch_diameter := clampf(record_diameter * 0.76, 52.0, 72.0)
-		var record_y := clampf(size.y * 0.59, 112.0, maxf(112.0, size.y - record_diameter - 82.0))
-		var record_x := side_margin if left_handed_controls else size.x - side_margin - record_diameter
+		var record_y := clampf(layout_size.y * 0.59, 112.0, maxf(112.0, layout_size.y - record_diameter - 82.0))
+		var record_x := side_margin if left_handed_controls else layout_size.x - side_margin - record_diameter
 		if is_instance_valid(pause_button):
 			pause_button.size = Vector2(nav_diameter, nav_diameter)
 			pause_button.pivot_offset = pause_button.size * 0.5
-			pause_button.position = Vector2(size.x - side_margin - nav_diameter, 12.0)
+			pause_button.position = Vector2(layout_size.x - side_margin - nav_diameter, 12.0)
 			_style_game_action_button(pause_button, "pause", nav_diameter)
 		if bottom_menu_control != null:
 			bottom_menu_control.size = Vector2(nav_diameter, nav_diameter)
@@ -1101,7 +1126,7 @@ func _layout_responsive_ui() -> void:
 		if reset_control != null:
 			reset_control.size = Vector2(nav_diameter, nav_diameter)
 			reset_control.pivot_offset = reset_control.size * 0.5
-			reset_control.position = Vector2(size.x - side_margin - nav_diameter, bottom_y)
+			reset_control.position = Vector2(layout_size.x - side_margin - nav_diameter, bottom_y)
 			_style_game_action_button(reset_control, "secondary", nav_diameter)
 		if record_control != null:
 			record_control.size = Vector2(record_diameter, record_diameter)
@@ -1124,10 +1149,10 @@ func _layout_centered_panels() -> void:
 		# Fit modal cards to short landscape phones without changing their authored
 		# layout. The center pivot keeps the scaled card visually centered.
 		panel.pivot_offset = panel.size * 0.5
-		var available := size - Vector2(24.0, 24.0)
+		var available := safe_layout_rect.size - Vector2(24.0, 24.0)
 		var fit_scale := minf(1.0, minf(available.x / maxf(panel.size.x, 1.0), available.y / maxf(panel.size.y, 1.0)))
 		panel.scale = Vector2.ONE * clampf(fit_scale, 0.45, 1.0)
-		panel.position = (size - panel.size) * 0.5
+		panel.position = safe_layout_rect.position + (safe_layout_rect.size - panel.size) * 0.5
 
 
 func _make_panel(panel_name: String, panel_position: Vector2, panel_size: Vector2) -> Panel:
