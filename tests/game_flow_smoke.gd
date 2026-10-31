@@ -241,10 +241,17 @@ func _test_portal_completion_is_idempotent(game: Control) -> void:
 	_check(bool(game.get("complete_panel").visible), "Portal completion should show the completion panel.")
 	_check(int(game.get("rooms_completed")) == previous_completed + 1, "Completing a chamber should count exactly one completion.")
 	var completed_count := int(game.get("rooms_completed"))
+	var completion_effect_remaining := float(game.get("completion_effect_timer"))
+	_check(completion_effect_remaining > 0.0, "Portal completion should start its separate visual burst timer.")
 
-	# Calling the state checker again must not award a second completion or write an extra count.
+	# The cosmetic timer continues while the completion panel is open, then repeated
+	# portal checks must not restart it or award a second completion.
+	game.call("_process", 0.05)
+	var completion_effect_after_tick := float(game.get("completion_effect_timer"))
+	_check(completion_effect_after_tick < completion_effect_remaining, "The completion burst should progress while the completion screen is open.")
 	game.call("_check_puzzle_state")
 	_check(int(game.get("rooms_completed")) == completed_count, "Repeated portal checks must not count a completed chamber twice.")
+	_check(is_equal_approx(float(game.get("completion_effect_timer")), completion_effect_after_tick), "Repeated portal checks must not restart the completion burst.")
 
 	# Restore the original persisted campaign values so running tests never permanently advances a save.
 	game.set("unlocked_level", previous_unlocked)
