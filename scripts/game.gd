@@ -2292,10 +2292,6 @@ func _draw_switch(position: Vector2, letter: String, tint: Color, active: bool, 
 	draw_circle(position, 26, Color(tint.r, tint.g, tint.b, 0.12 if active else 0.05))
 	draw_arc(position, 25, 0, TAU, 24 if performance_mode else 48, color, 3.0, true)
 	draw_circle(position, 13, color if active else Color(0.12, 0.18, 0.24))
-	if active:
-		draw_rect(Rect2(position - Vector2(4.0, 4.0), Vector2(8.0, 8.0)), Color(0.96, 1.0, 0.98), true)
-	else:
-		draw_circle(position, 4.0, Color(0.92, 0.98, 1.0), false, 1.6)
 	draw_string(ThemeDB.fallback_font, position + Vector2(-5, 5), letter, HORIZONTAL_ALIGNMENT_CENTER, 12, 13, Color(0.02, 0.08, 0.13) if active else Color(0.82, 0.91, 0.98))
 	draw_string(ThemeDB.fallback_font, position + Vector2(-38, 48), "SWITCH " + letter, HORIZONTAL_ALIGNMENT_CENTER, 76, 12, color)
 	var state_marker := position + Vector2(-48, 62)
