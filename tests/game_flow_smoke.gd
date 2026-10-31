@@ -264,7 +264,7 @@ func _test_chapter_visual_themes(game: Control) -> void:
 		var style: Dictionary = game.call("_get_chapter_theme_style", chapter)
 		_check(str(style.get("name", "")) == expected_names[chapter - 1], "Chapter %d should have its own named visual identity." % chapter)
 		_check(int(style.get("motif", 0)) == chapter, "Chapter %d should select its matching procedural motif." % chapter)
-		_check(style.get("primary") is Color and style.get("secondary") is Color, "Each chapter theme should define both background accent colors.")
+		_check(typeof(style.get("primary")) == TYPE_COLOR and typeof(style.get("secondary")) == TYPE_COLOR, "Each chapter theme should define both background accent colors.")
 		var primary: Color = style["primary"]
 		var secondary: Color = style["secondary"]
 		_check(primary != secondary, "Chapter %d should use two distinct visual accents." % chapter)
