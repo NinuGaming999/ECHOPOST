@@ -1,5 +1,55 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
+## 0. Latest verified handoff — Original courier sprite sheet
+
+**Current main merge commit:** `aea8d636c07b8e634636ea5127853e5823f8c13f`  
+**Merged pull request:** [#11 — Add an original animated courier sprite sheet](https://github.com/NinuGaming999/ECHOPOST/pull/11)  
+**Godot PR verification:** [run 41223500641](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41223500641) — success on Godot **4.4.0** and **4.7.2**.  
+**Godot main-branch verification:** [run 41223548512](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41223548512) — success on Godot **4.4.0** and **4.7.2** after merge.
+
+### What changed
+
+- Added `assets/courier_sprite_sheet.svg`, an original transparent vector sprite sheet with six 128×128 frames: two hovering poses, left/right drift, recording, and echo playback.
+- The courier renderer now selects a frame from movement direction and mode, then draws a single texture region for the body. The real player and both echoes continue to use their existing independent tints and scale values.
+- The old procedural orb/core/visor/fins/beacon circles and polygon point arrays have been removed from the body renderer. The compact shadow, orbit arc, recording arc and echo shimmer remain separate low-cost cues.
+- Performance Mode uses the same single sprite draw and fewer orbit segments; the full-detail-only secondary orbit arc is skipped. No per-frame point arrays or new animation nodes are created.
+- Reduced Motion fixes the idle phase and suppresses hover/frame cycling and steering poses; recording and echo state still remain visually identifiable.
+- Added a gameplay smoke-test regression that imports the sheet and verifies its exact 768×128 dimensions (six 128×128 cells).
+- Updated README, build status, game design and roadmap descriptions.
+
+### Exact current source map
+
+- `assets/courier_sprite_sheet.svg` — blob `9f84b3702006935fc15e6e0c6f03eb90f7b426bb`, **226 lines**; six transparent cells in one horizontal strip.
+- `scripts/game.gd` — blob `0245b5d5e7e1b152631e8d5aa67002f63ae5579a`, **2,837 lines**:
+  - **L31–L32:** preload the SVG as a local `Texture2D` and define the 128×128 frame size.
+  - **L2718–L2803:** courier renderer, mode/direction frame selection, sprite source rectangle, low-cost orbit and recording/echo cues.
+  - **L2747–L2769:** chooses hover, drift, recording and echo playback cells; Reduced Motion keeps the idle pose.
+  - **L2793:** draws the selected frame with `draw_texture_rect_region`.
+- `tests/game_flow_smoke.gd` — blob `04c1e2c97e91bce8518860c9bbc75d2a37262514`, **1,630 lines**:
+  - **L9:** preloads the sprite resource.
+  - **L24:** runs the sprite test in the gameplay suite.
+  - **L265–L268:** checks imported sheet width and height.
+- `docs/ROADMAP.md` — blob `90e760a270ff551c1933f24108f8997dd8bfe10a`, **95 lines**; original courier sprite item marked complete.
+- `docs/GAME_DESIGN.md` — blob `82c5cd611ce95da8f88a2db38e80ba8193e6933c`, **129 lines**; art direction describes sprite states and tinting.
+- `README.md` — blob `36a3f5d42db45e7fd811ff927f244b8c93e62f8b`, **122 lines**; visual identity and smoke-test coverage updated.
+- `docs/BUILD_STATUS.md` — blob `8e03b17405a4b0c7bd7abffee2d7deb29b2a6c66`, **50 lines**; implementation and test coverage updated.
+- This handoff follows merge commit `aea8d636c07b8e634636ea5127853e5823f8c13f`.
+
+### Verification and remaining limits
+
+- **Godot CI:** PR run 41223500641 and post-merge main run 41223548512 both passed Godot 4.4.0 and 4.7.2, including editor import/parse and the full data/game-flow smoke tests. The new sprite resource dimensions were checked by the gameplay test.
+- **Android APK:** the post-merge export [run 41223548578](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41223548578) was still in progress when this handoff was written. The previous confirmed APK [run 41221998392](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41221998392) belongs to earlier commit `209e5309b07ba9f5e097505c5007ffc2a00396ad`; do not assume it contains the new sprite sheet.
+- **Physical-device QA:** not performed. Check sprite scale/readability, left/right poses, recording amber cue, both echo tints, Reduced Motion and low-end frame pacing on a real landscape Android phone.
+- **Scope:** offline SVG artwork only; no external runtime downloads, new scene nodes, plugins or gameplay changes.
+
+### Next development tasks
+
+1. Confirm Android APK export for commit `aea8d636c07b8e634636ea5127853e5823f8c13f`, including the archive-integrity check.
+2. Install the updated APK on a physical landscape Android device and visually check the courier at normal size and both echo scales; compare Performance Mode and Reduced Motion.
+3. Only after visual testing, add more directional poses or short expressive reactions if the current six-frame set needs them.
+
+---
+
 ## 0. Latest verified handoff — Chamber completion signal burst
 
 **Current main merge commit:** `ead7b408cd03f469c38c8c6d7eba4fc0c63e27ad`  
