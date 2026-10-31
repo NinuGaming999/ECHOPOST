@@ -2237,6 +2237,80 @@ func _draw_chapter_environment(room_rect: Rect2, chapter: int) -> void:
 	var right := room_rect.end.x
 	var bottom := room_rect.end.y
 
+	# One small landmark is tucked into the first available corner pocket.
+	# Objective checks happen in-place: no helper arrays or new scene nodes are
+	# created in this per-frame renderer.
+	var landmark_anchor := Vector2.ZERO
+	var landmark_found := false
+	for candidate_index in range(4):
+		var candidate_x := left + 64.0 if candidate_index % 2 == 0 else right - 64.0
+		var candidate_y := top + 48.0 if candidate_index < 2 else bottom - 48.0
+		var candidate := Vector2(candidate_x, candidate_y)
+		var landmark_clear := true
+		if level_data.has("spawn") and candidate.distance_to(level_data["spawn"]) < 94.0:
+			landmark_clear = false
+		if level_data.has("plate_a") and candidate.distance_to(level_data["plate_a"]) < 94.0:
+			landmark_clear = false
+		if level_data.has("plate_b") and candidate.distance_to(level_data["plate_b"]) < 94.0:
+			landmark_clear = false
+		if level_data.has("plate_c") and candidate.distance_to(level_data["plate_c"]) < 94.0:
+			landmark_clear = false
+		if level_data.has("memory_shard") and candidate.distance_to(level_data["memory_shard"]) < 94.0:
+			landmark_clear = false
+		if level_data.has("echo_waypoint") and candidate.distance_to(level_data["echo_waypoint"]) < 94.0:
+			landmark_clear = false
+		if level_data.has("echo_waypoints"):
+			for waypoint_value in level_data["echo_waypoints"]:
+				if candidate.distance_to(waypoint_value) < 94.0:
+					landmark_clear = false
+		if level_data.has("echo_jammer"):
+			var jammer_clearance := float(level_data.get("echo_jammer_radius", 100.0)) + 34.0
+			if candidate.distance_to(level_data["echo_jammer"]) < jammer_clearance:
+				landmark_clear = false
+		if landmark_clear:
+			landmark_anchor = candidate
+			landmark_found = true
+			break
+
+	if landmark_found:
+		var landmark_strength := 0.18 if performance_mode else 0.30
+		var landmark_primary := Color(primary.r, primary.g, primary.b, landmark_strength)
+		var landmark_secondary := Color(secondary.r, secondary.g, secondary.b, landmark_strength * 0.85)
+		var mirror_x := -1.0 if landmark_anchor.x > room_rect.get_center().x else 1.0
+		match int(style["motif"]):
+			1:
+				# Signal relay pylon.
+				draw_rect(Rect2(landmark_anchor + Vector2(-6.0, -17.0), Vector2(12.0, 34.0)), landmark_primary, true)
+				draw_line(landmark_anchor + Vector2(0.0, -17.0), landmark_anchor + Vector2(0.0, -29.0), landmark_secondary, 2.0, true)
+				draw_line(landmark_anchor + Vector2(-6.0, -8.0), landmark_anchor + Vector2(-16.0, -14.0), landmark_secondary, 1.5, true)
+				draw_circle(landmark_anchor + Vector2(0.0, -3.0), 3.0, landmark_secondary)
+			2:
+				# Crystal cluster.
+				draw_line(landmark_anchor + Vector2(-21.0 * mirror_x, 16.0), landmark_anchor + Vector2(-11.0 * mirror_x, -19.0), landmark_primary, 3.0, true)
+				draw_line(landmark_anchor + Vector2(-11.0 * mirror_x, -19.0), landmark_anchor + Vector2(1.0 * mirror_x, 16.0), landmark_secondary, 2.0, true)
+				draw_line(landmark_anchor + Vector2(1.0 * mirror_x, 16.0), landmark_anchor + Vector2(12.0 * mirror_x, -25.0), landmark_primary, 3.0, true)
+				draw_line(landmark_anchor + Vector2(12.0 * mirror_x, -25.0), landmark_anchor + Vector2(23.0 * mirror_x, 16.0), landmark_secondary, 2.0, true)
+			3:
+				# Bridge anchor.
+				draw_line(landmark_anchor + Vector2(-24.0, 16.0), landmark_anchor + Vector2(24.0, 16.0), landmark_primary, 3.0, true)
+				draw_line(landmark_anchor + Vector2(-19.0, -17.0), landmark_anchor + Vector2(-19.0, 16.0), landmark_primary, 3.0, true)
+				draw_line(landmark_anchor + Vector2(19.0, -17.0), landmark_anchor + Vector2(19.0, 16.0), landmark_primary, 3.0, true)
+				draw_line(landmark_anchor + Vector2(-19.0, -17.0), landmark_anchor + Vector2(0.0, -5.0), landmark_secondary, 1.5, true)
+				draw_line(landmark_anchor + Vector2(0.0, -5.0), landmark_anchor + Vector2(19.0, -17.0), landmark_secondary, 1.5, true)
+			4:
+				# Twin antenna station.
+				for antenna_offset in [-15.0, 15.0]:
+					var antenna_base := landmark_anchor + Vector2(antenna_offset, 10.0)
+					draw_line(antenna_base, antenna_base + Vector2(0.0, -28.0), landmark_primary, 3.0, true)
+					draw_arc(antenna_base + Vector2(0.0, -28.0), 8.0, -PI * 0.72, PI * 0.72, 12, landmark_secondary, 1.5, true)
+				draw_line(landmark_anchor + Vector2(-17.0, 10.0), landmark_anchor + Vector2(17.0, 10.0), landmark_secondary, 1.2, true)
+			5:
+				# Small portal arch.
+				draw_line(landmark_anchor + Vector2(-22.0, 17.0), landmark_anchor + Vector2(-22.0, -6.0), landmark_primary, 4.0, true)
+				draw_line(landmark_anchor + Vector2(22.0, 17.0), landmark_anchor + Vector2(22.0, -6.0), landmark_primary, 4.0, true)
+				draw_arc(landmark_anchor + Vector2(0.0, -6.0), 22.0, PI, TAU, 24 if not performance_mode else 14, landmark_secondary, 2.2, true)
+				draw_line(landmark_anchor + Vector2(-27.0, 18.0), landmark_anchor + Vector2(27.0, 18.0), landmark_primary, 2.5, true)
+
 	match int(style["motif"]):
 		1:
 			# Chapter I — first signal: simple corner traces and clear contact nodes.
