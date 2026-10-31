@@ -9,7 +9,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Desktop movement and touchscreen virtual joystick.
 - [x] Record, stop, replay, and linger behavior for one echo.
 - [x] Two-switch gate and exit loop.
-- [x] Twenty-one authored room layouts across four chapters, including moving-platform and pulse-switch mechanics plus independently recorded two-echo/third-switch puzzles.
+- [x] Twenty-four authored room layouts across five chapters, including double moving bridges, pulse switches, echo-jammer routes and independently recorded two-echo/third-switch puzzles.
 - [x] Moving sentinel in later rooms.
 - [x] Chapter unlocks, local save data, and a scrollable chapter selector.
 - [x] Separate echo-track, level-catalog, and progress-store code from the main scene.
@@ -26,13 +26,14 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Add movement-speed presets and left-handed joystick placement, persisted separately from campaign progress.
 - [x] Automatically reset the whole chamber after sentinel contact or a failed relay route, with a short readable reset card and no extra restart tap.
 - [x] Add responsive bottom HUD placement, centered modal cards, larger primary touch targets, consistent premium button/panel styling and subtle button feedback animations.
-- [ ] Support multiple aspect ratios and device safe areas.
+- [x] Make modal cards scale to fit compact landscape viewports while preserving centered layouts.
+- [ ] Validate operating-system safe areas and device cutouts on physical Android hardware.
 - [ ] Add an in-game level-state debug view for development builds.
 
 ## Milestone 2 — Content foundation
 
 - [ ] Create a reusable room scene/data model and a level validation tool.
-- [ ] Build 20–24 authored puzzles that teach one new idea at a time.
+- [x] Build 20–24 authored puzzles that teach one new idea at a time.
 - [x] Add a required Relay Beacon route checkpoint to Static Bloom and an ordered two-relay route to Chorus Route, including segment-distance validation and clear rejection feedback.
 - [x] Add Pulse Lock, a timed gate with a 3.5-second crossing window, timeout/retry handling, and a portal that stays powered after a successful crossing.
 - [x] Add an echo-only signal-jammer/dead-zone room; reject recordings whose sample segments enter the field and auto-reset after failure, while allowing a safe curved route.
@@ -41,9 +42,9 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Add two independently recorded echo slots, separate playback/lifetime state, Switch C and simultaneous A/C/B gate logic; verify duet and pulse-duet rooms.
 - [ ] Add more switch types and carefully constrain puzzle complexity beyond the toggle and pulse switches, moving platforms, ordered four-relay route, and combined relay/sentinel/timed-gate gauntlet.
 - [ ] Add checkpoints, better reset messaging, and a campaign map.
-- [x] Add one optional Memory Shard per authored chamber (currently twenty-one) with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
+- [x] Add one optional Memory Shard per authored chamber (currently twenty-four) with short courier-station lore fragments, local collection persistence, and a Memory Archive to revisit recovered lore.
 - [x] Add a non-blocking restored-signal reward when all currently authored memories are recovered, both in the play status and Memory Archive.
-- [ ] Expand narrative fragments and authored world storytelling beyond the twenty-one current introductory memories.
+- [ ] Expand narrative fragments and authored world storytelling beyond the twenty-four current introductory memories.
 
 ## Milestone 3 — Art, animation, and audio
 
@@ -52,13 +53,15 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [ ] Create several visual room themes with clear contrast and low-cost mobile rendering.
 - [ ] Animate walking, recording, echo playback, sentinel contact, gate opening, and portal entry.
 - [ ] Add original SFX, ambient sound, music, and settings for audio/haptics.
-- [ ] Add color-blindness-friendly indicators and accessibility options.
+- [x] Add a saved Reduced Motion setting that freezes decorative ambience and suppresses UI scale animations without stopping puzzle-critical motion.
+- [ ] Add color-blindness-friendly indicators, audio/haptics toggles and broader accessibility options.
 
 ## Milestone 4 — Mobile QA and release preparation
 
 - [ ] Validate lifecycle pause/resume on physical Android devices and unusual background/foreground transitions.
-- [ ] Install the current debug APK and test all twenty-one rooms, touch controls, save persistence and app relaunch on a real Android device.
+- [ ] Install the current debug APK and test all twenty-four rooms, touch controls, save persistence and app relaunch on a real Android device.
 - [x] Add saved Performance Mode with reduced decorative rendering, batched route polylines and a 30 FPS mobile target; both supported Godot CI versions pass the settings/rendering regressions.
+- [x] Add saved Reduced Motion support and compact-viewport modal scaling; both controls have separate persistence and regression coverage.
 - [ ] Measure low-end GPU performance, actual FPS, battery/thermals, aspect ratios and safe areas on physical devices.
 - [ ] Tune touch targets, joystick sensitivity, landscape handling, and screen cutouts based on device tests.
 - [x] Set the Android package ID (`com.ninugaming.echopost`), version (`0.1.0`), app icon and tracked arm64-v8a debug export preset.

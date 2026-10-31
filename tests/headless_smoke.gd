@@ -272,13 +272,27 @@ func _test_settings_store() -> void:
 	_check(is_equal_approx(float(defaults["move_speed"]), 255.0), "Missing settings should default to normal movement speed.")
 	_check(not bool(defaults["left_handed_controls"]), "Missing settings should default to the standard left-side joystick.")
 	_check(bool(defaults["performance_mode"]), "New settings should default to Performance Mode for weak-device headroom.")
+	_check(not bool(defaults["reduced_motion"]), "Reduced Motion should default to OFF.")
 
-	var save_error := SettingsStore.save_settings(200.0, true, TEST_SETTINGS_PATH, false)
+	# Existing v2 preferences remain readable and use the safe Reduced Motion default.
+	var legacy_v2 := ConfigFile.new()
+	legacy_v2.set_value("meta", "settings_version", 2)
+	legacy_v2.set_value("controls", "move_speed", 255.0)
+	legacy_v2.set_value("controls", "left_handed_controls", false)
+	legacy_v2.set_value("graphics", "performance_mode", false)
+	_check(legacy_v2.save(TEST_SETTINGS_PATH) == OK, "A version-2 preferences file should be writable.")
+	var migrated_v2: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
+	_check(not bool(migrated_v2["reduced_motion"]), "Version-2 settings should load with Reduced Motion OFF.")
+
+	var save_error := SettingsStore.save_settings(200.0, true, TEST_SETTINGS_PATH, false, true)
 	_check(save_error == OK, "Control settings should save to their own preferences file.")
 	var saved: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
 	_check(is_equal_approx(float(saved["move_speed"]), 200.0), "Settings should preserve the selected slow movement preset.")
 	_check(bool(saved["left_handed_controls"]), "Settings should preserve left-handed joystick preference.")
 	_check(not bool(saved["performance_mode"]), "Settings should preserve the selected full-visual mode.")
+	_check(bool(saved["reduced_motion"]), "Settings v3 should persist Reduced Motion independently of Performance Mode.")
+	var saved_config := ConfigFile.new()
+	_check(saved_config.load(TEST_SETTINGS_PATH) == OK and int(saved_config.get_value("meta", "settings_version", 0)) == 3, "The preferences file should use schema version 3.")
 
 	# Unsupported values are normalized to the nearest supported preset rather than saved as arbitrary speeds.
 	save_error = SettingsStore.save_settings(999.0, false, TEST_SETTINGS_PATH)
@@ -287,6 +301,7 @@ func _test_settings_store() -> void:
 	_check(is_equal_approx(float(normalized["move_speed"]), 310.0), "Out-of-range movement speeds should normalize to the fast preset.")
 	_check(not bool(normalized["left_handed_controls"]), "Left-handed preference should be independently changeable.")
 	_check(bool(normalized["performance_mode"]), "An omitted Performance Mode value should safely default to ON.")
+	_check(not bool(normalized["reduced_motion"]), "Omitted Reduced Motion should safely default to OFF.")
 
 	var user_directory := DirAccess.open("user://")
 	if user_directory != null:

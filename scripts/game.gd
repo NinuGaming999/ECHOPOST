@@ -35,6 +35,7 @@ var collected_shards: PackedInt32Array = PackedInt32Array()
 var player_move_speed: float = MOVE_SPEED
 var left_handed_controls: bool = false
 var performance_mode: bool = true
+var reduced_motion: bool = false
 var background_texture: Texture2D
 var particle_time: float = 0.0
 var level_data: Dictionary = {}
@@ -97,6 +98,7 @@ var speed_normal_button: Button
 var speed_fast_button: Button
 var left_handed_button: Button
 var performance_button: Button
+var reduced_motion_button: Button
 var menu_progress_label
 var level_title_label: Label
 var level_hint_label: Label
@@ -153,8 +155,9 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	# The background ambience continues on the menu and pause screens as well.
-	particle_time = fposmod(particle_time + minf(delta, 0.05), 4096.0)
+	# Static ambience remains visible when Reduced Motion is enabled.
+	if not reduced_motion:
+		particle_time = fposmod(particle_time + minf(delta, 0.05), 4096.0)
 	if screen_state != ScreenState.PLAYING:
 		queue_redraw()
 		return
@@ -497,7 +500,7 @@ func _open_memory_archive() -> void:
 
 
 func _build_options_panel() -> void:
-	options_panel = _make_panel("OptionsPanel", Vector2(370, 155), Vector2(540, 410))
+	options_panel = _make_panel("OptionsPanel", Vector2(370, 125), Vector2(540, 470))
 	_make_label(options_panel, "OptionsTitle", Vector2(24, 18), Vector2(492, 42), "OPTIONS", 27, Color(0.88, 0.97, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
 	_make_label(options_panel, "SpeedLabel", Vector2(38, 73), Vector2(464, 30), "MOVEMENT SPEED", 16, Color(0.72, 0.83, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
 
@@ -515,8 +518,11 @@ func _build_options_panel() -> void:
 	performance_button = _make_button(options_panel, "PerformanceButton", Vector2(62, 309), Vector2(416, 42), "PERFORMANCE MODE: ON", Color(0.02, 0.30, 0.31), Color(0.03, 0.48, 0.45), 14)
 	performance_button.tooltip_text = "Simplifies optional effects and targets a steadier 30 FPS on mobile."
 	performance_button.pressed.connect(_toggle_performance_mode)
+	reduced_motion_button = _make_button(options_panel, "ReducedMotionButton", Vector2(62, 356), Vector2(416, 42), "REDUCED MOTION: OFF", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 14)
+	reduced_motion_button.tooltip_text = "Keeps decorative stars and UI still. Moving bridges, sentinels and pulse switches continue to work normally."
+	reduced_motion_button.pressed.connect(_toggle_reduced_motion)
 
-	var back := _make_button(options_panel, "OptionsBack", Vector2(150, 356), Vector2(240, 44), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 15)
+	var back := _make_button(options_panel, "OptionsBack", Vector2(150, 414), Vector2(240, 44), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 15)
 	back.pressed.connect(func():
 		options_panel.hide()
 		menu_root.show()
@@ -577,6 +583,17 @@ func _set_performance_mode(enabled: bool) -> void:
 	queue_redraw()
 
 
+func _toggle_reduced_motion() -> void:
+	_set_reduced_motion(not reduced_motion)
+
+
+func _set_reduced_motion(enabled: bool) -> void:
+	reduced_motion = enabled
+	_save_settings()
+	_update_options_panel()
+	queue_redraw()
+
+
 func _apply_performance_mode() -> void:
 	# Target a steadier frame rate on mobile while reducing effects. Desktop and
 	# editor sessions keep their normal pacing for development.
@@ -594,6 +611,9 @@ func _update_options_panel() -> void:
 	if is_instance_valid(performance_button):
 		performance_button.text = "PERFORMANCE MODE: ON" if performance_mode else "PERFORMANCE MODE: OFF"
 		performance_button.tooltip_text = "Less background detail, simpler glow and a steadier mobile frame rate." if performance_mode else "Full neon decoration is enabled. Use Performance Mode on slower phones."
+	if is_instance_valid(reduced_motion_button):
+		reduced_motion_button.text = "REDUCED MOTION: ON" if reduced_motion else "REDUCED MOTION: OFF"
+		reduced_motion_button.tooltip_text = "Keeps decorative stars and UI still. Moving bridges, sentinels and pulse switches continue to work normally."
 
 
 func _update_memory_archive() -> void:
@@ -899,8 +919,15 @@ func _layout_responsive_ui() -> void:
 
 func _layout_centered_panels() -> void:
 	for panel in [complete_panel, help_panel, level_select_panel, memory_archive_panel, options_panel, failure_panel]:
-		if is_instance_valid(panel):
-			panel.position = (size - panel.size) * 0.5
+		if not is_instance_valid(panel):
+			continue
+		# Fit modal cards to short landscape phones without changing their authored
+		# layout. The center pivot keeps the scaled card visually centered.
+		panel.pivot_offset = panel.size * 0.5
+		var available := size - Vector2(24.0, 24.0)
+		var fit_scale := minf(1.0, minf(available.x / maxf(panel.size.x, 1.0), available.y / maxf(panel.size.y, 1.0)))
+		panel.scale = Vector2.ONE * clampf(fit_scale, 0.45, 1.0)
+		panel.position = (size - panel.size) * 0.5
 
 
 func _make_panel(panel_name: String, panel_position: Vector2, panel_size: Vector2) -> Panel:
@@ -1055,6 +1082,9 @@ func _style_game_action_button(button: Button, role: String, diameter: float) ->
 
 func _animate_button(button: Button, scale_target: float) -> void:
 	if not is_instance_valid(button):
+		return
+	if reduced_motion:
+		button.scale = Vector2.ONE
 		return
 	var animation := create_tween()
 	animation.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
@@ -1604,11 +1634,14 @@ func _schedule_room_reset(reason: String, detail: String) -> void:
 	if is_instance_valid(failure_progress_bar):
 		failure_progress_bar.value = 1.0
 	if is_instance_valid(failure_panel):
-		failure_panel.modulate.a = 0.0
 		failure_panel.show()
-		var fade := create_tween()
-		fade.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		fade.tween_property(failure_panel, "modulate:a", 1.0, 0.16)
+		if reduced_motion:
+			failure_panel.modulate.a = 1.0
+		else:
+			failure_panel.modulate.a = 0.0
+			var fade := create_tween()
+			fade.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			fade.tween_property(failure_panel, "modulate:a", 1.0, 0.16)
 	game_hud.hide()
 	queue_redraw()
 
@@ -1903,11 +1936,12 @@ func _load_settings() -> void:
 	player_move_speed = float(settings["move_speed"])
 	left_handed_controls = bool(settings["left_handed_controls"])
 	performance_mode = bool(settings.get("performance_mode", true))
+	reduced_motion = bool(settings.get("reduced_motion", false))
 	_apply_performance_mode()
 
 
 func _save_settings() -> void:
-	var error: int = SETTINGS_STORE.save_settings(player_move_speed, left_handed_controls, SETTINGS_STORE.SETTINGS_PATH, performance_mode)
+	var error: int = SETTINGS_STORE.save_settings(player_move_speed, left_handed_controls, SETTINGS_STORE.SETTINGS_PATH, performance_mode, reduced_motion)
 	if error != OK:
 		push_warning("Could not save control settings. Error code: %s" % error)
 
@@ -2026,7 +2060,7 @@ func _draw_room() -> void:
 	# Moving rails and scan sweep are optional. Structural geometry and every
 	# gameplay cue remain visible in Performance Mode.
 	if not performance_mode:
-		var rail_pulse := 0.18 + (sin(hazard_time * 0.9) + 1.0) * 0.035
+		var rail_pulse := 0.215 if reduced_motion else 0.18 + (sin(hazard_time * 0.9) + 1.0) * 0.035
 		var rail_color := Color(0.12, 0.84, 0.78, rail_pulse)
 		var rail_dim := Color(0.07, 0.47, 0.49, rail_pulse * 0.62)
 		var rail_segments: Array[PackedVector2Array] = [
@@ -2039,8 +2073,9 @@ func _draw_room() -> void:
 			draw_polyline(rail_segments[rail_index], rail_color if rail_index % 2 == 0 else rail_dim, 1.6, true)
 			var rail_point: Vector2 = rail_segments[rail_index][1]
 			draw_circle(rail_point, 3.0, Color(0.26, 1.0, 0.92, rail_pulse + 0.10))
-		var scan_y := ROOM_TOP + fposmod(hazard_time * 30.0, ROOM_BOTTOM - ROOM_TOP)
-		draw_line(Vector2(ROOM_LEFT + 8, scan_y), Vector2(ROOM_RIGHT - 8, scan_y), Color(0.16, 0.89, 0.82, 0.035), 1.0, true)
+		if not reduced_motion:
+			var scan_y := ROOM_TOP + fposmod(hazard_time * 30.0, ROOM_BOTTOM - ROOM_TOP)
+			draw_line(Vector2(ROOM_LEFT + 8, scan_y), Vector2(ROOM_RIGHT - 8, scan_y), Color(0.16, 0.89, 0.82, 0.035), 1.0, true)
 
 	if level_data.has("echo_jammer"):
 		var jammer_position: Vector2 = level_data["echo_jammer"]

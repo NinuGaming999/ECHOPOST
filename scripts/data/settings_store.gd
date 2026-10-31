@@ -10,7 +10,8 @@ static func load_settings(path: String = SETTINGS_PATH) -> Dictionary:
 	var result := {
 		"move_speed": DEFAULT_MOVE_SPEED,
 		"left_handed_controls": false,
-		"performance_mode": true
+		"performance_mode": true,
+		"reduced_motion": false
 	}
 	var config := ConfigFile.new()
 	if config.load(path) != OK:
@@ -19,15 +20,24 @@ static func load_settings(path: String = SETTINGS_PATH) -> Dictionary:
 	result["move_speed"] = _normalize_move_speed(float(config.get_value("controls", "move_speed", DEFAULT_MOVE_SPEED)))
 	result["left_handed_controls"] = bool(config.get_value("controls", "left_handed_controls", false))
 	result["performance_mode"] = bool(config.get_value("graphics", "performance_mode", true))
+	# Older preference files omit this key and receive the safe default.
+	result["reduced_motion"] = bool(config.get_value("accessibility", "reduced_motion", false))
 	return result
 
 
-static func save_settings(move_speed: float, left_handed_controls: bool, path: String = SETTINGS_PATH, performance_mode: bool = true) -> int:
+static func save_settings(
+	move_speed: float,
+	left_handed_controls: bool,
+	path: String = SETTINGS_PATH,
+	performance_mode: bool = true,
+	reduced_motion: bool = false
+) -> int:
 	var config := ConfigFile.new()
-	config.set_value("meta", "settings_version", 2)
+	config.set_value("meta", "settings_version", 3)
 	config.set_value("controls", "move_speed", _normalize_move_speed(move_speed))
 	config.set_value("controls", "left_handed_controls", left_handed_controls)
 	config.set_value("graphics", "performance_mode", performance_mode)
+	config.set_value("accessibility", "reduced_motion", reduced_motion)
 	return config.save(path)
 
 
