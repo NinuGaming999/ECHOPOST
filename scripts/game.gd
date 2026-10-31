@@ -2089,21 +2089,36 @@ func _draw_room() -> void:
 		draw_line(jammer_position + Vector2(0.0, -12.0), jammer_position + Vector2(0.0, 12.0), Color(0.95, 0.85, 1.0, 0.95), 3.0)
 		draw_string(ThemeDB.fallback_font, Vector2(jammer_position.x - jammer_radius - 10.0, jammer_position.y - jammer_radius - 9.0), "ECHO DEAD ZONE", HORIZONTAL_ALIGNMENT_CENTER, jammer_radius * 2.0 + 20.0, 13, Color(0.86, 0.67, 1.0, 0.95))
 
-	_draw_switch(level_data["plate_a"], "A", Color(0.23, 0.83, 1.0), echo_visible and echo_position.distance_to(level_data["plate_a"]) < 43.0)
+	var switch_a_active := echo_visible and echo_position.distance_to(level_data["plate_a"]) < 43.0
+	var switch_a_status := _get_switch_status_label(switch_a_active, "WAITING FOR ECHO")
+	_draw_switch(level_data["plate_a"], "A", Color(0.23, 0.83, 1.0), switch_a_active, switch_a_status)
+
 	var plate_b_mode := str(level_data.get("plate_b_mode", "hold"))
-	var switch_b_active := player_position.distance_to(level_data["plate_b"]) < 43.0
+	var player_on_b := player_position.distance_to(level_data["plate_b"]) < 43.0
+	var switch_b_active := player_on_b
+	var switch_b_waiting_text := "WAITING FOR PLAYER"
 	if plate_b_mode == "toggle":
 		switch_b_active = switch_b_latched
+		switch_b_waiting_text = "NOT LATCHED"
 	elif plate_b_mode == "pulse":
-		switch_b_active = _is_pulse_switch_active() and player_position.distance_to(level_data["plate_b"]) < 43.0
-	_draw_switch(level_data["plate_b"], "B", Color(1.0, 0.70, 0.34), switch_b_active)
+		var pulse_live := _is_pulse_switch_active()
+		switch_b_active = pulse_live and player_on_b
+		switch_b_waiting_text = "PULSE CLOSED" if not pulse_live else "MOVE TO B"
+	var switch_b_status := _get_switch_status_label(switch_b_active, switch_b_waiting_text)
+	if plate_b_mode == "toggle" and switch_b_latched:
+		switch_b_status = "LATCHED"
+	_draw_switch(level_data["plate_b"], "B", Color(1.0, 0.70, 0.34), switch_b_active, switch_b_status)
+
 	if level_data.has("plate_c"):
 		var switch_c_active := secondary_echo_visible and not secondary_echo_playing and secondary_echo_position.distance_to(level_data["plate_c"]) < 43.0
-		_draw_switch(level_data["plate_c"], "C", Color(0.76, 0.49, 1.0), switch_c_active)
+		var switch_c_waiting_text := "ECHO 2 INBOUND" if secondary_echo_playing else "WAITING FOR ECHO 2"
+		var switch_c_status := _get_switch_status_label(switch_c_active, switch_c_waiting_text)
+		_draw_switch(level_data["plate_c"], "C", Color(0.76, 0.49, 1.0), switch_c_active, switch_c_status)
+
 	if plate_b_mode == "pulse":
 		var pulse_label := "PULSE LIVE" if _is_pulse_switch_active() else "PULSE IN %.1fs" % _get_pulse_switch_seconds_until_active()
 		var pulse_tint := Color(1.0, 0.76, 0.34) if _is_pulse_switch_active() else Color(0.73, 0.80, 0.92)
-		draw_string(ThemeDB.fallback_font, level_data["plate_b"] + Vector2(-55, 70), pulse_label, HORIZONTAL_ALIGNMENT_CENTER, 110, 11, pulse_tint)
+		draw_string(ThemeDB.fallback_font, level_data["plate_b"] + Vector2(-55, 84), pulse_label, HORIZONTAL_ALIGNMENT_CENTER, 110, 11, pulse_tint)
 	_draw_gate()
 	_draw_portal(Vector2(1170, 365), door_open)
 	if level_data.has("echo_waypoint"):
@@ -2177,6 +2192,14 @@ func _draw_room() -> void:
 
 
 
+func _get_switch_status_label(active: bool, inactive_text: String = "WAITING") -> String:
+	return "ACTIVE" if active else inactive_text
+
+
+func _get_relay_status_label(linked: bool) -> String:
+	return "LINKED" if linked else "REQUIRED"
+
+
 func _draw_echo_waypoint(position: Vector2, label: String = "RELAY", linked: bool = false) -> void:
 	# Amber means not reached; green means the current route has linked this checkpoint in order.
 	var glow := Color(0.24, 1.0, 0.72) if linked else Color(1.0, 0.66, 0.25)
@@ -2193,9 +2216,19 @@ func _draw_echo_waypoint(position: Vector2, label: String = "RELAY", linked: boo
 	draw_colored_polygon(diamond, Color(0.64, 1.0, 0.84, 0.97) if linked else Color(1.0, 0.66, 0.27, 0.94))
 	var outline := Color(0.91, 1.0, 0.96, 0.99) if linked else Color(1.0, 0.88, 0.62, 0.98)
 	draw_polyline(PackedVector2Array([diamond[0], diamond[1], diamond[2], diamond[3], diamond[0]]), outline, 1.5, true)
-	var beacon_label := label + " LINKED" if linked else label
-	var label_color := Color(0.42, 1.0, 0.77) if linked else Color(1.0, 0.80, 0.47)
-	draw_string(ThemeDB.fallback_font, position + Vector2(20, 4), beacon_label, HORIZONTAL_ALIGNMENT_LEFT, 130, 11, label_color)
+	# Shape and text both communicate state, so color is only decorative.
+	if linked:
+		var check_mark := PackedVector2Array([
+			position + Vector2(-6, 0),
+			position + Vector2(-1, 5),
+			position + Vector2(8, -6),
+		])
+		draw_polyline(check_mark, Color(0.06, 0.18, 0.14, 0.98), 2.6, true)
+	else:
+		draw_line(position + Vector2(0, -7), position + Vector2(0, 2), Color(0.22, 0.13, 0.04, 0.98), 2.5, true)
+		draw_circle(position + Vector2(0, 7), 1.8, Color(0.22, 0.13, 0.04, 0.98))
+	var beacon_label := label + "  " + _get_relay_status_label(linked)
+	draw_string(ThemeDB.fallback_font, position + Vector2(20, 4), beacon_label, HORIZONTAL_ALIGNMENT_LEFT, 154, 11, Color(0.90, 0.96, 1.0, 0.98))
 
 
 func _draw_memory_shard(position: Vector2) -> void:
@@ -2253,15 +2286,29 @@ func _draw_moving_platforms() -> void:
 		draw_string(ThemeDB.fallback_font, Vector2(deck.position.x, deck.position.y - 10.0), "MOVING BRIDGE • RIDE", HORIZONTAL_ALIGNMENT_CENTER, platform_size.x, 11, Color(0.55, 1.0, 0.98, 0.98))
 
 
-func _draw_switch(position: Vector2, letter: String, tint: Color, active: bool) -> void:
+func _draw_switch(position: Vector2, letter: String, tint: Color, active: bool, status_text: String) -> void:
 	var color := tint if active else tint.darkened(0.45)
 	draw_circle(position, 35, Color(tint.r, tint.g, tint.b, 0.09))
 	draw_circle(position, 26, Color(tint.r, tint.g, tint.b, 0.12 if active else 0.05))
 	draw_arc(position, 25, 0, TAU, 24 if performance_mode else 48, color, 3.0, true)
 	draw_circle(position, 13, color if active else Color(0.12, 0.18, 0.24))
-	draw_circle(position, 5, Color(0.92, 0.98, 1.0) if active else color)
+	if active:
+		draw_rect(Rect2(position - Vector2(4.0, 4.0), Vector2(8.0, 8.0)), Color(0.96, 1.0, 0.98), true)
+	else:
+		draw_circle(position, 4.0, Color(0.92, 0.98, 1.0), false, 1.6)
 	draw_string(ThemeDB.fallback_font, position + Vector2(-5, 5), letter, HORIZONTAL_ALIGNMENT_CENTER, 12, 13, Color(0.02, 0.08, 0.13) if active else Color(0.82, 0.91, 0.98))
 	draw_string(ThemeDB.fallback_font, position + Vector2(-38, 48), "SWITCH " + letter, HORIZONTAL_ALIGNMENT_CENTER, 76, 12, color)
+	var state_marker := position + Vector2(-48, 62)
+	if active:
+		var state_check := PackedVector2Array([
+			state_marker + Vector2(-4, 0),
+			state_marker + Vector2(-1, 4),
+			state_marker + Vector2(5, -4),
+		])
+		draw_polyline(state_check, Color(0.72, 1.0, 0.94, 0.98), 1.9, true)
+	else:
+		draw_arc(state_marker, 4.0, 0.0, TAU, 12, Color(0.82, 0.90, 0.96, 0.98), 1.4, true)
+	draw_string(ThemeDB.fallback_font, position + Vector2(-39, 66), status_text, HORIZONTAL_ALIGNMENT_LEFT, 116, 10, Color(0.88, 0.94, 0.99, 0.98))
 
 
 func _draw_gate() -> void:
