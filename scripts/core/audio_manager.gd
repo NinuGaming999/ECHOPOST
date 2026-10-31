@@ -19,6 +19,7 @@ const EFFECT_SPECS: Dictionary = {
 var music_enabled: bool = true
 var sfx_enabled: bool = true
 var haptics_enabled: bool = false
+var app_suspended: bool = false
 
 var music_player: AudioStreamPlayer
 var sfx_player: AudioStreamPlayer
@@ -63,6 +64,13 @@ func set_haptics_enabled(enabled: bool) -> void:
 	haptics_enabled = enabled
 
 
+func set_app_suspended(suspended: bool) -> void:
+	app_suspended = suspended
+	_sync_music()
+	if suspended and is_instance_valid(sfx_player):
+		sfx_player.stop()
+
+
 func play_sfx(effect_name: String) -> void:
 	if not sfx_enabled or not is_instance_valid(sfx_player):
 		return
@@ -87,6 +95,7 @@ func _sync_music() -> void:
 	if music_enabled:
 		if not music_player.playing:
 			music_player.play()
+		music_player.stream_paused = app_suspended
 	else:
 		music_player.stop()
 
