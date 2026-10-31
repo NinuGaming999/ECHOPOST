@@ -27,6 +27,7 @@ func _run_tests() -> void:
 	_test_all_memories_restore_signal(game)
 	_test_memory_archive_ui(game)
 	_test_options_panel(game)
+	_test_color_independent_puzzle_cues(game)
 	_test_latch_protocol_switch(game)
 	_test_echo_waypoint_requirement(game)
 	_test_ordered_echo_waypoints(game)
@@ -430,6 +431,15 @@ func _test_options_panel(game: Control) -> void:
 	_check(bool(game.get("left_handed_controls")) == previous_handedness, "The test should restore the original handedness preference.")
 	_check(bool(game.get("reduced_motion")) == previous_reduced_motion, "The test should restore the original Reduced Motion preference.")
 
+
+
+func _test_color_independent_puzzle_cues(game: Control) -> void:
+	_check(str(game.call("_get_switch_status_label", true)) == "ACTIVE", "An active switch must have an explicit text state independent of its tint.")
+	_check(str(game.call("_get_switch_status_label", false)) == "WAITING", "An inactive switch must have a readable waiting state independent of its tint.")
+	_check(str(game.call("_get_switch_status_label", false, "PULSE CLOSED")) == "PULSE CLOSED", "Pulse switches must explain a closed active window without relying on color.")
+	_check(str(game.call("_get_switch_status_label", false, "MOVE TO B")) == "MOVE TO B", "A live pulse must tell the player to reach Switch B.")
+	_check(str(game.call("_get_relay_status_label", false)) == "REQUIRED", "An unlinked relay must explicitly say that it is required.")
+	_check(str(game.call("_get_relay_status_label", true)) == "LINKED", "A completed relay must explicitly say that it is linked.")
 
 
 func _test_latch_protocol_switch(game: Control) -> void:

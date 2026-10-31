@@ -54,6 +54,10 @@ The first thirteen chambers establish the two-switch echo rule, sentinels, order
 
 The chapter selector scrolls so future rooms do not collide with the navigation controls. The 24-room campaign spans five signal chapters. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. More multi-echo combinations, checkpoints and varied puzzle rules remain future work; the twenty-four current rooms are still a foundation rather than a finished campaign.
 
+## Puzzle state readability
+
+Switches communicate their state with explicit labels and different center/outline shapes, not just their cyan, amber or violet tint. Hold switches show whether they are active or waiting; toggle and pulse switches explain the next condition (for example, not latched, pulse closed, or move to B). Relay beacons identify themselves as **REQUIRED** or **LINKED** and use a warning/check symbol. Color remains part of the visual identity, but it is never the only signal for these puzzle states.
+
 ## Echo rules
 
 - A recording contains timestamped player positions. In standard rooms a route is accepted only when it finishes on Switch A. In two-echo rooms, slot 1 must finish on A and slot 2 on C; the first echo must settle on A before the second recording can begin.
