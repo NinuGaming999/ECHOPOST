@@ -27,7 +27,7 @@ static func load_settings(path: String = SETTINGS_PATH) -> Dictionary:
 	result["performance_mode"] = bool(config.get_value("graphics", "performance_mode", true))
 	# Older preference files omit this key and receive the safe default.
 	result["reduced_motion"] = bool(config.get_value("accessibility", "reduced_motion", false))
-	# Audio settings are optional in v1-v3 preference files.
+	# Audio switches and haptics were introduced in v4; missing keys use safe defaults.
 	result["music_enabled"] = bool(config.get_value("audio", "music_enabled", true))
 	result["sfx_enabled"] = bool(config.get_value("audio", "sfx_enabled", true))
 	result["haptics_enabled"] = bool(config.get_value("accessibility", "haptics_enabled", false))
