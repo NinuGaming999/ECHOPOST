@@ -2263,23 +2263,26 @@ func _get_visible_chapter_landmark_positions(room_rect: Rect2) -> Array[Vector2]
 
 
 func _draw_chapter_landmarks(room_rect: Rect2, motif: int, primary: Color, secondary: Color) -> void:
-	if performance_mode:
-		# A single structural mark per room is enough on slower devices.
-		var compact_positions := _get_visible_chapter_landmark_positions(room_rect)
-		if not compact_positions.is_empty():
-			_draw_chapter_landmark(compact_positions[0], motif, primary, secondary, 0)
-		return
-	var positions := _get_visible_chapter_landmark_positions(room_rect)
-	for index in range(positions.size()):
-		_draw_chapter_landmark(positions[index], motif, primary, secondary, index)
+	# Check four fixed corner slots directly. Avoid allocating Arrays in _draw(),
+	# which is called every frame on lower-end mobile hardware.
+	for index in range(4):
+		var horizontal_offset := 64.0 if index % 2 == 0 else room_rect.size.x - 64.0
+		var vertical_offset := 48.0 if index < 2 else room_rect.size.y - 48.0
+		var anchor := room_rect.position + Vector2(horizontal_offset, vertical_offset)
+		if not _is_chapter_landmark_clear(anchor):
+			continue
+		_draw_chapter_landmark(anchor, motif, primary, secondary, index)
+		if performance_mode:
+			# One landmark is enough in the compact renderer.
+			return
 
 
 func _draw_chapter_landmark(anchor: Vector2, motif: int, primary: Color, secondary: Color, index: int) -> void:
 	var mirror_x := -1.0 if index % 2 == 1 else 1.0
 	var mirror_y := -1.0 if index >= 2 else 1.0
 	var base := anchor + Vector2(0.0, 20.0 * mirror_y)
-	var silhouette := Color(primary.r, primary.g, primary.b, 0.24)
-	var highlight := Color(secondary.r, secondary.g, secondary.b, 0.44)
+	var silhouette := Color(primary.r, primary.g, primary.b, minf(0.24, primary.a * 2.5))
+	var highlight := Color(secondary.r, secondary.g, secondary.b, minf(0.44, secondary.a * 5.0))
 	match motif:
 		1:
 			# Signal relay pylon with two short antenna arms.
@@ -2299,8 +2302,10 @@ func _draw_chapter_landmark(anchor: Vector2, motif: int, primary: Color, seconda
 		3:
 			# Miniature bridge anchor with two towers and a suspended cable.
 			draw_line(anchor + Vector2(-25.0 * mirror_x, 20.0 * mirror_y), anchor + Vector2(25.0 * mirror_x, 20.0 * mirror_y), silhouette, 3.0, true)
-			draw_rect(Rect2(anchor + Vector2(-21.0 * mirror_x - 3.0, -17.0 * mirror_y), Vector2(6.0, 38.0 * mirror_y).abs()), silhouette, true)
-			draw_rect(Rect2(anchor + Vector2(15.0 * mirror_x - 3.0, -17.0 * mirror_y), Vector2(6.0, 38.0 * mirror_y).abs()), silhouette, true)
+			var tower_top := -17.0 * mirror_y
+			var tower_y := minf(tower_top, tower_top + 38.0 * mirror_y)
+			draw_rect(Rect2(anchor + Vector2(-21.0 * mirror_x - 3.0, tower_y), Vector2(6.0, 38.0)), silhouette, true)
+			draw_rect(Rect2(anchor + Vector2(15.0 * mirror_x - 3.0, tower_y), Vector2(6.0, 38.0)), silhouette, true)
 			draw_line(anchor + Vector2(-21.0 * mirror_x, -17.0 * mirror_y), anchor + Vector2(0.0, -5.0 * mirror_y), highlight, 1.5, true)
 			draw_line(anchor + Vector2(0.0, -5.0 * mirror_y), anchor + Vector2(21.0 * mirror_x, -17.0 * mirror_y), highlight, 1.5, true)
 			for cable_index in range(3):
