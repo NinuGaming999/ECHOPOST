@@ -1,9 +1,67 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
 
-## 0. Latest verified handoff — Procedural audio, puzzle SFX and optional haptics
+## 0. Latest verified handoff — Independent Music/SFX volume sliders
 
-**Current main merge commit:** `0e5131a8fb2d27fda134470add527a43bc50191a`  
+**Current main merge commit:** `eaaad382c766df9e878d833578f3a707c4465eb9`  
+**Merged pull request:** [#5 — Add separate Music and SFX volume sliders](https://github.com/NinuGaming999/ECHOPOST/pull/5)  
+**Godot verification:** [run 41199404148](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41199404148) — success on Godot **4.4.0** and **4.7.2**. Both jobs imported/parsed the project and passed the data-layer and complete gameplay smoke tests.
+
+### What changed
+
+- The Options panel now includes independent **Music Volume** and **SFX Volume** sliders, each from **0–100%**, with a live percentage readout.
+- Moving either slider immediately adjusts only its own audio player. The existing Music/SFX mute switches and optional Haptics control remain separate.
+- Slider positions and percentages refresh from the stored values whenever Options opens or updates. Programmatic UI refresh blocks slider signals so integer-step display rounding cannot change the saved gain.
+- The default gains preserve the previous output levels: Music `0.14125375` linear (`-17 dB`) and SFX `0.89125094` linear (`-1 dB`). The visible initial slider values round to approximately **14%** and **89%**.
+- Settings are now **schema v5**. Existing v2/v3/v4 settings remain compatible. In particular, v4 Music/SFX mute and Haptics values are preserved, and missing volume fields receive the old output levels.
+- The Options card expanded to **540×560** and uses the existing center-pivot scaling so it fits compact landscape screens.
+- README, roadmap and game-design notes describe the independent volume controls.
+
+### Exact current source map
+
+- `scripts/core/audio_manager.gd` — blob `38fb2bbc31810b2c3dbc464bc816655816914320`, 185 lines:
+  - **L19–L26:** previous-output-compatible Music/SFX defaults and audio state.
+  - **L49–L61:** configure both volume values at startup.
+  - **L75–L84:** clamp and apply independent linear gains to the two AudioStreamPlayers; zero is mapped to `-80 dB`.
+- `scripts/data/settings_store.gd` — blob `7b3cf8822a0f50f785a45f1bfd8dc2e7bdc10d47`, 79 lines:
+  - **L9–L36:** default volumes, v2/v3/v4 compatibility, and clamped volume loading.
+  - **L40–L67:** schema v5 persistence and 0–1 normalized storage.
+- `scripts/game.gd` — blob `0ba0ad51fc8e478a55572268d1054d559dc0444f`, 2555 lines:
+  - **L43–L45:** saved Music/SFX volume state.
+  - **L524–L590:** expanded Options layout, volume readouts and slider construction.
+  - **L577–L589:** 0–100 HSlider configuration.
+  - **L695–L707:** separate immediate volume setters.
+  - **L730–L759:** ON/OFF controls and percentage refresh; signals are blocked for programmatic slider updates.
+  - **L2084–L2100:** load/save of schema v5 preferences.
+- `tests/headless_smoke.gd` — blob `2fe303a8ef421a73f4cc75135949619d9d8de918`, 363 lines:
+  - **L270–L355:** default-volume checks, v2/v3/v4 migration, v5 persistence and clamping.
+- `tests/game_flow_smoke.gd` — blob `7a7c9386ce4b678932ca146fb092bd50e620fbf8`, 1564 lines:
+  - **L369–L483:** Options controls, direct slider interaction, live per-channel changes, labels, restore/persistence and expanded-panel layout.
+  - **L487–L535:** AudioStreamPlayer gain tests, including zero-volume muting.
+  - **L1395–L1401:** compact landscape fit and centered Options assertions.
+- `README.md` — blob `fb184159b3dc4c11d046b207b120727ae05264f2`, 118 lines; **L26** describes the sliders/defaults and **L35–L37** documents audio controls.
+- `docs/ROADMAP.md` — blob `776a1c915427f415fbc36b2ec10976eca26ce7db`, 91 lines; **L56** marks separate saved volume sliders complete.
+- `docs/GAME_DESIGN.md` — blob `b97760673d824c689342b6fd3b2ed2eda4006a8e`, 129 lines; **L57–L59** describes the audio controls.
+
+### Verification and remaining limits
+
+- **Godot CI:** run 41199404148 passed both supported engine versions: project import/parse, data tests and full gameplay smoke tests. The earlier run 41199330877 exposed slider-step rounding of saved values; this was fixed by blocking UI refresh signals and retested successfully on both engines.
+- **Android APK:** the post-merge Android export for commit `eaaad382c766df9e878d833578f3a707c4465eb9` has not been confirmed here. Do not assume the current nightly APK contains these sliders until the Android workflow export succeeds.
+- **Physical-device QA:** not performed. Check slider touch comfort, audible range, percentage readout size and saved values after app relaunch on real phones.
+- **Performance:** sliders only change AudioStreamPlayer gain; no new per-frame processing or imported audio assets were added.
+
+### Next development tasks
+
+1. Confirm the post-merge Android APK export, install it and test both sliders on a real Android phone.
+2. Check mute/unmute, saved levels after relaunch, and how the sliders behave on short landscape screens.
+3. Tune levels based on actual speaker/headphone listening tests; consider audio-device-specific adjustments only if device tests show a need.
+4. Continue the planned character asset/animation polish and visual room themes while preserving Performance Mode and Reduced Motion support.
+
+---
+
+## 0. Previous verified handoff — Procedural audio, puzzle SFX and optional haptics
+
+**Main merge commit at that handoff:** `0e5131a8fb2d27fda134470add527a43bc50191a`  
 **Merged pull request:** [#4 — Add procedural ambient audio, puzzle SFX and haptics options](https://github.com/NinuGaming999/ECHOPOST/pull/4)  
 **Godot verification:** [run 41196446527](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41196446527) — success on Godot **4.4.0** and **4.7.2**. Both jobs imported/parsed the project and passed the data-layer and complete gameplay smoke tests.
 
@@ -18,7 +76,7 @@
 - Settings are now **schema v4**. Existing v2 and v3 preferences still load; v3 Reduced Motion is preserved, while older files receive Music/SFX ON and Haptics OFF defaults.
 - README, roadmap and game-design notes describe the audio layer and remaining production-audio/device-QA work.
 
-### Exact current source map
+### Source map at that handoff
 
 - `scripts/core/audio_manager.gd` — blob `b1ebe2fbc6d19f1f8ff4154066c69b1a2f1dcfa6`, 161 lines:
   - **L1–L27:** sample rate, original note pattern and seven event-tone specifications.
@@ -169,7 +227,7 @@
 **Project root:** repository root; main scene is `res://scenes/main.tscn`  
 **Engine:** Godot 4.x; CI tests Godot 4.4.0 and 4.7.2  
 **Target:** Android-first landscape game; desktop builds support development and testing  
-**Current main gameplay commit:** `3c4046c62a1b1b4aa5e5e97f4afb93af20adc65c` — 24-room Chapter V campaign, settings schema v3, Reduced Motion, compact modal cards, and color-independent puzzle state cues.  
+**Current main gameplay commit:** `eaaad382c766df9e878d833578f3a707c4465eb9` — 24-room Chapter V campaign, responsive mobile controls, Reduced Motion, color-independent puzzle cues, procedural ambient audio/SFX, optional haptics and saved Music/SFX volume sliders.  
 **Recording-cap code commit:** `b5f36b6a4f764a595e5dd930e8d6b3cebd5ce3a8`  
 **Gameplay-test commit:** `11c3b30de34323c536b0b8302eb8604259248d52`  
 **Options source fix commit:** `45ee5b1b5b6854fea8f17934897a539a47abd0da`  
@@ -186,9 +244,9 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Current main controller source blob:** `5cace96ee0cb2c5a3ccc53efc539eda760643063` (2400 lines)  
-**Current gameplay regression-test blob:** `b9767899deb7cf5fceef56c6af47ac5731140317` (1459 lines)  
-**Current settings-store blob:** `ffb5469ee782837912c6a131b006fde75b01dff6` (66 lines); schema v4 stores Performance Mode, Reduced Motion, Music, SFX and Haptics separately.  
+**Current main controller source blob:** `0ba0ad51fc8e478a55572268d1054d559dc0444f` (2555 lines)  
+**Current gameplay regression-test blob:** `7a7c9386ce4b678932ca146fb092bd50e620fbf8` (1564 lines)  
+**Current settings-store blob:** `7b3cf8822a0f50f785a45f1bfd8dc2e7bdc10d47` (79 lines); schema v5 stores Performance Mode, Reduced Motion, Music/SFX toggles and volume levels, and Haptics separately.  
 **Low-end rendering commits:** saved Performance Mode preference [30f1189](https://github.com/NinuGaming999/ECHOPOST/commit/30f1189f7f8c03805b1c58fabf4abc94d5cd9c06), render/route optimization [1904ad8](https://github.com/NinuGaming999/ECHOPOST/commit/1904ad8f9b34a56c30873fba47258ef10e7cc0a1), regression tests [9297624](https://github.com/NinuGaming999/ECHOPOST/commit/929762484dd228eb3ca1d22da3c2ca41d8dc66bf), and final joystick/HUD cleanup [36622a5](https://github.com/NinuGaming999/ECHOPOST/commit/36622a5488f3cb4073b8692ae85a768b62710d43).  
 **Latest Godot CI for multi-echo source:** [run 41132293123](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293123) passed on Godot 4.4.0 and 4.7.2 for the 21-room Chapter IV revision.  
 **Latest Android APK export:** [run 41132293283](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293283) succeeded for the 21-room multi-echo gameplay revision and refreshed the nightly APK.  
