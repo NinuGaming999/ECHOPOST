@@ -1,5 +1,56 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
+## 0. Latest verified handoff — Sentinel, gate and portal visual feedback
+
+**Current main merge commit:** `fd50bd2dde6b36782884fe8b0c3c4df1280cd702`  
+**Merged pull request:** [#9 — Add sentinel impact and gate-entry feedback](https://github.com/NinuGaming999/ECHOPOST/pull/9)  
+**Godot verification:** [run 41221449439](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41221449439) — success on Godot **4.4.0** and **4.7.2**. Both versions completed project import/parse, data tests and the full main-scene gameplay smoke tests.
+
+### What changed
+
+- **Sentinel impact:** the exact collision location is preserved before the automatic room reset moves the courier back to spawn. A short red ring and crosshair appear at that hit point while the reset card is shown.
+- **Reduced Motion:** the sentinel impact uses one static ring; normal mode expands/fades the ring during the existing reset window. The reset duration and collision behavior are unchanged.
+- **Gate activation:** opening a gate starts a separate 0.62-second visual flash timer. A thin expanding energy ring and horizontal glint animate around the gate. This timer is cosmetic and is not used by the gate's authored crossing countdown.
+- **Portal entry:** when a powered portal is within 108 design units of the courier, it gains a proximity halo. Normal mode gently pulses/rotates the arc; Reduced Motion displays a still halo.
+- Performance Mode uses fewer arc segments. The changes use existing procedural draw calls, with no new scene nodes, textures or external assets.
+- No gameplay values changed: sentinel path/radius, reset duration, movement, record cap, gate open countdown, portal radius and completion/save behavior remain as before.
+- Regression tests check that sentinel contact stores the real impact position and that standard/timed gate activation starts the visual flare state.
+- README, game-design notes and roadmap now document the visual reactions.
+
+### Exact current source map
+
+- `scripts/game.gd` — blob `d5d5cf6c9249c582ee9f519caa0eed797d228105`, 2817 lines:
+  - **L89–L90:** preserved impact position and independent visual gate-flash timer.
+  - **L1896:** Reduced Motion immediately suppresses the decorative gate flash; otherwise the timer decrements independently of gameplay timing.
+  - **L1312–L1317:** clears effect state on chamber start.
+  - **L1784–L1787:** stores the sentinel contact point before resetting the player to spawn.
+  - **L2489–L2497:** draws the collision ring during the automatic sentinel-reset card.
+  - **L2658–L2677:** open gate ring plus independent expanding activation flare.
+  - **L2678–L2693:** powered portal proximity halo with a static Reduced Motion version.
+- `tests/game_flow_smoke.gd` — blob `fe3e5de98c2a94825823d7f8b5c90ad4975db80c`, 1616 lines:
+  - **L89:** direct switch/gate flow asserts that activation starts the visual flare.
+  - **L157–L184:** sentinel reset integration checks include the preserved hit position and interrupted-record cleanup.
+  - **L1027–L1079:** timed gate tests confirm the new flash state does not replace or alter the authored countdown, retry and crossing behavior.
+- `tests/headless_smoke.gd` — blob `2fe303a8ef421a73f4cc75135949619d9d8de918`, 363 lines; unchanged.
+- `README.md` — blob `90fa9444fcd5d041b5b72f4ae6a178ec49879501`, 122 lines; gameplay visual identity and sentinel/gate/portal feedback are described in the visual identity section.
+- `docs/GAME_DESIGN.md` — blob `b8bf19944e2e8fd202a6b2470b0ed37ab2ab7065`, 129 lines; **L114–L116** documents the visual feedback and Reduced Motion behavior.
+- `docs/ROADMAP.md` — blob `cbf320278f52d91c3530c0ba963c5731af3670f3`, 94 lines; **L56** marks sentinel impact, gate activation and portal proximity reactions complete.
+
+### Verification and remaining limits
+
+- **Godot CI:** run 41221449439 passed Godot 4.4.0 and 4.7.2, including project import, data tests, sentinel reset and full gameplay smoke tests.
+- **Android APK:** the Android export for merge commit `fd50bd2dde6b36782884fe8b0c3c4df1280cd702` has not been confirmed here. Do not assume the nightly APK includes these visual effects until the Android export and archive-integrity check pass.
+- **Physical-device QA:** not performed. Check effect readability and Reduced Motion on a real landscape phone, particularly smaller screens and low-end devices.
+- **Art scope:** the effects remain procedural and restrained. A cohesive authored sprite/animation set, deeper chapter props and final production polish remain future work.
+
+### Next development tasks
+
+1. Confirm the post-merge Android APK export and inspect the effects on a real phone.
+2. Improve the courier's chamber-complete exit transition while preserving the current completion/save flow.
+3. Continue authored environment art and physical-device performance measurements.
+
+---
+
 ## 0. Latest verified handoff — Safe chapter-specific environmental landmarks
 
 **Current main merge commit:** `9424c55176aed7bd708d7a0559678b3b08fac623`  
