@@ -25,6 +25,7 @@ func _run_tests() -> void:
 	_test_chapter_visual_themes(game)
 	_test_chapter_select_layout(game)
 	_test_touch_joystick_comfort(game)
+	_test_safe_area_input_mapping(game)
 	_test_premium_mobile_ui(game)
 	_test_memory_shard_collection(game)
 	_test_all_memories_restore_signal(game)
@@ -1478,6 +1479,35 @@ func _make_test_route(start_position: Vector2, waypoint_values: Array, end_posit
 	elapsed += previous_position.distance_to(end_position) / 255.0
 	route.add_sample(elapsed, end_position)
 	return route
+
+
+func _test_safe_area_input_mapping(game: Control) -> void:
+	var safe_rect: Rect2 = game.get("safe_layout_rect")
+	var menu_root: Control = game.get("menu_root")
+	var game_hud: Control = game.get("game_hud")
+	_check(menu_root.position.is_equal_approx(safe_rect.position), "The main menu should begin at the OS safe-area origin.")
+	_check(menu_root.size.is_equal_approx(safe_rect.size), "The main menu should use the OS safe-area dimensions.")
+	_check(game_hud.position.is_equal_approx(safe_rect.position), "Gameplay HUD should begin at the OS safe-area origin.")
+	_check(game_hud.size.is_equal_approx(safe_rect.size), "Gameplay HUD should use the OS safe-area dimensions.")
+
+	var panel: Panel = game.get("pause_panel")
+	game.set("safe_layout_rect", Rect2(Vector2(100.0, 30.0), Vector2(1080.0, 660.0)))
+	game.call("_layout_centered_panels")
+	var expected_pause_position := Vector2(100.0, 30.0) + (Vector2(1080.0, 660.0) - panel.size) * 0.5
+	_check(panel.position.is_equal_approx(expected_pause_position), "Modal cards should center inside the safe rectangle rather than behind display cutouts.")
+
+	var original_handedness := bool(game.get("left_handed_controls"))
+	game.set("left_handed_controls", false)
+	_check(bool(game.call("_is_joystick_area", Vector2(400.0, 250.0))), "Right-handed movement pickup should use the safe area's left half.")
+	_check(not bool(game.call("_is_joystick_area", Vector2(900.0, 250.0))), "Right-handed movement pickup should reject the safe area's right half.")
+	_check(not bool(game.call("_is_joystick_area", Vector2(400.0, 80.0))), "Movement pickup should stay clear of the safe area's top HUD.")
+	_check(not bool(game.call("_is_joystick_area", Vector2(400.0, 650.0))), "Movement pickup should stay clear of the safe area's bottom action row.")
+	game.set("left_handed_controls", true)
+	_check(bool(game.call("_is_joystick_area", Vector2(900.0, 250.0))), "Left-handed movement pickup should mirror within the safe area's right half.")
+	_check(not bool(game.call("_is_joystick_area", Vector2(400.0, 250.0))), "Left-handed movement pickup should reject the safe area's left half.")
+	game.set("left_handed_controls", original_handedness)
+	game.set("safe_layout_rect", safe_rect)
+	game.call("_layout_centered_panels")
 
 
 func _test_premium_mobile_ui(game: Control) -> void:
