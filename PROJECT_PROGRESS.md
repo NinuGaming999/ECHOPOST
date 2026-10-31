@@ -1,5 +1,54 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
+## 0. Latest verified handoff — Remove forced FPS caps
+
+**Current main merge commit:** `0b327d0c3a910aa2eaaba6d6792c69f562b636ae`  
+**Merged pull request:** [#12 — Remove all forced FPS caps from ECHOPOST](https://github.com/NinuGaming999/ECHOPOST/pull/12)  
+**Godot PR verification:** [run 41224597733](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41224597733) — success on Godot **4.4.0** and **4.7.2**.  
+**Godot main-branch verification:** [run 41224646840](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41224646840) — success on Godot **4.4.0** and **4.7.2** after merge.
+
+### What changed
+
+- Removed the forced mobile frame caps: the old code assigned `Engine.max_fps = 30` in Performance Mode and `60` when it was off. `_apply_performance_mode()` now always sets **`Engine.max_fps = 0`** on every platform.
+- Set project `application/run/max_fps=0` explicitly and disabled V-Sync with `display/window/vsync/vsync_mode=0`. The desktop app is no longer synchronized to the monitor refresh rate by this project setting.
+- Performance Mode remains ON by default and still reduces optional visual workload (grid density, background rails/sweep, glow detail and other decoration), but it no longer affects frame pacing or sets an FPS ceiling.
+- Updated both Performance Mode tooltips to say the mode does not impose an FPS cap; updated README, build status and roadmap to remove obsolete 30/60 FPS target claims.
+- Added regression coverage: the gameplay test seeds runtime FPS caps of 120 and 45, then verifies both graphics modes reset them to 0. The data smoke test verifies both project-level no-cap settings.
+- No game movement speed, recording/echo timing, physics, difficulty, saves, or puzzle logic was changed.
+
+### Exact current source map
+
+- `scripts/game.gd` — blob `17f008c0e8084e6e21108cf04c007c846ba21042`, **2,836 lines**:
+  - **L564:** initial Performance Mode tooltip states it reduces decoration without limiting FPS.
+  - **L746–L749:** `_apply_performance_mode()` applies `Engine.max_fps = 0` unconditionally.
+  - **L761:** dynamic Performance Mode tooltip confirms no FPS cap in either state.
+- `project.godot` — blob `236b6cc3db5a71ad488c40c227086625fda5e404`, **46 lines**:
+  - **L11:** `run/max_fps=0`.
+  - **L19:** `window/vsync/vsync_mode=0` (V-Sync disabled).
+- `tests/game_flow_smoke.gd` — blob `b6f23f28a3a8126946534047b3dfc400ba0dd2c4`, **1,634 lines**:
+  - **L463–L470:** verifies full-effects mode and Performance Mode both clear an existing nonzero runtime cap.
+- `tests/headless_smoke.gd` — blob `b1d3f41e8653200fe954d91ff7d59ac1f07e554f`, **369 lines**:
+  - **L30–L32:** verifies the project max-FPS setting is 0 and V-Sync mode is disabled.
+- `README.md` — blob `ee9426b5e9011bc48d130b5377c503185f69b09b`, **122 lines**; documents unlimited engine FPS, disabled desktop V-Sync, mobile refresh/OS limits and the additional heat/battery trade-off.
+- `docs/BUILD_STATUS.md` — blob `2e4a4e67b45918dafd274c9eed1b07ca9d317a34`, **50 lines**; describes Performance Mode as detail-only, with no FPS cap.
+- `docs/ROADMAP.md` — blob `0e956e33947fc464dda464dedc9e5dc75b716033`, **95 lines**; removes the obsolete 30 FPS mobile target.
+- This handoff follows merge commit `0b327d0c3a910aa2eaaba6d6792c69f562b636ae`.
+
+### Verification and remaining limits
+
+- **Godot CI:** PR run 41224597733 and post-merge main run 41224646840 both passed Godot 4.4.0 and 4.7.2, including editor import/parse, data and full game-flow smoke tests.
+- **Android APK:** post-merge export [run 41224646870](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41224646870) was still in progress when this handoff was written. Confirm export and ZIP integrity before saying a new APK is ready.
+- **Actual FPS:** removing software caps does not guarantee the device can render faster. Android/iOS display refresh, compositor, power/thermal policy and CPU/GPU load can still limit actual output. On desktop, disabled V-Sync can produce visible tearing and higher power use.
+- **Physical-device QA:** not performed. Compare FPS with the device's refresh setting, test both Performance Mode states, and watch heat/battery during a longer session.
+
+### Next development tasks
+
+1. Confirm the Android APK export for commit `0b327d0c3a910aa2eaaba6d6792c69f562b636ae`, including archive integrity, then test it on a physical phone.
+2. Measure actual FPS on the user's hardware. If it remains low after the software caps are gone, profile the drawing/render path rather than raising another cap.
+3. Preserve Performance Mode as visual detail reduction only; do not reintroduce a fixed FPS limit.
+
+---
+
 ## 0. Latest verified handoff — Original courier sprite sheet
 
 **Current main merge commit:** `aea8d636c07b8e634636ea5127853e5823f8c13f`  
