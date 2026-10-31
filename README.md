@@ -28,6 +28,10 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 - **Touch movement:** touch and drag anywhere on the left side of the playfield to move (right side when left-handed mode is enabled). A floating, dead-zone joystick gives fine control with short drags and eases in/out so movement does not snap or drift. The top HUD, center gutter and bottom action row are protected from movement input.
 - **Touch actions:** use the large translucent round **REC** button on the right to record/send an echo; the optional Switch B latch is the smaller round control beside it. Round **Pause**, **Menu** and **Restart** controls stay at the top/bottom edges. In left-handed mode, the Record/Latch cluster mirrors to the left.
 
+## Puzzle readability and accessibility
+
+Switches show their state in words as well as color: **ACTIVE**, **WAITING**, or a specific instruction such as **PULSE CLOSED**, **MOVE TO B**, or **LATCHED**. Active and inactive switches also use different center/outline shapes. Relay checkpoints explicitly show **REQUIRED** or **LINKED**, with a matching warning/check symbol inside the beacon. Reduced Motion remains separate from Performance Mode, and neither setting disables puzzle-critical movement.
+
 ## Visual identity
 
 The supplied ECHO logo sets a dark navy and neon-cyan theme. A new 16:9 cosmic-nebula backdrop adds a ringed signal planet, distant cyan skyline and orbital horizon; twinkling cyan/teal stars animate over the scene. The player and echo remain glowing orbit-orbs; recorded paths retain their layered cyan glow. Performance Mode reduces the ambient star count and skips glint rays so the backdrop stays lightweight.
