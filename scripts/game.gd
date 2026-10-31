@@ -2241,9 +2241,18 @@ func _is_chapter_landmark_clear(position: Vector2) -> bool:
 	const OBJECTIVE_CLEARANCE := 94.0
 	# Check authored positions directly instead of building a temporary Array in
 	# the frame renderer. The waypoint list is already stored in level data.
-	for key in ["spawn", "plate_a", "plate_b", "plate_c", "memory_shard", "echo_waypoint"]:
-		if _is_chapter_landmark_near_value(position, level_data.get(key, null), OBJECTIVE_CLEARANCE):
-			return false
+	if _is_chapter_landmark_near_value(position, level_data.get("spawn", null), OBJECTIVE_CLEARANCE):
+		return false
+	if _is_chapter_landmark_near_value(position, level_data.get("plate_a", null), OBJECTIVE_CLEARANCE):
+		return false
+	if _is_chapter_landmark_near_value(position, level_data.get("plate_b", null), OBJECTIVE_CLEARANCE):
+		return false
+	if _is_chapter_landmark_near_value(position, level_data.get("plate_c", null), OBJECTIVE_CLEARANCE):
+		return false
+	if _is_chapter_landmark_near_value(position, level_data.get("memory_shard", null), OBJECTIVE_CLEARANCE):
+		return false
+	if _is_chapter_landmark_near_value(position, level_data.get("echo_waypoint", null), OBJECTIVE_CLEARANCE):
+		return false
 	var waypoint_values: Variant = level_data.get("echo_waypoints", [])
 	if waypoint_values is Array:
 		for waypoint_value in waypoint_values:
