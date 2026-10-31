@@ -32,7 +32,11 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 
 Switches show their state in words as well as color: **ACTIVE**, **WAITING**, or a specific instruction such as **PULSE CLOSED**, **MOVE TO B**, or **LATCHED**. Active and inactive switches also use different center/outline shapes. Relay checkpoints explicitly show **REQUIRED** or **LINKED**, with a matching warning/check symbol inside the beacon. Reduced Motion remains separate from Performance Mode, and neither setting disables puzzle-critical movement.
 
-## Audio and feedback\n\nECHOPOST synthesizes a quiet eight-second ambient loop and short original event tones locally at startup; no audio downloads or imported music files are required. Recording, echo release, gate opening, Memory Shards, failures and chamber completion each have a matching sound cue. Music and SFX can be muted separately in Options. Optional brief handheld vibration is OFF by default and can be enabled separately; the Android export preset includes the standard VIBRATE permission. Audio pauses when the app is suspended.\n\n## Visual identity
+## Audio and feedback
+
+ECHOPOST synthesizes a quiet eight-second ambient loop and short original event tones locally at startup; no audio downloads or imported music files are required. Recording, echo release, gate opening, Memory Shards, failures and chamber completion each have a matching sound cue. Music and SFX can be muted separately in Options. Optional brief handheld vibration is OFF by default and can be enabled separately; the Android export preset includes the standard VIBRATE permission. Audio pauses when the app is suspended.
+
+## Visual identity
 
 The supplied ECHO logo sets a dark navy and neon-cyan theme. A new 16:9 cosmic-nebula backdrop adds a ringed signal planet, distant cyan skyline and orbital horizon; twinkling cyan/teal stars animate over the scene. The player and echo remain glowing orbit-orbs; recorded paths retain their layered cyan glow. Performance Mode reduces the ambient star count and skips glint rays so the backdrop stays lightweight.
 
