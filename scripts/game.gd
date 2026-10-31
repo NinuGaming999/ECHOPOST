@@ -1634,11 +1634,14 @@ func _schedule_room_reset(reason: String, detail: String) -> void:
 	if is_instance_valid(failure_progress_bar):
 		failure_progress_bar.value = 1.0
 	if is_instance_valid(failure_panel):
-		failure_panel.modulate.a = 0.0
 		failure_panel.show()
-		var fade := create_tween()
-		fade.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		fade.tween_property(failure_panel, "modulate:a", 1.0, 0.16)
+		if reduced_motion:
+			failure_panel.modulate.a = 1.0
+		else:
+			failure_panel.modulate.a = 0.0
+			var fade := create_tween()
+			fade.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			fade.tween_property(failure_panel, "modulate:a", 1.0, 0.16)
 	game_hud.hide()
 	queue_redraw()
 
