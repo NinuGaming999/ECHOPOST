@@ -656,7 +656,7 @@ The menu identity uses the supplied ECHO logo and a matching cyan geometric SVG 
 
 **Goal:** reduce avoidable CPU/GPU work per frame and provide a saved low-end-device preset without removing puzzle-critical feedback.
 
-- `scripts/game.gd:L545–L558` and `L1651–L1664`: Performance Mode defaults ON for fresh installs and older settings files. It is switchable in Options and stored separately from campaign progress. On mobile it targets 30 FPS for steadier frame pacing; turning it off restores full visual effects and a 60 FPS mobile cap. Desktop/editor pacing is unchanged.
+- `scripts/game.gd:L545–L558` and `L1651–L1664`: Performance Mode defaults ON for fresh installs and older settings files. It is switchable in Options and stored separately from campaign progress. **The historical 30/60 FPS limits described for this snapshot were removed in PR #12**; the current setting controls visual detail only, with Engine.max_fps set to 0 in both modes and project V-Sync disabled.
 - `scripts/game.gd:L1733–L1849`: halves room-grid density, skips animated corner rails and scan sweep, and lowers tessellation for jammer/relay/switch/gate/portal decorations in Performance Mode. Puzzle cues remain visible.
 - `scripts/game.gd:L1925–L1954` and `L1957–L1970`: Performance Mode uses a lower-allocation orb renderer and fewer joystick arc segments.
 - `scripts/game.gd:L1974–L1991`: routes are batched into PackedVector2Array polylines. Performance Mode submits one polyline per route instead of three draw calls per segment; full mode retains three glow passes as three batched polylines.

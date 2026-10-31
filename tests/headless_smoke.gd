@@ -13,6 +13,7 @@ var failures: int = 0
 
 
 func _initialize() -> void:
+	_test_uncapped_render_settings()
 	_test_echo_track()
 	_test_level_catalog()
 	_test_chapter_five_campaign()
@@ -24,6 +25,11 @@ func _initialize() -> void:
 	else:
 		push_error("ECHOPOST smoke tests failed: %d" % failures)
 		quit(1)
+
+
+func _test_uncapped_render_settings() -> void:
+	_check(int(ProjectSettings.get_setting("application/run/max_fps", 0)) == 0, "Project settings should not impose an application FPS cap.")
+	_check(int(ProjectSettings.get_setting("display/window/vsync/vsync_mode", DisplayServer.VSYNC_ENABLED)) == DisplayServer.VSYNC_DISABLED, "Project settings should disable V-Sync so desktop FPS is not limited to monitor refresh.")
 
 
 func _test_echo_track() -> void:
