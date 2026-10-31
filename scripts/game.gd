@@ -109,6 +109,9 @@ var level_select_panel: Panel
 var memory_archive_panel: Panel
 var options_panel: Panel
 var failure_panel: Panel
+var pause_scrim: ColorRect
+var pause_panel: Panel
+var pause_detail_label: Label
 var failure_title_label: Label
 var failure_detail_label: Label
 var failure_progress_bar: ProgressBar
@@ -170,7 +173,13 @@ func _pause_for_lifecycle() -> void:
 	player_visual_velocity = Vector2.ZERO
 	pause_button.text = "▶"
 	pause_button.tooltip_text = "Resume"
-	status_message = "Paused automatically because ECHOPOST lost focus. Tap PLAY to continue."
+	status_message = "Paused automatically because ECHOPOST lost focus. Tap RESUME when ready."
+	if is_instance_valid(pause_detail_label):
+		pause_detail_label.text = "The app lost focus, so your chamber was paused safely. Resume when you're ready."
+	if is_instance_valid(pause_scrim):
+		pause_scrim.show()
+	if is_instance_valid(pause_panel):
+		pause_panel.show()
 	_update_hud()
 	queue_redraw()
 
@@ -345,6 +354,7 @@ func _build_interface() -> void:
 	_build_memory_archive_panel()
 	_build_options_panel()
 	_build_failure_panel()
+	_build_pause_panel()
 
 
 func _build_menu() -> void:
@@ -802,6 +812,30 @@ func _update_memory_archive() -> void:
 		memory_archive_status_label.text = "MEMORIES RECOVERED: %d / %d" % [collected_shards.size(), LEVELS.size()]
 
 
+func _build_pause_panel() -> void:
+	# The full-screen scrim blocks touch controls behind the pause card.
+	pause_scrim = ColorRect.new()
+	pause_scrim.name = "PauseScrim"
+	pause_scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pause_scrim.color = Color(0.002, 0.009, 0.018, 0.72)
+	pause_scrim.mouse_filter = Control.MOUSE_FILTER_STOP
+	pause_scrim.z_index = 80
+	add_child(pause_scrim)
+	pause_scrim.hide()
+
+	pause_panel = _make_panel("PausePanel", Vector2.ZERO, Vector2(500, 360))
+	pause_panel.z_index = 90
+	_make_label(pause_panel, "PauseTitle", Vector2(28, 22), Vector2(444, 58), "SIGNAL PAUSED", 29, Color(0.88, 0.98, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	pause_detail_label = _make_label(pause_panel, "PauseDetail", Vector2(40, 82), Vector2(420, 60), "Your chamber is safe. Resume when you're ready.", 15, Color(0.62, 0.80, 0.88), HORIZONTAL_ALIGNMENT_CENTER)
+	var resume := _make_button(pause_panel, "PauseResumeButton", Vector2(50, 158), Vector2(400, 52), "RESUME CHAMBER", Color(0.04, 0.48, 0.63), Color(0.06, 0.65, 0.80), 17)
+	resume.pressed.connect(_on_pause_pressed)
+	var restart := _make_button(pause_panel, "PauseRestartButton", Vector2(50, 220), Vector2(400, 48), "RESTART CHAMBER", Color(0.13, 0.22, 0.34), Color(0.18, 0.33, 0.47), 14)
+	restart.pressed.connect(_on_reset_pressed)
+	var menu := _make_button(pause_panel, "PauseMenuButton", Vector2(50, 278), Vector2(400, 48), "RETURN TO MAIN MENU", Color(0.10, 0.16, 0.25), Color(0.18, 0.28, 0.40), 14)
+	menu.pressed.connect(_show_menu)
+	pause_panel.hide()
+
+
 func _build_failure_panel() -> void:
 	failure_panel = _make_panel("FailureResetPanel", Vector2.ZERO, Vector2(520, 194))
 	failure_panel.z_index = 100
@@ -1084,7 +1118,7 @@ func _layout_responsive_ui() -> void:
 
 
 func _layout_centered_panels() -> void:
-	for panel in [complete_panel, help_panel, level_select_panel, memory_archive_panel, options_panel, failure_panel]:
+	for panel in [complete_panel, help_panel, level_select_panel, memory_archive_panel, options_panel, failure_panel, pause_panel]:
 		if not is_instance_valid(panel):
 			continue
 		# Fit modal cards to short landscape phones without changing their authored
@@ -1262,6 +1296,10 @@ func _show_menu() -> void:
 	failure_reset_reason = ""
 	if is_instance_valid(failure_panel):
 		failure_panel.hide()
+	if is_instance_valid(pause_panel):
+		pause_panel.hide()
+	if is_instance_valid(pause_scrim):
+		pause_scrim.hide()
 	screen_state = ScreenState.MENU
 	is_recording = false
 	joystick_touch_index = -1
@@ -1289,6 +1327,10 @@ func _start_level(level_index: int) -> void:
 	failure_reset_reason = ""
 	if is_instance_valid(failure_panel):
 		failure_panel.hide()
+	if is_instance_valid(pause_panel):
+		pause_panel.hide()
+	if is_instance_valid(pause_scrim):
+		pause_scrim.hide()
 	current_level_index = clampi(level_index, 0, LEVELS.size() - 1)
 	joystick_touch_index = -1
 	joystick_mouse_active = false
@@ -2010,12 +2052,22 @@ func _on_pause_pressed() -> void:
 		player_visual_velocity = Vector2.ZERO
 		pause_button.text = "▶"
 		pause_button.tooltip_text = "Resume"
-		status_message = "Paused. Tap PLAY to continue."
+		status_message = "Paused. Your chamber is safe."
+		if is_instance_valid(pause_detail_label):
+			pause_detail_label.text = "Your chamber is safe. Resume when you're ready."
+		if is_instance_valid(pause_scrim):
+			pause_scrim.show()
+		if is_instance_valid(pause_panel):
+			pause_panel.show()
 	elif screen_state == ScreenState.PAUSED:
 		screen_state = ScreenState.PLAYING
 		pause_button.text = "Ⅱ"
 		pause_button.tooltip_text = "Pause"
 		status_message = "Back in the chamber."
+		if is_instance_valid(pause_panel):
+			pause_panel.hide()
+		if is_instance_valid(pause_scrim):
+			pause_scrim.hide()
 	_update_hud()
 	queue_redraw()
 
