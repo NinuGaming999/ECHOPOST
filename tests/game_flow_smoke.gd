@@ -6,6 +6,7 @@ const MainScene = preload("res://scenes/main.tscn")
 const EchoTrackScript = preload("res://scripts/core/echo_track.gd")
 const LevelCatalog = preload("res://scripts/data/level_catalog.gd")
 const ProgressStore = preload("res://scripts/data/progress_store.gd")
+const CourierSpriteSheet: Texture2D = preload("res://assets/courier_sprite_sheet.svg")
 
 var failures: int = 0
 
@@ -20,6 +21,7 @@ func _run_tests() -> void:
 	await process_frame
 
 	_test_ambient_background(game)
+	_test_courier_sprite_sheet()
 	_test_chapter_visual_themes(game)
 	_test_chapter_select_layout(game)
 	_test_touch_joystick_comfort(game)
@@ -258,6 +260,11 @@ func _test_portal_completion_is_idempotent(game: Control) -> void:
 	game.set("rooms_completed", previous_completed)
 	game.call("_save_progress")
 	game.call("_update_menu_progress")
+
+
+func _test_courier_sprite_sheet() -> void:
+	_check(CourierSpriteSheet.get_width() == 768, "The courier sprite sheet should contain six 128-pixel frames in one row.")
+	_check(CourierSpriteSheet.get_height() == 128, "The courier sprite frames should have a consistent 128-pixel height.")
 
 
 func _test_chapter_visual_themes(game: Control) -> void:
