@@ -54,7 +54,8 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [ ] Animate walking, recording, echo playback, sentinel contact, gate opening, and portal entry.
 - [ ] Add original SFX, ambient sound, music, and settings for audio/haptics.
 - [x] Add a saved Reduced Motion setting that freezes decorative ambience and suppresses UI scale animations without stopping puzzle-critical motion.
-- [ ] Add color-blindness-friendly indicators, audio/haptics toggles and broader accessibility options.
+- [x] Add color-independent switch states and relay checkpoint labels/symbols so puzzle progress is not communicated by tint alone.
+- [ ] Add audio/haptics toggles and broader accessibility options.
 
 ## Milestone 4 — Mobile QA and release preparation
 
