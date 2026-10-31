@@ -747,10 +747,16 @@ func _update_options_panel() -> void:
 	if is_instance_valid(haptics_button):
 		haptics_button.text = "HAPTICS: ON" if haptics_enabled else "HAPTICS: OFF"
 	if is_instance_valid(music_volume_slider):
+		# Refreshing the display must not quantize saved gains to the slider's
+		# integer step; only real user input should change the stored value.
+		music_volume_slider.set_block_signals(true)
 		music_volume_slider.value = music_volume * 100.0
+		music_volume_slider.set_block_signals(false)
 		music_volume_label.text = "MUSIC VOLUME  •  %d%%" % roundi(music_volume * 100.0)
 	if is_instance_valid(sfx_volume_slider):
+		sfx_volume_slider.set_block_signals(true)
 		sfx_volume_slider.value = sfx_volume * 100.0
+		sfx_volume_slider.set_block_signals(false)
 		sfx_volume_label.text = "SFX VOLUME  •  %d%%" % roundi(sfx_volume * 100.0)
 
 
