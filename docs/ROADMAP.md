@@ -28,6 +28,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Add responsive bottom HUD placement, centered modal cards, larger primary touch targets, consistent premium button/panel styling and subtle button feedback animations.
 - [x] Add a blocking, responsive pause screen with clear Resume, Restart Chamber and Return to Main Menu actions; route OS background/focus pauses through the same explicit-resume card.
 - [x] Make modal cards scale to fit compact landscape viewports while preserving centered layouts.
+- [x] Map the OS-reported display safe rectangle into viewport coordinates and keep menus, gameplay HUD and modal cards inside it; add geometry and touch-hit-area regression tests.
 - [ ] Validate operating-system safe areas and device cutouts on physical Android hardware.
 - [ ] Add an in-game level-state debug view for development builds.
 
