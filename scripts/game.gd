@@ -2299,10 +2299,11 @@ func _draw_chapter_environment(room_rect: Rect2, chapter: int) -> void:
 				draw_line(landmark_anchor + Vector2(0.0, -5.0), landmark_anchor + Vector2(19.0, -17.0), landmark_secondary, 1.5, true)
 			4:
 				# Twin antenna station.
-				for antenna_offset in [-15.0, 15.0]:
+				for antenna_index in range(2):
+					var antenna_offset := -15.0 if antenna_index == 0 else 15.0
 					var antenna_base := landmark_anchor + Vector2(antenna_offset, 10.0)
 					draw_line(antenna_base, antenna_base + Vector2(0.0, -28.0), landmark_primary, 3.0, true)
-					draw_arc(antenna_base + Vector2(0.0, -28.0), 8.0, -PI * 0.72, PI * 0.72, 12, landmark_secondary, 1.5, true)
+					draw_arc(antenna_base + Vector2(0.0, -28.0), 8.0, -PI * 0.72, PI * 0.72, 12 if not performance_mode else 8, landmark_secondary, 1.5, true)
 				draw_line(landmark_anchor + Vector2(-17.0, 10.0), landmark_anchor + Vector2(17.0, 10.0), landmark_secondary, 1.2, true)
 			5:
 				# Small portal arch.
