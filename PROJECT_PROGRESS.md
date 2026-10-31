@@ -1,9 +1,52 @@
-# ECHOPOST — PROJECT PROGRESS / HANDOFF
+## 0. Latest verified handoff — Color-independent puzzle state cues
 
+**Current main merge commit:** `3c4046c62a1b1b4aa5e5e97f4afb93af20adc65c`  
+**Merged pull request:** [#3 — Add color-independent puzzle state cues](https://github.com/NinuGaming999/ECHOPOST/pull/3)  
+**Godot verification:** [run 41194278050](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41194278050) — success on Godot **4.4.0** and **4.7.2**. Both jobs imported/parsed the project and passed the data-layer and complete gameplay smoke tests.
 
-## 0. Latest verified handoff — Reduced Motion and compact mobile Options
+### What changed
 
-**Current main merge commit:** `47b17bb05758a16006c7779c17362007dcb335da`  
+- Switch A, B and C now show explicit state words beneath their names. The labels cover **ACTIVE**, waiting for the relevant player/echo, and specific B-switch instructions such as **NOT LATCHED**, **PULSE CLOSED**, **MOVE TO B**, and **LATCHED**.
+- Switch states now have a check or hollow-circle marker next to the state label, so active/inactive is not communicated by tint alone.
+- Relay checkpoints now explicitly show **REQUIRED** or **LINKED**, with an exclamation/check symbol inside the beacon diamond.
+- The pulse-window label was moved lower to keep it separate from the new Switch B state label.
+- No gameplay rules, timers, room data, settings, extra scene nodes, or per-frame processing were added. Existing rendering uses the same lightweight CanvasItem drawing path.
+- README, roadmap and game-design notes describe the new accessibility behavior.
+
+### Source map at that handoff
+
+- `scripts/game.gd` — blob `5cace96ee0cb2c5a3ccc53efc539eda760643063`, 2400 lines:
+  - **L2091–L2116:** state text for Switch A, B and C, including toggle/pulse-specific messages.
+  - **L2118–L2120:** pulse-window label repositioned below the switch status.
+  - **L2195–L2200:** shared switch and relay state-label helpers.
+  - **L2203–L2230:** relay warning/check glyph and REQUIRED/LINKED label.
+  - **L2289–L2305:** switch state marker and explicit status text.
+- `tests/game_flow_smoke.gd` — blob `b9767899deb7cf5fceef56c6af47ac5731140317`, 1459 lines:
+  - **L30:** color-independent cue regression test is part of the full game-flow suite.
+  - **L436–L442:** active/waiting, pulse-closed/move-to-B, and relay-required/linked label assertions.
+- `README.md` — blob `2a9f0ce4369dedd777bb83bcbe07780b75f75574`, 114 lines; **L31 onward** documents puzzle readability/accessibility.
+- `docs/ROADMAP.md` — blob `fd5f16cea21e7d18078a98ef03c27e2a1d42f2ca`, 88 lines; **L57** marks color-independent switch/relay indicators complete while audio/haptics settings remain open.
+- `docs/GAME_DESIGN.md` — blob `b25fdbc00fe6835ef922ba8ed585a703a27bad5f`, 125 lines; **L57 onward** documents the readable state rules.
+
+### Verification and remaining limits
+
+- **Godot CI:** run 41194278050 passed both supported engine versions, including import/parse, data smoke tests and the complete gameplay smoke suite.
+- **Android APK:** the post-merge Android export for commit `3c4046c62a1b1b4aa5e5e97f4afb93af20adc65c` is not confirmed in this handoff. Do not assume the nightly download contains these changes until the Android workflow export succeeds.
+- **Physical-device QA:** not performed. Check the new status labels at real phone scale, especially around Switch B's pulse text, and verify touch targets, save persistence, cutouts and lifecycle pause/resume.
+- **Performance:** this upgrade adds no scene nodes or per-frame update work; it extends the existing draw routine with a few static shapes and labels.
+
+### Next development tasks
+
+1. Confirm the post-merge Android APK export, install it and inspect switch/relay labels at normal phone viewing distance.
+2. Validate the 24 rooms on a physical Android device, including both pulse-switch rooms and the Chapter V two-echo/relay challenges.
+3. Add original lightweight sound effects and separate music/SFX/haptics settings without slowing weaker phones.
+4. Continue polish of the character assets and animations after device readability/performance checks.
+
+---
+
+## 0. Previous verified handoff — Reduced Motion and compact mobile Options
+
+**Main merge commit at that handoff:** `47b17bb05758a16006c7779c17362007dcb335da`  
 **Merged pull request:** [#2 — Add Reduced Motion accessibility and compact Options layout](https://github.com/NinuGaming999/ECHOPOST/pull/2)  
 **Godot verification:** [run 41193222360](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41193222360) — success on Godot **4.4.0** and **4.7.2**. Both jobs imported/parsed the project and passed the data-layer and complete gameplay smoke tests.
 
@@ -62,7 +105,7 @@
 **Project root:** repository root; main scene is `res://scenes/main.tscn`  
 **Engine:** Godot 4.x; CI tests Godot 4.4.0 and 4.7.2  
 **Target:** Android-first landscape game; desktop builds support development and testing  
-**Current main gameplay commit:** `47b17bb05758a16006c7779c17362007dcb335da` — 24-room Chapter V campaign, settings schema v3, Reduced Motion accessibility and responsive modal cards.  
+**Current main gameplay commit:** `3c4046c62a1b1b4aa5e5e97f4afb93af20adc65c` — 24-room Chapter V campaign, settings schema v3, Reduced Motion, compact modal cards, and color-independent puzzle state cues.  
 **Recording-cap code commit:** `b5f36b6a4f764a595e5dd930e8d6b3cebd5ce3a8`  
 **Gameplay-test commit:** `11c3b30de34323c536b0b8302eb8604259248d52`  
 **Options source fix commit:** `45ee5b1b5b6854fea8f17934897a539a47abd0da`  
@@ -79,8 +122,8 @@
 **Dynamic archive count commit:** `f900f967fa83f618e3615f423a9ef613f85bd71a`  
 **All-memory reward test commit:** `04be8ef22ca631b000d14b541bbce2ca0426b5b8`  
 **Archive count assertion commit:** `7531407e22c8a8068b4d62df90c190272713668d`  
-**Current main controller source blob:** `cbf3f8c4176fb04d6c621dca3b30fabd091a1c66` (2357 lines)  
-**Current gameplay regression-test blob:** `843703ff8a0186bffe80c385435e7d399f8cb818` (1449 lines)  
+**Current main controller source blob:** `5cace96ee0cb2c5a3ccc53efc539eda760643063` (2400 lines)  
+**Current gameplay regression-test blob:** `b9767899deb7cf5fceef56c6af47ac5731140317` (1459 lines)  
 **Current settings-store blob:** `0436be3c8d171df8ea8015903778356e1d8ab59a` (53 lines); schema v3 stores Reduced Motion separately from controls and Performance Mode.  
 **Low-end rendering commits:** saved Performance Mode preference [30f1189](https://github.com/NinuGaming999/ECHOPOST/commit/30f1189f7f8c03805b1c58fabf4abc94d5cd9c06), render/route optimization [1904ad8](https://github.com/NinuGaming999/ECHOPOST/commit/1904ad8f9b34a56c30873fba47258ef10e7cc0a1), regression tests [9297624](https://github.com/NinuGaming999/ECHOPOST/commit/929762484dd228eb3ca1d22da3c2ca41d8dc66bf), and final joystick/HUD cleanup [36622a5](https://github.com/NinuGaming999/ECHOPOST/commit/36622a5488f3cb4073b8692ae85a768b62710d43).  
 **Latest Godot CI for multi-echo source:** [run 41132293123](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41132293123) passed on Godot 4.4.0 and 4.7.2 for the 21-room Chapter IV revision.  
