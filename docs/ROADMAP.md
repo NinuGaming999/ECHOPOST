@@ -68,7 +68,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 
 - [ ] Validate lifecycle pause/resume on physical Android devices and unusual background/foreground transitions.
 - [ ] Install the current debug APK and test all twenty-four rooms, touch controls, save persistence and app relaunch on a real Android device.
-- [x] Add saved Performance Mode with reduced decorative rendering, batched route polylines and a 30 FPS mobile target; both supported Godot CI versions pass the settings/rendering regressions.
+- [x] Add saved Performance Mode with reduced decorative rendering and batched route polylines; Performance Mode changes visual detail only and does not cap FPS. Both supported Godot CI versions cover the uncapped settings.
 - [x] Add saved Reduced Motion support and compact-viewport modal scaling; both controls have separate persistence and regression coverage.
 - [ ] Measure low-end GPU performance, actual FPS, battery/thermals, aspect ratios and safe areas on physical devices.
 - [ ] Tune touch targets, joystick sensitivity, landscape handling, and screen cutouts based on device tests.
