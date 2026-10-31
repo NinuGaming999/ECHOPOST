@@ -6,7 +6,7 @@
 
 This repository is the long-term home of the full game. The current source implements an early playable slice: keyboard/touch movement, recording/playback echoes with endpoint and Relay Beacon validation, layered cyan neon route trails, pressure switches, hold/toggle/timed gates, exits, twenty-four chamber layouts across five signal chapters, two independently recorded echoes, roaming sentinels, an echo-only jammer puzzle, optional Memory Shards with lore fragments, scrollable chapter selection, chapter unlocks and versioned local save data. Gameplay art is mostly procedural, with the supplied ECHO logo used on the menu, project icon and Android launcher.
 
-> **Development status:** Early development. Automated Godot CI parses the project and runs smoke tests on every push and pull request. Android APK builds are automated, but the game still needs real-device QA and production art/audio. Online echo sharing and broader accessibility options remain future work.
+> **Development status:** Early development. Automated Godot CI parses the project and runs smoke tests on every push and pull request. The game now has a small procedural ambient soundtrack and event-driven feedback sounds; composed production audio and real-device QA remain future work. Android APK builds are automated. Online echo sharing remains future work.
 
 ## Run the game
 
@@ -23,7 +23,7 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 - **Record Echo:** begin recording your route; press again to release the echo.
 - **Restart Room:** restart the current puzzle.
 - **Pause:** freeze or resume play.
-- **Options:** choose slow/normal/fast movement, mirror the joystick/actions for left-handed play, toggle **Performance Mode**, and enable **Reduced Motion**. Performance Mode is ON by default, reduces optional effects and route-rendering work, and targets 30 FPS on mobile. Reduced Motion freezes decorative stars, disables the background scan sweep and skips button scale animations while keeping moving platforms, sentinels and pulse switches working normally. Turn it OFF on faster devices to restore the full neon effects and 60 FPS mobile cap.
+- **Options:** choose slow/normal/fast movement, mirror the joystick/actions for left-handed play, toggle **Performance Mode**, enable **Reduced Motion**, and independently toggle **Music**, **SFX**, and optional **Haptics**. Music and SFX are ON by default; Haptics is OFF by default. Performance Mode is ON by default, reduces optional effects and route-rendering work, and targets 30 FPS on mobile. Reduced Motion freezes decorative stars, disables the background scan sweep and skips button scale animations while keeping moving platforms, sentinels and pulse switches working normally. Turn it OFF on faster devices to restore the full neon effects and 60 FPS mobile cap.
 - **Latch Switch B / E:** in Latch Protocol, stand near Switch B after the echo holds A, then tap LATCH SWITCH B or press E. The switch stays latched when you leave it.
 - **Touch movement:** touch and drag anywhere on the left side of the playfield to move (right side when left-handed mode is enabled). A floating, dead-zone joystick gives fine control with short drags and eases in/out so movement does not snap or drift. The top HUD, center gutter and bottom action row are protected from movement input.
 - **Touch actions:** use the large translucent round **REC** button on the right to record/send an echo; the optional Switch B latch is the smaller round control beside it. Round **Pause**, **Menu** and **Restart** controls stay at the top/bottom edges. In left-handed mode, the Record/Latch cluster mirrors to the left.
@@ -32,7 +32,7 @@ No third-party plugin, paid asset, API key, or server is required for the curren
 
 Switches show their state in words as well as color: **ACTIVE**, **WAITING**, or a specific instruction such as **PULSE CLOSED**, **MOVE TO B**, or **LATCHED**. Active and inactive switches also use different center/outline shapes. Relay checkpoints explicitly show **REQUIRED** or **LINKED**, with a matching warning/check symbol inside the beacon. Reduced Motion remains separate from Performance Mode, and neither setting disables puzzle-critical movement.
 
-## Visual identity
+## Audio and feedback\n\nECHOPOST synthesizes a quiet eight-second ambient loop and short original event tones locally at startup; no audio downloads or imported music files are required. Recording, echo release, gate opening, Memory Shards, failures and chamber completion each have a matching sound cue. Music and SFX can be muted separately in Options. Optional brief handheld vibration is OFF by default and can be enabled separately; the Android export preset includes the standard VIBRATE permission. Audio pauses when the app is suspended.\n\n## Visual identity
 
 The supplied ECHO logo sets a dark navy and neon-cyan theme. A new 16:9 cosmic-nebula backdrop adds a ringed signal planet, distant cyan skyline and orbital horizon; twinkling cyan/teal stars animate over the scene. The player and echo remain glowing orbit-orbs; recorded paths retain their layered cyan glow. Performance Mode reduces the ambient star count and skips glint rays so the backdrop stays lightweight.
 
