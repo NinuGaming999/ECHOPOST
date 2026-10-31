@@ -51,6 +51,7 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [x] Establish an initial ECHO logo/neon-cyan visual identity: supplied logo, dark navy panels, matching geometric SVG icon and cyan-to-red route feedback. Detailed authored room art packs and production audio remain future work.
 - [ ] Replace temporary procedural robot drawing with a consistent character asset set.
 - [x] Add five low-cost chapter-specific room environments with separate palettes and motifs; keep puzzle objects readable and reduce details under Performance Mode.
+- [x] Add matching chapter landmarks at safe room corners, with objective/relay/jammer clearance and a single-landmark Performance Mode path.
 - [x] Add low-cost procedural courier hover, steering lean, a recording pulse and echo-playback shimmer; Performance Mode remains node-free and Reduced Motion freezes these decorative motions.
 - [ ] Add sentinel-contact, gate-opening and portal-entry reactions, then replace the procedural placeholder with a cohesive sprite/animation set.
 - [x] Add locally generated ambient music and event-driven puzzle SFX, separate Music/SFX toggles, optional Haptics (OFF by default), and Android VIBRATE export permission.
