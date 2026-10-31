@@ -56,7 +56,7 @@ The chapter selector scrolls so future rooms do not collide with the navigation 
 
 ## Audio and haptic feedback
 
-The current prototype generates an eight-second, low-volume ambient loop and short event tones locally as mono 16-bit PCM at 22.05 kHz. It plays brief original cues for recording, sending an echo, opening a gate, collecting a Memory Shard, failing a room, and completing a chamber. Music and sound effects have separate saved toggles. Optional handheld vibration is independently controlled and defaults OFF; it is only invoked on supported mobile/web platforms. Android builds request the normal VIBRATE permission. Music pauses while the app is backgrounded. These are lightweight placeholder compositions; richer authored audio and device-level listening/haptic QA remain future work.
+The current prototype generates an eight-second, low-volume ambient loop and short event tones locally as mono 16-bit PCM at 22.05 kHz. It plays brief original cues for recording, sending an echo, opening a gate, collecting a Memory Shard, failing a room, and completing a chamber. Music and sound effects have separate saved toggles and independent 0–100% volume sliders that apply immediately and persist. The slider defaults preserve the original prototype loudness. Optional handheld vibration is independently controlled and defaults OFF; it is only invoked on supported mobile/web platforms. Android builds request the normal VIBRATE permission. Music pauses while the app is backgrounded. These are lightweight placeholder compositions; richer authored audio and device-level listening/haptic QA remain future work.
 
 ## Puzzle state readability
 

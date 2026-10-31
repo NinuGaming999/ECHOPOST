@@ -53,7 +53,8 @@ This roadmap is the intended path from the initial project foundation to a relea
 - [ ] Create several visual room themes with clear contrast and low-cost mobile rendering.
 - [ ] Animate walking, recording, echo playback, sentinel contact, gate opening, and portal entry.
 - [x] Add locally generated ambient music and event-driven puzzle SFX, separate Music/SFX toggles, optional Haptics (OFF by default), and Android VIBRATE export permission.
-- [ ] Compose/commission richer production audio, add volume sliders and verify haptics/audio on physical devices.
+- [x] Add separate saved 0–100% Music/SFX volume sliders with immediate preview while adjusting.
+- [ ] Compose/commission richer production audio and verify haptics/audio levels on physical devices.
 - [x] Add a saved Reduced Motion setting that freezes decorative ambience and suppresses UI scale animations without stopping puzzle-critical motion.
 - [x] Add color-independent switch states and relay checkpoint labels/symbols so puzzle progress is not communicated by tint alone.
 - [x] Add independent saved Music, SFX and optional Haptics toggles; audio pauses on app suspension.

@@ -276,6 +276,8 @@ func _test_settings_store() -> void:
 	_check(bool(defaults["music_enabled"]), "Original ambient music should default to ON.")
 	_check(bool(defaults["sfx_enabled"]), "Puzzle sound effects should default to ON.")
 	_check(not bool(defaults["haptics_enabled"]), "Haptics should default to OFF until the player enables vibration.")
+	_check(is_equal_approx(float(defaults["music_volume"]), 0.14125375), "Music volume should default to the previous -17 dB ambient level.")
+	_check(is_equal_approx(float(defaults["sfx_volume"]), 0.89125094), "SFX volume should default to the previous -1 dB effect level.")
 
 	# Existing v2 preferences remain readable and use safe defaults for newer options.
 	var legacy_v2 := ConfigFile.new()
@@ -302,7 +304,24 @@ func _test_settings_store() -> void:
 	_check(bool(migrated_v3["music_enabled"]) and bool(migrated_v3["sfx_enabled"]), "Version-3 settings should receive enabled music/SFX defaults.")
 	_check(not bool(migrated_v3["haptics_enabled"]), "Version-3 settings should receive the disabled haptics default.")
 
-	var save_error := SettingsStore.save_settings(200.0, true, TEST_SETTINGS_PATH, false, true, false, false, true)
+	# Version 4 introduced the separate Music/SFX/Haptics switches; preserve them in v5.
+	var legacy_v4 := ConfigFile.new()
+	legacy_v4.set_value("meta", "settings_version", 4)
+	legacy_v4.set_value("controls", "move_speed", 200.0)
+	legacy_v4.set_value("controls", "left_handed_controls", false)
+	legacy_v4.set_value("graphics", "performance_mode", true)
+	legacy_v4.set_value("accessibility", "reduced_motion", false)
+	legacy_v4.set_value("audio", "music_enabled", false)
+	legacy_v4.set_value("audio", "sfx_enabled", true)
+	legacy_v4.set_value("accessibility", "haptics_enabled", true)
+	_check(legacy_v4.save(TEST_SETTINGS_PATH) == OK, "A version-4 preferences file should be writable.")
+	var migrated_v4: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
+	_check(not bool(migrated_v4["music_enabled"]) and bool(migrated_v4["sfx_enabled"]), "Version-4 mute switches should survive the volume-slider migration.")
+	_check(bool(migrated_v4["haptics_enabled"]), "Version-4 haptics preference should survive the volume-slider migration.")
+	_check(is_equal_approx(float(migrated_v4["music_volume"]), 0.14125375), "Version-4 music should retain its prior loudness when no volume slider value exists.")
+	_check(is_equal_approx(float(migrated_v4["sfx_volume"]), 0.89125094), "Version-4 SFX should retain its prior loudness when no volume slider value exists.")
+
+	var save_error := SettingsStore.save_settings(200.0, true, TEST_SETTINGS_PATH, false, true, false, false, true, 0.35, 0.72)
 	_check(save_error == OK, "Control, audio and accessibility settings should save to their own preferences file.")
 	var saved: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
 	_check(is_equal_approx(float(saved["move_speed"]), 200.0), "Settings should preserve the selected slow movement preset.")
@@ -310,9 +329,11 @@ func _test_settings_store() -> void:
 	_check(not bool(saved["performance_mode"]), "Settings should preserve the selected full-visual mode.")
 	_check(bool(saved["reduced_motion"]), "Settings v4 should persist Reduced Motion independently of Performance Mode.")
 	_check(not bool(saved["music_enabled"]) and not bool(saved["sfx_enabled"]), "Settings v4 should independently persist disabled music and SFX.")
-	_check(bool(saved["haptics_enabled"]), "Settings v4 should persist enabled haptics separately.")
+	_check(bool(saved["haptics_enabled"]), "Settings v5 should persist enabled haptics separately.")
+	_check(is_equal_approx(float(saved["music_volume"]), 0.35), "Settings v5 should persist the Music slider value.")
+	_check(is_equal_approx(float(saved["sfx_volume"]), 0.72), "Settings v5 should persist the SFX slider value.")
 	var saved_config := ConfigFile.new()
-	_check(saved_config.load(TEST_SETTINGS_PATH) == OK and int(saved_config.get_value("meta", "settings_version", 0)) == 4, "The preferences file should use schema version 4.")
+	_check(saved_config.load(TEST_SETTINGS_PATH) == OK and int(saved_config.get_value("meta", "settings_version", 0)) == 5, "The preferences file should use schema version 5.")
 
 	# Unsupported values are normalized to the nearest supported preset rather than saved as arbitrary speeds.
 	save_error = SettingsStore.save_settings(999.0, false, TEST_SETTINGS_PATH)
@@ -324,6 +345,12 @@ func _test_settings_store() -> void:
 	_check(not bool(normalized["reduced_motion"]), "Omitted Reduced Motion should safely default to OFF.")
 	_check(bool(normalized["music_enabled"]) and bool(normalized["sfx_enabled"]), "Omitted audio values should safely default to ON.")
 	_check(not bool(normalized["haptics_enabled"]), "Omitted haptics should safely default to OFF.")
+	_check(is_equal_approx(float(normalized["music_volume"]), 0.14125375), "Omitted Music volume should restore the compatible default.")
+	_check(is_equal_approx(float(normalized["sfx_volume"]), 0.89125094), "Omitted SFX volume should restore the compatible default.")
+	var clamped_error := SettingsStore.save_settings(255.0, false, TEST_SETTINGS_PATH, true, false, true, true, false, 2.0, -1.0)
+	_check(clamped_error == OK, "Out-of-range volume values should still save safely.")
+	var clamped: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
+	_check(is_equal_approx(float(clamped["music_volume"]), 1.0) and is_zero_approx(float(clamped["sfx_volume"])), "Volume values should clamp to the supported 0–100% range.")
 
 	var user_directory := DirAccess.open("user://")
 	if user_directory != null:
