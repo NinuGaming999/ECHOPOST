@@ -16,9 +16,14 @@ const EFFECT_SPECS: Dictionary = {
 	"ui": {"start_hz": 480.0, "end_hz": 640.0, "duration": 0.09, "second_hz": 0.0, "gain": 0.08},
 }
 
+const DEFAULT_MUSIC_VOLUME := 0.14125375 # Preserves the previous -17 dB ambience level.
+const DEFAULT_SFX_VOLUME := 0.89125094 # Preserves the previous -1 dB effects level.
+
 var music_enabled: bool = true
 var sfx_enabled: bool = true
 var haptics_enabled: bool = false
+var music_volume: float = DEFAULT_MUSIC_VOLUME
+var sfx_volume: float = DEFAULT_SFX_VOLUME
 var app_suspended: bool = false
 
 var music_player: AudioStreamPlayer
@@ -29,7 +34,6 @@ var sfx_streams: Dictionary = {}
 func _ready() -> void:
 	music_player = AudioStreamPlayer.new()
 	music_player.name = "AmbientMusic"
-	music_player.volume_db = -17.0
 	add_child(music_player)
 	music_player.stream = _build_ambient_music()
 
@@ -42,10 +46,18 @@ func _ready() -> void:
 		sfx_streams[effect_name] = _build_effect_stream(str(effect_name))
 
 
-func configure(enable_music: bool, enable_sfx: bool, enable_haptics: bool) -> void:
+func configure(
+	enable_music: bool,
+	enable_sfx: bool,
+	enable_haptics: bool,
+	music_level: float = DEFAULT_MUSIC_VOLUME,
+	sfx_level: float = DEFAULT_SFX_VOLUME
+) -> void:
 	music_enabled = enable_music
 	sfx_enabled = enable_sfx
 	haptics_enabled = enable_haptics
+	set_music_volume(music_level)
+	set_sfx_volume(sfx_level)
 	_sync_music()
 
 
@@ -58,6 +70,18 @@ func set_sfx_enabled(enabled: bool) -> void:
 	sfx_enabled = enabled
 	if not sfx_enabled and is_instance_valid(sfx_player):
 		sfx_player.stop()
+
+
+func set_music_volume(volume: float) -> void:
+	music_volume = clampf(volume, 0.0, 1.0)
+	if is_instance_valid(music_player):
+		music_player.volume_db = -80.0 if music_volume <= 0.0 else linear_to_db(music_volume)
+
+
+func set_sfx_volume(volume: float) -> void:
+	sfx_volume = clampf(volume, 0.0, 1.0)
+	if is_instance_valid(sfx_player):
+		sfx_player.volume_db = -80.0 if sfx_volume <= 0.0 else linear_to_db(sfx_volume)
 
 
 func set_haptics_enabled(enabled: bool) -> void:
