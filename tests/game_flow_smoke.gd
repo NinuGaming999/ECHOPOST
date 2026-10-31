@@ -485,6 +485,11 @@ func _test_audio_manager(game: Control) -> void:
 	manager.call("set_haptics_enabled", true)
 	_check(bool(manager.get("haptics_enabled")), "The audio manager should retain the independent haptics state.")
 	manager.call("set_haptics_enabled", previous_haptics)
+	manager.call("set_app_suspended", true)
+	_check(bool(music_player.stream_paused), "The ambient loop should pause while the app is suspended.")
+	_check(not sfx_player.playing, "Short feedback tones should stop when the app is backgrounded.")
+	manager.call("set_app_suspended", false)
+	_check(not bool(music_player.stream_paused), "The ambient loop should unpause when the app returns.")
 	manager.call("set_music_enabled", previous_music)
 	manager.call("set_sfx_enabled", previous_sfx)
 
