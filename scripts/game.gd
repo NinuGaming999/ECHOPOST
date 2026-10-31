@@ -561,7 +561,7 @@ func _build_options_panel() -> void:
 	left_handed_button.pressed.connect(_toggle_left_handed_controls)
 	_make_label(options_panel, "HandedHelp", Vector2(35, 197), Vector2(470, 22), "Move the virtual joystick to the right or left side.", 11, Color(0.55, 0.68, 0.81), HORIZONTAL_ALIGNMENT_CENTER)
 	performance_button = _make_button(options_panel, "PerformanceButton", Vector2(62, 224), Vector2(416, 36), "PERFORMANCE MODE: ON", Color(0.02, 0.30, 0.31), Color(0.03, 0.48, 0.45), 13)
-	performance_button.tooltip_text = "Simplifies optional effects and targets a steadier 30 FPS on mobile."
+	performance_button.tooltip_text = "Reduces decorative effects without limiting the frame rate."
 	performance_button.pressed.connect(_toggle_performance_mode)
 	reduced_motion_button = _make_button(options_panel, "ReducedMotionButton", Vector2(62, 264), Vector2(416, 36), "REDUCED MOTION: OFF", Color(0.20, 0.15, 0.34), Color(0.34, 0.22, 0.52), 13)
 	reduced_motion_button.tooltip_text = "Keeps decorative stars and UI still. Moving bridges, sentinels and pulse switches continue to work normally."
@@ -744,10 +744,9 @@ func _play_feedback(effect_name: String, haptic_duration_ms: int = 0, amplitude:
 
 
 func _apply_performance_mode() -> void:
-	# Target a steadier frame rate on mobile while reducing effects. Desktop and
-	# editor sessions keep their normal pacing for development.
-	if OS.has_feature("mobile"):
-		Engine.max_fps = 30 if performance_mode else 60
+	# Performance Mode only reduces optional rendering work. Never impose an
+	# engine FPS cap; display refresh and platform presentation remain external limits.
+	Engine.max_fps = 0
 
 
 func _update_options_panel() -> void:
@@ -759,7 +758,7 @@ func _update_options_panel() -> void:
 	left_handed_button.text = "LEFT-HANDED JOYSTICK: ON" if left_handed_controls else "LEFT-HANDED JOYSTICK: OFF"
 	if is_instance_valid(performance_button):
 		performance_button.text = "PERFORMANCE MODE: ON" if performance_mode else "PERFORMANCE MODE: OFF"
-		performance_button.tooltip_text = "Less background detail, simpler glow and a steadier mobile frame rate." if performance_mode else "Full neon decoration is enabled. Use Performance Mode on slower phones."
+		performance_button.tooltip_text = "Fewer decorative effects; no FPS cap is applied." if performance_mode else "Full visual effects; no FPS cap is applied."
 	if is_instance_valid(reduced_motion_button):
 		reduced_motion_button.text = "REDUCED MOTION: ON" if reduced_motion else "REDUCED MOTION: OFF"
 		reduced_motion_button.tooltip_text = "Keeps decorative stars and UI still. Moving bridges, sentinels and pulse switches continue to work normally."
