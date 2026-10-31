@@ -23,9 +23,9 @@ Make players feel that a successful run leaves a useful trace in the world. The 
 5. The gate opens; reach the portal to complete the room.
 6. Unlock the next chamber; progress is stored locally.
 
-## Current campaign: twenty-one chambers across four signal chapters
+## Current campaign: twenty-four chambers across five signal chapters
 
-The first thirteen chambers establish the two-switch echo rule, sentinels, ordered relays, a latched switch, timed gates and the echo-only jammer. Chapter II adds four synthesis rooms that combine established rules. Chapter III teaches moving-platform support and pulse-timed switches. Chapter IV introduces two independently recorded echoes and a third switch. The campaign remains a content foundation, not a finished game.
+The first thirteen chambers establish the two-switch echo rule, sentinels, ordered relays, a latched switch, timed gates and the echo-only jammer. Chapter II adds four synthesis rooms that combine established rules. Chapter III teaches moving-platform support and pulse-timed switches. Chapter IV introduces two independently recorded echoes and a third switch. Chapter V deepens the two-echo puzzles with moving bridges, shared relay routes and a final pulse-gate gauntlet. The campaign remains a content foundation, not a finished game.
 
 - **The First Echo:** a safe introduction to recording, echo playback, and both switches.
 - **Long Memory:** introduces the roaming sentinel and separates Switch A from the real player's destination.
@@ -48,8 +48,11 @@ The first thirteen chambers establish the two-switch echo rule, sentinels, order
 - **Phase Relay:** Switch B activates only during a repeating 2.1-second pulse in a 5.5-second cycle. Both switches must be linked during the live phase, then a 3.2-second gate window begins.
 - **Twin Signal:** records two independent echoes. Echo 1 must finish and settle on Switch A before the player can record Echo 2 from their current location to Switch C. The real player then occupies Switch B; both echoes remain as separate playback actors and must hold their own plates at the same time.
 - **Convergent Signal:** repeats the two-echo A/C setup and adds a pulse-timed Switch B. The player must reach B during its repeating 2.5-second active phase in a 6-second cycle; the gate then stays open for only 2.4 seconds.
+- **Orbit Crossing:** introduces two independently phased bridges over a wide void corridor. The player chooses a bridge, rides it to the far side, collects an optional memory and catches a pulse switch.
+- **Tandem Relay:** both independently recorded echoes must pass the same two ordered relay checkpoints and avoid an echo-only jammer before occupying Switches A and C.
+- **The Last Duet:** both echoes must pass four ordered relays while avoiding the jammer; the player then catches a pulse on B and crosses the final 4.2-second gate.
 
-The chapter selector scrolls so future rooms do not collide with the navigation controls. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. More multi-echo combinations, checkpoints and varied puzzle rules remain future work; the twenty-one current rooms are still a foundation rather than a finished campaign.
+The chapter selector scrolls so future rooms do not collide with the navigation controls. The 24-room campaign spans five signal chapters. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. More multi-echo combinations, checkpoints and varied puzzle rules remain future work; the twenty-one current rooms are still a foundation rather than a finished campaign.
 
 ## Echo rules
 
@@ -62,7 +65,7 @@ The chapter selector scrolls so future rooms do not collide with the navigation 
 - A room may require route checkpoints. Static Bloom's `echo_waypoint` requires crossing one Relay Beacon; Chorus Route requires Relay 1 then Relay 2, and Triune Relay requires Relay 1, Relay 2, then Relay 3, all in path order. The game checks the nearest point on each sample-to-sample line segment so crossings between samples count. Wrong order or a missed checkpoint is rejected with explicit feedback that names every required relay in the correct order.
 - Pulse Lock defines `gate_open_seconds`. When both switches activate it, the timer ticks only during PLAYING state; timeout closes the gate if the player has not crossed the barrier. A missed attempt stays latched until the player leaves a switch, so standing still cannot immediately reopen the gate. Crossing the barrier before timeout permanently powers the portal for that room.
 - Sentinel contact is a full room failure. The current take is discarded immediately and a brief SIGNAL LOST card explains the cause; after a short visual countdown, the same chamber starts fresh with the echo, switches, gate, timer and recording state cleared. In rooms with required Relay Beacons, a missing/out-of-order relay or a route that ends away from Switch A also triggers this automatic room reset. Ordinary non-relay endpoint mistakes remain retryable without resetting the whole room.
-- Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. The Memory Archive can revisit a recovered fragment later. Recovering all twenty-one shards reveals a final “signal restored” reward in the play status and Archive. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
+- Every current chamber has an optional Memory Shard at its own authored position. Touching it records that room index in local progress and displays a short lore fragment. The Memory Archive can revisit a recovered fragment later. Recovering all twenty-four shards reveals a final “signal restored” reward in the play status and Archive. Missing a shard does not block the switches, gate, exit, or campaign unlocks.
 - Save schema version 2 stores the collected room indices. Version 1 saves remain loadable and begin with no Memory Shards collected; duplicate, negative, and out-of-campaign indices are filtered during loading.
 - A future online version must validate uploaded recordings and isolate them from executable code. A recording should be data only, never a script.
 
@@ -72,7 +75,7 @@ The chapter selector scrolls so future rooms do not collide with the navigation 
 - Reposition the circular action cluster, pause button, movement hint and status banner with viewport changes; preserve clear space between the movement zone and action hitboxes. Automated checks cover compact landscapes, but physical-device safe-area, cutout and aspect-ratio QA is still required.
 - Keep Performance Mode available for weaker phones. It should simplify decorative effects and route rendering while preserving every puzzle-relevant cue; target steadier mobile frame pacing and verify actual FPS, battery and thermals on physical hardware.
 - Add a color-blindness-friendly indicator and text/icon cues, not color alone.
-- Basic control preferences are implemented: slow/normal/fast movement presets and left-handed joystick placement, saved separately from campaign progress. Reduced motion, color-independent feedback, audio/haptics toggles, localization, and safe-area tuning remain release accessibility work.
+- Basic control preferences are implemented: slow/normal/fast movement presets and left-handed joystick placement, saved separately from campaign progress. A saved Reduced Motion option freezes decorative stars, suppresses the scan sweep and button scale animation, but leaves puzzle-critical bridges, sentinels and pulse switches active. Modal cards scale to fit compact landscape viewports. Color-independent feedback, audio/haptics toggles, localization, and physical-device safe-area tuning remain release accessibility work.
 - Keep challenge based on planning and route choice.
 
 ## Full-game direction
