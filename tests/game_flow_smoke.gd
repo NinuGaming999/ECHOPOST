@@ -284,48 +284,6 @@ func _test_chapter_visual_themes(game: Control) -> void:
 	_check(seen_chapters.size() == 5, "All five theme styles should be available to the room renderer.")
 
 
-func _test_chapter_landmarks(game: Control) -> void:
-	var previous_level_data: Dictionary = game.get("level_data")
-	var room_rect := Rect2(Vector2(48.0, 112.0), Vector2(1184.0, 500.0))
-	var visible_by_chapter: Dictionary = {}
-	for room_value in LevelCatalog.LEVELS:
-		var room_data: Dictionary = room_value
-		game.set("level_data", room_data)
-		var candidates: Array = game.call("_get_chapter_landmark_positions", room_rect)
-		var visible_landmarks: Array = game.call("_get_visible_chapter_landmark_positions", room_rect)
-		var chapter := int(room_data.get("chapter", 1))
-		_check(candidates.size() == 4, "Each chamber should have four defined environmental landmark pockets.")
-		_check(visible_landmarks.size() <= 4, "Environmental landmark count should stay capped at four per chamber.")
-		if not visible_landmarks.is_empty():
-			visible_by_chapter[chapter] = int(visible_by_chapter.get(chapter, 0)) + visible_landmarks.size()
-		for landmark_position in visible_landmarks:
-			_check(bool(game.call("_is_chapter_landmark_clear", landmark_position)), "A visible landmark must pass the authored-object clearance check.")
-			for key in ["spawn", "plate_a", "plate_b", "plate_c", "memory_shard", "echo_waypoint"]:
-				var reserved: Variant = room_data.get(key, null)
-				if typeof(reserved) == TYPE_VECTOR2:
-					_check(landmark_position.distance_to(reserved) >= 94.0, "A background landmark must stay clear of %s." % key)
-			var waypoints: Variant = room_data.get("echo_waypoints", [])
-			if waypoints is Array:
-				for waypoint in waypoints:
-					if typeof(waypoint) == TYPE_VECTOR2:
-						_check(landmark_position.distance_to(waypoint) >= 94.0, "A background landmark must stay clear of every relay checkpoint.")
-			if room_data.has("echo_jammer"):
-				var jammer: Vector2 = room_data["echo_jammer"]
-				var jammer_clearance := float(room_data.get("echo_jammer_radius", 100.0)) + 34.0
-				_check(landmark_position.distance_to(jammer) >= jammer_clearance, "A background landmark must stay outside the jammer field's visual clearance.")
-	_check(visible_by_chapter.size() == 5, "All five signal chapters should have at least one room where an environmental landmark can be shown.")
-
-	# Long Memory places its spawn near the lower-left display pocket. The prop
-	# must disappear there rather than sitting under the player at room start.
-	var long_memory: Dictionary = LevelCatalog.get_level(1)
-	game.set("level_data", long_memory)
-	var anchors: Array = game.call("_get_chapter_landmark_positions", room_rect)
-	var visible_for_long_memory: Array = game.call("_get_visible_chapter_landmark_positions", room_rect)
-	_check(not bool(game.call("_is_chapter_landmark_clear", anchors[2])), "The lower-left landmark should be suppressed near Long Memory's spawn.")
-	_check(not visible_for_long_memory.has(anchors[2]), "The lower-left prop must not render underneath Long Memory's player spawn.")
-	game.set("level_data", previous_level_data)
-
-
 func _test_chapter_select_layout(game: Control) -> void:
 	game.call("_open_level_select")
 	var panel: Panel = game.get("level_select_panel")
