@@ -1,5 +1,27 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
+## 0. Latest verified handoff — Android safe-area-aware responsive UI
+
+**Status:** implementation is on branch `upgrade/android-safe-area-layout`; PR [#14 — Add Android safe-area-aware responsive UI](https://github.com/NinuGaming999/ECHOPOST/pull/14) is open and has not been merged into `main`.  
+**Branch head:** `aa0776b0af798094761735c8ca853ecefbd334a7`.  
+**Godot CI:** [run 41238968143](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41238968143) — both Godot **4.4.0** and **4.7.2** jobs passed editor import/parse, data-layer smoke tests, and main-scene gameplay smoke tests.
+
+### What changed
+
+- Added `scripts/core/safe_area_layout.gd` to convert the OS display-safe rectangle from window pixels to the stretched game viewport, clipping it to the active window and falling back to the full viewport for unusable metrics.
+- `scripts/game.gd` now keeps the menu and gameplay HUD inside that safe content rectangle, centers modal cards within it, and translates touch-joystick hit testing into safe-area-relative coordinates.
+- Preserved the authored 1280×720 room/world drawing space, existing puzzle mechanics, save formats, audio settings, and the no-FPS-cap policy.
+- Added headless geometry coverage for viewport scaling, insets, clipping, and fallback behavior. Added gameplay-flow coverage for menu/HUD bounds, modal centering, protected HUD/action bands, and mirrored joystick hit regions.
+- Updated README, roadmap and build status.
+
+### Verification and remaining limits
+
+- Both supported Godot CI versions passed on PR run 41238968143.
+- The Android APK workflow does not run for pull requests; this PR has not produced a new nightly APK.
+- Physical-device testing of camera cutouts, gesture bars, rotated screens and different Android aspect ratios remains outstanding. Do not mark that QA item complete until tested on real devices.
+
+---
+
 ## 0. Latest verified handoff — Polished pause screen
 
 **Current main merge commit:** `4c726c3941755c53b23f970dcd478ead9490fbf0`  
