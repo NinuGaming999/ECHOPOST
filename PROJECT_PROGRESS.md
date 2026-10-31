@@ -1,5 +1,55 @@
 # ECHOPOST — PROJECT PROGRESS / HANDOFF
 
+## 0. Latest verified handoff — Procedural courier animation polish
+
+**Current main merge commit:** `59e024b6323b398ae9efa685ac81dc2ea7371024`  
+**Merged pull request:** [#6 — Polish the courier with lightweight hover and echo animations](https://github.com/NinuGaming999/ECHOPOST/pull/6)  
+**Godot verification:** [run 41216077479](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41216077479) — success on Godot **4.4.0** and **4.7.2**. Both jobs imported/parsed the project, passed data-layer smoke tests, and passed the full main-scene gameplay smoke tests.
+
+### What changed
+
+- The existing luminous orb remains the courier's core identity, but now reads more clearly as a small signal drone with a horizontal visor, twin stabilizer fins, a floating orbit beacon, and a grounding shadow.
+- The live courier gently hovers while idle and leans in its current steering direction. While recording, a restrained amber pulse arc appears around it.
+- Both echoes receive a distinct playback shimmer and offset animation phase; the two-echo visual treatment remains distinct through its existing teal/purple tints.
+- Decorative courier time advances only during active gameplay and freezes under **Reduced Motion**. Puzzle movement, recording, moving bridges, sentinels, timers and echo playback are unchanged.
+- **Performance Mode** keeps the compact rendering path: no additional scene nodes, sprites, imported textures, or per-frame polygon arrays are created for the courier. Full-detail mode retains its existing detailed orbit/highlight path.
+- The courier's steering pose is cleared on manual pause, automatic lifecycle pause, room start and automatic failure reset.
+- Regression tests verify Reduced Motion freezes the decorative courier clock while gameplay still advances, that the animation resumes after the setting is switched off, and that the pose receives the horizontal steering direction.
+- README, game design and roadmap now describe this animation slice and the remaining art tasks.
+
+### Exact current source map
+
+- `scripts/game.gd` — blob `e9be913a3e7d28344393ac50fdc7e8809d3036a7`, 2621 lines:
+  - **L48–L49:** decorative animation clock and live steering direction.
+  - **L205–L210:** animation clock advances only while actively playing and Reduced Motion is OFF.
+  - **L157, L1285, L1778, L1986:** clear the visual steering pose on lifecycle pause, room start, failure reset and manual pause.
+  - **L1623:** visual direction derives from the same normalized steering vector used by movement.
+  - **L2330–L2336:** animated primary/secondary echoes and live courier draw calls.
+  - **L2499–L2585:** procedural courier drone silhouette, steering lean, hover, orbit beacon, echo shimmer and recording arc. Performance Mode stays on the compact no-array path.
+- `tests/game_flow_smoke.gd` — blob `5f2dde03baa9b31e0ee2780e225e0d3b5d382a5e`, 1578 lines:
+  - **L450–L452:** Reduced Motion freeze regression while the gameplay process continues.
+  - **L462–L469:** animation resumes when Reduced Motion is turned off and the visual pose follows horizontal steering.
+- `tests/headless_smoke.gd` — blob `2fe303a8ef421a73f4cc75135949619d9d8de918`, 363 lines; unchanged settings/data validation.
+- `README.md` — blob `1eea6350b02a34a51e9c9f1ac6b0f49d1d2230c6`, 118 lines; **L39** describes the courier visual identity and accessibility behavior.
+- `docs/GAME_DESIGN.md` — blob `2f77acc9bf62149b2dc1b576eb2cb6f5e7af58b7`, 129 lines; **L114–L116** documents the art direction.
+- `docs/ROADMAP.md` — blob `8cfa713f49e4772344027ae903a4357c1444bbfa`, 92 lines; **L54–L55** marks this first animation slice complete and leaves contact/gate/portal reactions plus a cohesive sprite set open.
+
+### Verification and remaining limits
+
+- **Godot CI:** run 41216077479 passed both Godot 4.4.0 and 4.7.2, including project import/parse, data tests and the full gameplay smoke suite.
+- **Android APK:** the Android export for merge commit `59e024b6323b398ae9efa685ac81dc2ea7371024` has not been confirmed in this handoff. Do not assume the nightly APK includes this courier polish until the export workflow completes successfully.
+- **Physical-device QA:** not performed. Inspect the courier at real phone scale, test Reduced Motion on/off, and measure actual low-end-device FPS, battery and heat.
+- **Art scope:** this is still original procedural CanvasItem art, not a finished sprite-sheet character. Sentinel-contact, gate-opening and portal-entry reactions, multiple room themes, and the final courier sprite/animation set remain future work.
+
+### Next development tasks
+
+1. Confirm the post-merge Android APK export and install it on a real device for touch, save, lifecycle and visual checks.
+2. Add cohesive low-cost themes for the five chapters while keeping room objectives and switch states high-contrast.
+3. Add sentinel-contact, gate-opening and portal-entry reactions, then plan a consistent original courier sprite/animation set.
+4. Continue 24-room physical-device QA and measure actual low-end performance rather than inferring it from CI.
+
+---
+
 
 ## 0. Latest verified handoff — Independent Music/SFX volume sliders
 
