@@ -42,7 +42,7 @@ The supplied ECHO logo sets a dark navy and neon-cyan theme. A new 16:9 cosmic-n
 
 ## Five chapter environments
 
-Each signal chapter now has its own subtle room backdrop, so the campaign gradually changes visual language without changing puzzle geometry: **Chapter I — Signal Origins** uses cyan circuit traces and contact nodes; **Chapter II — Signal Synthesis** uses linked violet/blue constellation marks; **Chapter III — Drift & Phase** uses paired travel rails and phase rings; **Chapter IV — Twin Signal** uses mirrored orbit stations; and **Chapter V — Final Orbit** frames the chamber with opposing orbital arcs. These decorations sit behind the switches, relays, hazards and route trails. Performance Mode draws fewer/dimmer details, and Reduced Motion freezes the drifting phase accent.
+Each signal chapter now has its own subtle room backdrop, so the campaign gradually changes visual language without changing puzzle geometry: **Chapter I — Signal Origins** uses cyan circuit traces and contact nodes; **Chapter II — Signal Synthesis** uses linked violet/blue constellation marks; **Chapter III — Drift & Phase** uses paired travel rails and phase rings; **Chapter IV — Twin Signal** uses mirrored orbit stations; and **Chapter V — Final Orbit** frames the chamber with opposing orbital arcs. These decorations sit behind the switches, relays, hazards and route trails. Performance Mode draws fewer/dimmer details, and Reduced Motion freezes the drifting phase accent. Each chamber can also show one small chapter landmark—relay pylon, crystal cluster, bridge anchor, paired antenna or portal arch. The renderer checks four corner pockets and chooses the first one clear of that room's spawn, switches, shard, relay checkpoints and jammer.
 
 ## Core puzzle
 
