@@ -3,7 +3,7 @@
 ## 0. Latest verified handoff — Android safe-area-aware responsive UI
 
 **Status:** implementation is on branch `upgrade/android-safe-area-layout`; PR [#14 — Add Android safe-area-aware responsive UI](https://github.com/NinuGaming999/ECHOPOST/pull/14) is open and has not been merged into `main`.  
-**Branch head:** `aa0776b0af798094761735c8ca853ecefbd334a7`.  
+**Code and test commit verified:** `aa0776b0af798094761735c8ca853ecefbd334a7`.  
 **Godot CI:** [run 41238968143](https://github.com/NinuGaming999/ECHOPOST/actions/runs/41238968143) — both Godot **4.4.0** and **4.7.2** jobs passed editor import/parse, data-layer smoke tests, and main-scene gameplay smoke tests.
 
 ### What changed
