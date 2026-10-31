@@ -273,8 +273,11 @@ func _test_settings_store() -> void:
 	_check(not bool(defaults["left_handed_controls"]), "Missing settings should default to the standard left-side joystick.")
 	_check(bool(defaults["performance_mode"]), "New settings should default to Performance Mode for weak-device headroom.")
 	_check(not bool(defaults["reduced_motion"]), "Reduced Motion should default to OFF.")
+	_check(bool(defaults["music_enabled"]), "Original ambient music should default to ON.")
+	_check(bool(defaults["sfx_enabled"]), "Puzzle sound effects should default to ON.")
+	_check(not bool(defaults["haptics_enabled"]), "Haptics should default to OFF until the player enables vibration.")
 
-	# Existing v2 preferences remain readable and use the safe Reduced Motion default.
+	# Existing v2 preferences remain readable and use safe defaults for newer options.
 	var legacy_v2 := ConfigFile.new()
 	legacy_v2.set_value("meta", "settings_version", 2)
 	legacy_v2.set_value("controls", "move_speed", 255.0)
@@ -283,16 +286,33 @@ func _test_settings_store() -> void:
 	_check(legacy_v2.save(TEST_SETTINGS_PATH) == OK, "A version-2 preferences file should be writable.")
 	var migrated_v2: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
 	_check(not bool(migrated_v2["reduced_motion"]), "Version-2 settings should load with Reduced Motion OFF.")
+	_check(bool(migrated_v2["music_enabled"]) and bool(migrated_v2["sfx_enabled"]), "Version-2 settings should receive the enabled music/SFX defaults.")
+	_check(not bool(migrated_v2["haptics_enabled"]), "Version-2 settings should receive the disabled haptics default.")
 
-	var save_error := SettingsStore.save_settings(200.0, true, TEST_SETTINGS_PATH, false, true)
-	_check(save_error == OK, "Control settings should save to their own preferences file.")
+	# Version 3 added Reduced Motion; its value must survive the v4 audio migration.
+	var legacy_v3 := ConfigFile.new()
+	legacy_v3.set_value("meta", "settings_version", 3)
+	legacy_v3.set_value("controls", "move_speed", 310.0)
+	legacy_v3.set_value("controls", "left_handed_controls", true)
+	legacy_v3.set_value("graphics", "performance_mode", true)
+	legacy_v3.set_value("accessibility", "reduced_motion", true)
+	_check(legacy_v3.save(TEST_SETTINGS_PATH) == OK, "A version-3 preferences file should be writable.")
+	var migrated_v3: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
+	_check(bool(migrated_v3["reduced_motion"]), "Version-3 settings should preserve the saved Reduced Motion preference.")
+	_check(bool(migrated_v3["music_enabled"]) and bool(migrated_v3["sfx_enabled"]), "Version-3 settings should receive enabled music/SFX defaults.")
+	_check(not bool(migrated_v3["haptics_enabled"]), "Version-3 settings should receive the disabled haptics default.")
+
+	var save_error := SettingsStore.save_settings(200.0, true, TEST_SETTINGS_PATH, false, true, false, false, true)
+	_check(save_error == OK, "Control, audio and accessibility settings should save to their own preferences file.")
 	var saved: Dictionary = SettingsStore.load_settings(TEST_SETTINGS_PATH)
 	_check(is_equal_approx(float(saved["move_speed"]), 200.0), "Settings should preserve the selected slow movement preset.")
 	_check(bool(saved["left_handed_controls"]), "Settings should preserve left-handed joystick preference.")
 	_check(not bool(saved["performance_mode"]), "Settings should preserve the selected full-visual mode.")
-	_check(bool(saved["reduced_motion"]), "Settings v3 should persist Reduced Motion independently of Performance Mode.")
+	_check(bool(saved["reduced_motion"]), "Settings v4 should persist Reduced Motion independently of Performance Mode.")
+	_check(not bool(saved["music_enabled"]) and not bool(saved["sfx_enabled"]), "Settings v4 should independently persist disabled music and SFX.")
+	_check(bool(saved["haptics_enabled"]), "Settings v4 should persist enabled haptics separately.")
 	var saved_config := ConfigFile.new()
-	_check(saved_config.load(TEST_SETTINGS_PATH) == OK and int(saved_config.get_value("meta", "settings_version", 0)) == 3, "The preferences file should use schema version 3.")
+	_check(saved_config.load(TEST_SETTINGS_PATH) == OK and int(saved_config.get_value("meta", "settings_version", 0)) == 4, "The preferences file should use schema version 4.")
 
 	# Unsupported values are normalized to the nearest supported preset rather than saved as arbitrary speeds.
 	save_error = SettingsStore.save_settings(999.0, false, TEST_SETTINGS_PATH)
@@ -302,11 +322,12 @@ func _test_settings_store() -> void:
 	_check(not bool(normalized["left_handed_controls"]), "Left-handed preference should be independently changeable.")
 	_check(bool(normalized["performance_mode"]), "An omitted Performance Mode value should safely default to ON.")
 	_check(not bool(normalized["reduced_motion"]), "Omitted Reduced Motion should safely default to OFF.")
+	_check(bool(normalized["music_enabled"]) and bool(normalized["sfx_enabled"]), "Omitted audio values should safely default to ON.")
+	_check(not bool(normalized["haptics_enabled"]), "Omitted haptics should safely default to OFF.")
 
 	var user_directory := DirAccess.open("user://")
 	if user_directory != null:
 		user_directory.remove("echopost_settings_smoke_test.cfg")
-
 
 func _check(condition: bool, message: String) -> void:
 	if not condition:
