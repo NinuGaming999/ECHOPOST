@@ -52,7 +52,7 @@ The first thirteen chambers establish the two-switch echo rule, sentinels, order
 - **Tandem Relay:** both independently recorded echoes must pass the same two ordered relay checkpoints and avoid an echo-only jammer before occupying Switches A and C.
 - **The Last Duet:** both echoes must pass four ordered relays while avoiding the jammer; the player then catches a pulse on B and crosses the final 4.2-second gate.
 
-The chapter selector scrolls so future rooms do not collide with the navigation controls. The 24-room campaign spans five signal chapters. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. More multi-echo combinations, checkpoints and varied puzzle rules remain future work; the twenty-one current rooms are still a foundation rather than a finished campaign.
+The chapter selector scrolls so future rooms do not collide with the navigation controls. The 24-room campaign spans five signal chapters. Each current chamber also contains one optional Memory Shard that reveals a short courier-network memory. Shards are tracked by chamber and saved locally; the menu's scrollable Memory Archive lets players reread recovered fragments and shows undiscovered entries. Version-1 saves migrate without losing unlocked rooms or completion count. More multi-echo combinations, checkpoints and varied puzzle rules remain future work; the twenty-four current rooms are still a foundation rather than a finished campaign.
 
 ## Echo rules
 
