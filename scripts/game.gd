@@ -2223,33 +2223,35 @@ func _get_chapter_landmark_positions(room_rect: Rect2) -> Array[Vector2]:
 	var top := room_rect.position.y
 	var right := room_rect.end.x
 	var bottom := room_rect.end.y
-	return [
-		Vector2(left + 64.0, top + 48.0),
-		Vector2(right - 64.0, top + 48.0),
-		Vector2(left + 64.0, bottom - 48.0),
-		Vector2(right - 64.0, bottom - 48.0)
-	]
+	var positions: Array[Vector2] = []
+	positions.append(Vector2(left + 64.0, top + 48.0))
+	positions.append(Vector2(right - 64.0, top + 48.0))
+	positions.append(Vector2(left + 64.0, bottom - 48.0))
+	positions.append(Vector2(right - 64.0, bottom - 48.0))
+	return positions
+
+
+func _is_chapter_landmark_near_value(position: Vector2, value: Variant, clearance: float) -> bool:
+	if typeof(value) == TYPE_VECTOR2:
+		return position.distance_to(value) < clearance
+	return false
 
 
 func _is_chapter_landmark_clear(position: Vector2) -> bool:
 	const OBJECTIVE_CLEARANCE := 94.0
-	var reserved_points: Array[Vector2] = []
+	# Check authored positions directly instead of building a temporary Array in
+	# the frame renderer. The waypoint list is already stored in level data.
 	for key in ["spawn", "plate_a", "plate_b", "plate_c", "memory_shard", "echo_waypoint"]:
-		var value: Variant = level_data.get(key, null)
-		if value is Vector2:
-			reserved_points.append(value)
+		if _is_chapter_landmark_near_value(position, level_data.get(key, null), OBJECTIVE_CLEARANCE):
+			return false
 	var waypoint_values: Variant = level_data.get("echo_waypoints", [])
 	if waypoint_values is Array:
 		for waypoint_value in waypoint_values:
-			if waypoint_value is Vector2:
-				reserved_points.append(waypoint_value)
-	for reserved_point in reserved_points:
-		if position.distance_to(reserved_point) < OBJECTIVE_CLEARANCE:
-			return false
+			if _is_chapter_landmark_near_value(position, waypoint_value, OBJECTIVE_CLEARANCE):
+				return false
 	if level_data.has("echo_jammer"):
-		var jammer_position: Vector2 = level_data["echo_jammer"]
 		var jammer_clearance := float(level_data.get("echo_jammer_radius", 100.0)) + 34.0
-		if position.distance_to(jammer_position) < jammer_clearance:
+		if _is_chapter_landmark_near_value(position, level_data["echo_jammer"], jammer_clearance):
 			return false
 	return true
 
