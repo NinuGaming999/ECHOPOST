@@ -460,10 +460,14 @@ func _test_options_panel(game: Control) -> void:
 	_check(is_equal_approx(float(game.get("player_move_speed")), 200.0), "Selecting SLOW should affect the actual player movement speed.")
 	game.call("_set_left_handed_controls", true)
 	_check(bool(game.get("left_handed_controls")), "The left-handed setting should update active control state.")
+	Engine.max_fps = 120
 	game.call("_set_performance_mode", false)
+	_check(Engine.max_fps == 0, "Full-effects mode should remove any pre-existing engine FPS cap.")
 	_check(not bool(game.get("performance_mode")), "Performance Mode should be switchable off for devices that can handle full effects.")
 	_check(str((game.get("performance_button") as Button).text).contains("OFF"), "Options should display the selected performance setting.")
+	Engine.max_fps = 45
 	game.call("_set_performance_mode", true)
+	_check(Engine.max_fps == 0, "Performance Mode should also run without an engine FPS cap.")
 	_check(bool(game.get("performance_mode")), "Performance Mode should be switchable back on.")
 	game.call("_set_reduced_motion", true)
 	_check(bool(game.get("reduced_motion")), "Reduced Motion should be switchable on.")
