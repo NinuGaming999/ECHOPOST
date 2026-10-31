@@ -40,6 +40,8 @@ var reduced_motion: bool = false
 var music_enabled: bool = true
 var sfx_enabled: bool = true
 var haptics_enabled: bool = false
+var music_volume: float = 0.14125375
+var sfx_volume: float = 0.89125094
 var audio_manager: Node
 var background_texture: Texture2D
 var particle_time: float = 0.0
@@ -107,6 +109,10 @@ var reduced_motion_button: Button
 var music_button: Button
 var sfx_button: Button
 var haptics_button: Button
+var music_volume_slider: HSlider
+var sfx_volume_slider: HSlider
+var music_volume_label: Label
+var sfx_volume_label: Label
 var menu_progress_label
 var level_title_label: Label
 var level_hint_label: Label
@@ -163,7 +169,7 @@ func _ready() -> void:
 	audio_manager = AUDIO_MANAGER_SCRIPT.new() as Node
 	audio_manager.name = "AudioManager"
 	add_child(audio_manager)
-	audio_manager.call("configure", music_enabled, sfx_enabled, haptics_enabled)
+	audio_manager.call("configure", music_enabled, sfx_enabled, haptics_enabled, music_volume, sfx_volume)
 	_build_interface()
 	_layout_responsive_ui()
 	_show_menu()
@@ -516,7 +522,7 @@ func _open_memory_archive() -> void:
 
 
 func _build_options_panel() -> void:
-	options_panel = _make_panel("OptionsPanel", Vector2(370, 125), Vector2(540, 470))
+	options_panel = _make_panel("OptionsPanel", Vector2(370, 80), Vector2(540, 560))
 	_make_label(options_panel, "OptionsTitle", Vector2(24, 12), Vector2(492, 38), "OPTIONS", 27, Color(0.88, 0.97, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
 	_make_label(options_panel, "SpeedLabel", Vector2(38, 55), Vector2(464, 25), "MOVEMENT SPEED", 15, Color(0.72, 0.83, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
 
@@ -549,13 +555,38 @@ func _build_options_panel() -> void:
 	haptics_button.tooltip_text = "Optional short vibration cues on supported mobile devices. OFF by default."
 	haptics_button.pressed.connect(_toggle_haptics)
 
-	var back := _make_button(options_panel, "OptionsBack", Vector2(150, 386), Vector2(240, 42), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 14)
+	music_volume_label = _make_label(options_panel, "MusicVolumeLabel", Vector2(50, 374), Vector2(440, 22), "", 12, Color(0.72, 0.83, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
+	music_volume_slider = _make_volume_slider(options_panel, "MusicVolumeSlider", Vector2(58, 396), 14.125)
+	music_volume_slider.tooltip_text = "Adjust ambient music loudness without changing puzzle sound effects."
+	music_volume_slider.value_changed.connect(_on_music_volume_changed)
+
+	sfx_volume_label = _make_label(options_panel, "SFXVolumeLabel", Vector2(50, 425), Vector2(440, 22), "", 12, Color(0.72, 0.83, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
+	sfx_volume_slider = _make_volume_slider(options_panel, "SFXVolumeSlider", Vector2(58, 447), 89.125)
+	sfx_volume_slider.tooltip_text = "Adjust recording, gate and other feedback sound loudness independently."
+	sfx_volume_slider.value_changed.connect(_on_sfx_volume_changed)
+
+	var back := _make_button(options_panel, "OptionsBack", Vector2(150, 500), Vector2(240, 42), "BACK TO MENU", Color(0.16, 0.20, 0.31), Color(0.24, 0.29, 0.42), 14)
 	back.pressed.connect(func():
 		options_panel.hide()
 		menu_root.show()
 	)
 	options_panel.hide()
 	_update_options_panel()
+
+
+func _make_volume_slider(parent: Control, slider_name: String, slider_position: Vector2, initial_value: float) -> HSlider:
+	var slider := HSlider.new()
+	slider.name = slider_name
+	slider.position = slider_position
+	slider.size = Vector2(424, 24)
+	slider.min_value = 0.0
+	slider.max_value = 100.0
+	slider.step = 1.0
+	slider.value = clampf(initial_value, 0.0, 100.0)
+	slider.focus_mode = Control.FOCUS_ALL
+	slider.custom_minimum_size = Vector2(0, 24)
+	parent.add_child(slider)
+	return slider
 
 
 func _open_options() -> void:
@@ -657,6 +688,30 @@ func _set_haptics_enabled(enabled: bool) -> void:
 	_update_options_panel()
 
 
+func _on_music_volume_changed(value: float) -> void:
+	_set_music_volume(value / 100.0)
+
+
+func _set_music_volume(volume: float) -> void:
+	music_volume = clampf(volume, 0.0, 1.0)
+	if is_instance_valid(audio_manager):
+		audio_manager.call("set_music_volume", music_volume)
+	_save_settings()
+	_update_options_panel()
+
+
+func _on_sfx_volume_changed(value: float) -> void:
+	_set_sfx_volume(value / 100.0)
+
+
+func _set_sfx_volume(volume: float) -> void:
+	sfx_volume = clampf(volume, 0.0, 1.0)
+	if is_instance_valid(audio_manager):
+		audio_manager.call("set_sfx_volume", sfx_volume)
+	_save_settings()
+	_update_options_panel()
+
+
 func _play_feedback(effect_name: String, haptic_duration_ms: int = 0, amplitude: float = 0.25) -> void:
 	if not is_instance_valid(audio_manager):
 		return
@@ -691,6 +746,12 @@ func _update_options_panel() -> void:
 		sfx_button.text = "SFX: ON" if sfx_enabled else "SFX: OFF"
 	if is_instance_valid(haptics_button):
 		haptics_button.text = "HAPTICS: ON" if haptics_enabled else "HAPTICS: OFF"
+	if is_instance_valid(music_volume_slider):
+		music_volume_slider.value = music_volume * 100.0
+		music_volume_label.text = "MUSIC VOLUME  •  %d%%" % roundi(music_volume * 100.0)
+	if is_instance_valid(sfx_volume_slider):
+		sfx_volume_slider.value = sfx_volume * 100.0
+		sfx_volume_label.text = "SFX VOLUME  •  %d%%" % roundi(sfx_volume * 100.0)
 
 
 func _update_memory_archive() -> void:
@@ -2023,11 +2084,13 @@ func _load_settings() -> void:
 	music_enabled = bool(settings.get("music_enabled", true))
 	sfx_enabled = bool(settings.get("sfx_enabled", true))
 	haptics_enabled = bool(settings.get("haptics_enabled", false))
+	music_volume = float(settings.get("music_volume", 0.14125375))
+	sfx_volume = float(settings.get("sfx_volume", 0.89125094))
 	_apply_performance_mode()
 
 
 func _save_settings() -> void:
-	var error: int = SETTINGS_STORE.save_settings(player_move_speed, left_handed_controls, SETTINGS_STORE.SETTINGS_PATH, performance_mode, reduced_motion, music_enabled, sfx_enabled, haptics_enabled)
+	var error: int = SETTINGS_STORE.save_settings(player_move_speed, left_handed_controls, SETTINGS_STORE.SETTINGS_PATH, performance_mode, reduced_motion, music_enabled, sfx_enabled, haptics_enabled, music_volume, sfx_volume)
 	if error != OK:
 		push_warning("Could not save control settings. Error code: %s" % error)
 
