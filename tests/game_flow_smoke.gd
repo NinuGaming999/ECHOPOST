@@ -403,7 +403,7 @@ func _test_options_panel(game: Control) -> void:
 	_check(str((game.get("reduced_motion_button") as Button).text).contains("ON"), "Options should display the selected Reduced Motion setting.")
 	game.call("_set_music_enabled", false)
 	_check(not bool(game.get("music_enabled")), "Music should be switchable off independently.")
-	_check(not bool((game.get("music_button") as Button).text).contains("ON"), "Options should display Music OFF.")
+	_check(not str((game.get("music_button") as Button).text).contains("ON"), "Options should display Music OFF.")
 	game.call("_set_sfx_enabled", false)
 	_check(not bool(game.get("sfx_enabled")), "SFX should be switchable off independently.")
 	game.call("_set_haptics_enabled", true)
