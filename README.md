@@ -40,6 +40,10 @@ ECHOPOST synthesizes a quiet eight-second ambient loop and short original event 
 
 The supplied ECHO logo sets a dark navy and neon-cyan theme. A new 16:9 cosmic-nebula backdrop adds a ringed signal planet, distant cyan skyline and orbital horizon; twinkling cyan/teal stars animate over the scene. The player courier and recorded echoes now read as small signal drones: the glass core gains a visor, twin stabilizer fins and a floating orbit beacon. The courier gently hovers at rest, leans into steering, adds an amber pulse while recording and gets a distinct playback shimmer as an echo. These effects are procedural draw calls rather than extra animated nodes; Performance Mode keeps its compact rendering path, and Reduced Motion freezes decorative courier motion. Recorded paths retain their layered cyan glow. Performance Mode also reduces the ambient star count and skips glint rays so the backdrop stays lightweight.
 
+## Five chapter environments
+
+Each signal chapter now has its own subtle room backdrop, so the campaign gradually changes visual language without changing puzzle geometry: **Chapter I — Signal Origins** uses cyan circuit traces and contact nodes; **Chapter II — Signal Synthesis** uses linked violet/blue constellation marks; **Chapter III — Drift & Phase** uses paired travel rails and phase rings; **Chapter IV — Twin Signal** uses mirrored orbit stations; and **Chapter V — Final Orbit** frames the chamber with opposing orbital arcs. These decorations sit behind the switches, relays, hazards and route trails. Performance Mode draws fewer/dimmer details, and Reduced Motion freezes the drifting phase accent.
+
 ## Core puzzle
 
 1. Record a route to **Switch A** and finish recording while standing on it.
